@@ -641,103 +641,6 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
     return out_img
 
 
-def generate_contour_images(
-        n_images, frag, frag_params, c_len, beta, alpha, f_tile_size, img_size=None, bg_frag_relocate=True,
-        rand_inter_frag_direction_change=True, random_alpha_rot=True, center_frag_start=None, base_contour='random'):
-    """
-    Generate n_images with the specified fragment parameters.
-
-    In the Ref, a visible stimulus of a small size is placed inside a large tile
-    Here, full tile refers to the large tile & fragment tile refers to the visible stimulus
-
-    :param n_images:
-    :param frag:
-    :param frag_params:
-    :param c_len:
-    :param beta:
-    :param alpha:
-    :param f_tile_size
-    :param img_size: [Default = (227, 227, 3)]
-        :param center_frag_start:
-    :param bg_frag_relocate: If True, for a full tile that contains a background fragment, try to
-             relocate bg fragment within the full tile to see if it can fit.
-    :param rand_inter_frag_direction_change: [True]
-    :param random_alpha_rot: [True]
-    :param base_contour:
-
-    :return: array of generated images [n_images, r, c, ch]
-    """
-    if img_size is None:
-        img_size = np.array([227, 227, 3])
-
-    if center_frag_start is None:
-        img_center = img_size[0:2] // 2
-        frag_size = np.array(frag.shape[0:2])
-        center_frag_start = img_center - (frag_size // 2)
-
-    # print("Generating {0} images for fragment [ contour length {1}, inter fragment rotation {2}]".format(
-    #     n_images, c_len, beta))
-
-    # bg = np.mean(fragment, axis=(0, 1))
-    # bg = [np.uint8(chan) for chan in bg_value]
-    bg = get_mean_pixel_value_at_boundary(frag)
-
-    images = np.zeros((n_images, img_size[0], img_size[1], img_size[2]), dtype='uint8')
-
-    for img_idx in range(n_images):
-
-        # print("Image {}".format(img_idx))
-
-        img = np.ones(img_size, dtype=np.uint8) * bg
-
-        c_frag_starts = np.array([])
-        if (c_len > 1) or (c_len == 1 and beta == 0):
-            img, c_frag_starts = add_contour_path_constant_separation(
-                img, frag, frag_params, c_len, beta, alpha, f_tile_size[0],
-                center_frag_start=center_frag_start,
-                rand_inter_frag_direction_change=rand_inter_frag_direction_change,
-                random_alpha_rot=random_alpha_rot,
-                base_contour=base_contour
-            )
-        # If c_len == 1 and beta != 0, only background fragments are added. In this case the enhancement gain
-        # should be 1 (no enhancement) and serves as example when not to enhance the fragment
-
-        img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
-            img, frag, c_frag_starts, f_tile_size, 10, frag_params, bg_frag_relocate)
-
-        images[img_idx, ] = img
-
-        # # Debug
-        # # ------
-        # # Highlight Contour tiles - Red
-        # img = highlight_tiles(img, frag.shape[0:2], c_frag_starts.astype(int),  edge_color=(255, 0, 0))
-        #
-        # # # Highlight Background Fragment tiles - Green
-        # # img = alex_net_utils.highlight_tiles(img, frag.shape[0:2], bg_frag_starts, edge_color=(0, 255, 0))
-        #
-        # # Highlight Removed tiles - Blue
-        # img = highlight_tiles(img, frag.shape[0:2], removed_tiles.astype(int), edge_color=(0, 0, 255))
-        #
-        # # Highlight Relocated tiles - Teal
-        # img = highlight_tiles(img, frag.shape[0:2], relocated_tiles.astype(int), edge_color=(0, 255, 255))
-        #
-        # # highlight full tiles
-        # f_tile_starts = get_background_tiles_locations(
-        #     frag_len=f_tile_size[0],
-        #     img_len=img_size[0],
-        #     row_offset=0,
-        #     space_bw_tiles=0,
-        #     tgt_n_visual_rf_start=img_size[0] // 2 - (f_tile_size[0] // 2)
-        # )
-        #
-        # img = highlight_tiles(img, f_tile_size, f_tile_starts.astype(int), edge_color=(255, 255, 0))
-        #
-        # plt.figure()
-        # plt.imshow(img)
-
-    return images
-
-
 def get_mean_pixel_value_at_boundary(frag, width=1):
     """
 
@@ -760,6 +663,118 @@ def get_mean_pixel_value_at_boundary(frag, width=1):
     return mean_border_value
 
 
+def generate_contour_image(
+        frag, frag_params, c_len, beta, alpha, f_tile_size, img_size=None, bg_frag_relocate=True,
+        rand_inter_frag_direction_change=True, random_alpha_rot=True, center_frag_start=None, base_contour='random'):
+    """
+
+    Generate image and label for specified fragment parameters.
+
+    In [Fields -1993] a small visible stimulus is placed inside a large tile
+    Here, full tile refers to the large tile & fragment tile refers to the visible stimulus. If the
+    fragment is part of the contour, it is called a contour fragment otherwise a background fragment
+
+    :param frag:
+    :param frag_params:
+    :param c_len:
+    :param beta:
+    :param alpha:
+    :param f_tile_size:
+    :param img_size: [Default = (227, 227, 3)]
+    :param bg_frag_relocate: if a bg fragment overlaps with a contour fragment within a tile. Try to
+            relocate it before removing it.
+    :param rand_inter_frag_direction_change: Curve Direction changes randomly between component framgents.
+            [Default =True]
+    :param random_alpha_rot:
+    :param center_frag_start: starting location of contour fragments
+    :param base_contour:
+
+    :return: img, label
+        The labels is a numpy array of 0 or 1 identifying which full tiles contain contour fragments
+    """
+    if img_size is None:
+        img_size = np.array([227, 227, 3])
+
+    img_center = img_size[0:2] // 2
+
+    frag_size = np.array(frag.shape[0:2])
+
+    if center_frag_start is None:
+        center_frag_start = img_center - (frag_size // 2)
+
+    bg = get_mean_pixel_value_at_boundary(frag)
+
+    # Get the full tiles for the image
+    center_f_tile_start = img_center - (f_tile_size // 2)
+
+    f_tile_starts = get_background_tiles_locations(
+        frag_len=full_tile_size[0],
+        img_len=img_size[0],
+        row_offset=0,
+        space_bw_tiles=0,
+        tgt_n_visual_rf_start=center_f_tile_start[0]
+    )
+    f_tile_centers = f_tile_starts + (full_tile_size // 2)
+    num_f_tiles = len(f_tile_starts)
+    f_tiles_single_dim = np.int(np.sqrt(num_f_tiles))
+
+    img = np.ones(img_size, dtype=np.uint8) * bg
+    label = np.zeros(num_f_tiles, dtype='uint8')
+
+    # Image  -------------------------------------
+    # Get Contour Fragments
+    if (c_len > 1) or (c_len == 1 and beta == 0):
+        img, c_frag_starts = add_contour_path_constant_separation(
+            img, frag, frag_params, c_len, beta, alpha, f_tile_size[0],
+            center_frag_start=center_frag_start,
+            rand_inter_frag_direction_change=rand_inter_frag_direction_change,
+            random_alpha_rot=random_alpha_rot,
+            base_contour=base_contour
+        )
+    # For all other cases, c_len ==1 and beta !=0, just add background tiles.
+    # which move around within the full tile. No contour integration for single contour fragments
+
+    # Add background fragments
+    img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
+        img, frag, c_frag_starts, f_tile_size, 10, frag_params, bg_frag_relocate)
+
+    # Label -----------------------------------
+    for c_frag_start in c_frag_starts:
+        c_frag_center = c_frag_start + frag_size // 2
+
+        dist_to_c_frag = np.linalg.norm(f_tile_centers - c_frag_center, axis=1)
+        closest_full_tile_idx = np.argmin(dist_to_c_frag)
+
+        # print("Closest Full Tile Index {}. Distance {}".format(
+        #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
+
+        label[closest_full_tile_idx] = 1
+
+    label = label.reshape(f_tiles_single_dim, f_tiles_single_dim)
+
+    # # Debug ------------------------
+    # # Highlight Contour tiles - Red
+    # img = highlight_tiles(img, frag_size, c_frag_starts,  edge_color=(255, 0, 0))
+    #
+    # # Highlight Background Fragment tiles - Green
+    # img = highlight_tiles(img, frag_size, bg_frag_starts, edge_color=(0, 255, 0))
+    #
+    # # Highlight Removed tiles - Blue
+    # img = highlight_tiles(img, frag_size, removed_tiles, edge_color=(0, 0, 255))
+    #
+    # # Highlight Relocated tiles - Teal
+    # img = highlight_tiles(img, frag_size, relocated_tiles, edge_color=(0, 255, 255))
+    #
+    # # highlight full tiles
+    # img = highlight_tiles(img, f_tile_size, f_tile_starts, edge_color=(255, 255, 0))
+    #
+    # plt.figure()
+    # plt.imshow(img)
+    # print(label)
+
+    return img, label
+
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -769,7 +784,7 @@ if __name__ == "__main__":
     fragment_size = (11, 11)
     full_tile_size = np.array([18, 18])
 
-    image_size = np.array([256, 256, 3])
+    image_size = np.array([227, 227, 3])
 
     # Immutable
     plt.ion()
@@ -792,63 +807,63 @@ if __name__ == "__main__":
     # plt.imshow(fragment)
     # plt.title("Generated Fragment")
 
-    # -----------------------------------------------------------------------------------
-    #  Test Stimulus - Manual
-    # -----------------------------------------------------------------------------------
-    bg_value = get_mean_pixel_value_at_boundary(fragment)
-    test_image = np.ones(image_size, dtype=np.uint8) * bg_value
-
-    contour_len = 9
-    beta_rotation = 15
-    alpha_rotation = 0
-
-    #  Add the Contour Path
-    test_image, path_fragment_starts = add_contour_path_constant_separation(
-        img=test_image,
-        frag=fragment,
-        frag_params=gabor_parameters,
-        c_len=contour_len,
-        beta=beta_rotation,
-        alpha=alpha_rotation,
-        d=full_tile_size[0],
-        rand_inter_frag_direction_change=False,
-        base_contour='sigmoid'
-    )
-
-    plt.figure()
-    plt.imshow(test_image)
-    plt.title("Contour Fragments")
-
-    # Add background Fragments
-    test_image, bg_tiles, bg_removed_tiles, bg_relocated_tiles = add_background_fragments(
-        test_image,
-        fragment,
-        path_fragment_starts,
-        full_tile_size,
-        beta_rotation,
-        gabor_parameters,
-        relocate_allowed=True
-    )
-    plt.figure()
-    plt.imshow(test_image)
-    plt.title("Highlighted Tiles: Stimulus c_len = {}, beta = {}, alpha = {}".format(contour_len, beta_rotation,
-                                                                                     alpha_rotation))
-    # Highlight Tiles
-    full_tile_starts = get_background_tiles_locations(
-        frag_len=full_tile_size[0],
-        img_len=image_size[1],
-        row_offset=0,
-        space_bw_tiles=0,
-        tgt_n_visual_rf_start=image_size[0] // 2 - (full_tile_size[0] // 2)
-    )
-
-    test_image = highlight_tiles(test_image, fragment_size, bg_tiles, edge_color=(255, 255, 0))
-    test_image = highlight_tiles(test_image, full_tile_size, full_tile_starts, edge_color=(255, 0, 0))
-    test_image = highlight_tiles(test_image, fragment_size, path_fragment_starts, edge_color=(0, 0, 255))
-
-    plt.figure()
-    plt.imshow(test_image)
-    plt.title("Highlighted Tiles".format(contour_len, beta_rotation, alpha_rotation))
+    # # -----------------------------------------------------------------------------------
+    # #  Test Stimulus - Manual
+    # # -----------------------------------------------------------------------------------
+    # bg_value = get_mean_pixel_value_at_boundary(fragment)
+    # test_image = np.ones(image_size, dtype=np.uint8) * bg_value
+    #
+    # contour_len = 9
+    # beta_rotation = 15
+    # alpha_rotation = 0
+    #
+    # #  Add the Contour Path
+    # test_image, path_fragment_starts = add_contour_path_constant_separation(
+    #     img=test_image,
+    #     frag=fragment,
+    #     frag_params=gabor_parameters,
+    #     c_len=contour_len,
+    #     beta=beta_rotation,
+    #     alpha=alpha_rotation,
+    #     d=full_tile_size[0],
+    #     rand_inter_frag_direction_change=False,
+    #     base_contour='sigmoid'
+    # )
+    #
+    # plt.figure()
+    # plt.imshow(test_image)
+    # plt.title("Contour Fragments")
+    #
+    # # Add background Fragments
+    # test_image, bg_tiles, bg_removed_tiles, bg_relocated_tiles = add_background_fragments(
+    #     test_image,
+    #     fragment,
+    #     path_fragment_starts,
+    #     full_tile_size,
+    #     beta_rotation,
+    #     gabor_parameters,
+    #     relocate_allowed=True
+    # )
+    # plt.figure()
+    # plt.imshow(test_image)
+    # plt.title("Highlighted Tiles: Stimulus c_len = {}, beta = {}, alpha = {}".format(contour_len, beta_rotation,
+    #                                                                                  alpha_rotation))
+    # # Highlight Tiles
+    # full_tile_starts = get_background_tiles_locations(
+    #     frag_len=full_tile_size[0],
+    #     img_len=image_size[1],
+    #     row_offset=0,
+    #     space_bw_tiles=0,
+    #     tgt_n_visual_rf_start=image_size[0] // 2 - (full_tile_size[0] // 2)
+    # )
+    #
+    # test_image = highlight_tiles(test_image, fragment_size, bg_tiles, edge_color=(255, 255, 0))
+    # test_image = highlight_tiles(test_image, full_tile_size, full_tile_starts, edge_color=(255, 0, 0))
+    # test_image = highlight_tiles(test_image, fragment_size, path_fragment_starts, edge_color=(0, 0, 255))
+    #
+    # plt.figure()
+    # plt.imshow(test_image)
+    # plt.title("Highlighted Tiles".format(contour_len, beta_rotation, alpha_rotation))
 
     # -----------------------------------------------------------------------------------
     #  Stimulus - Single function
@@ -857,19 +872,36 @@ if __name__ == "__main__":
     beta_rotation = 15
     alpha_rotation = 0
 
-    img_arr = generate_contour_images(
-        n_images=1,
+    image, image_label = generate_contour_image(
         frag=fragment,
         frag_params=gabor_parameters,
         c_len=contour_len,
         beta=beta_rotation,
         alpha=alpha_rotation,
         f_tile_size=full_tile_size,
-        img_size=np.array((227, 227, 3)),
+        img_size=image_size,
         random_alpha_rot=True
     )
 
     plt.figure()
-    image_idx = 0
-    plt.imshow(img_arr[image_idx, :])
-    plt.title("Image @ index {}".format(image_idx))
+    plt.imshow(image)
+    plt.title("Input Image")
+
+    # Highlight the label
+    center_full_tile_start = image_size[:2] // 2 - (full_tile_size[0:2] // 2)
+    full_tile_starts = get_background_tiles_locations(
+        frag_len=full_tile_size[0],
+        img_len=image_size[0],
+        row_offset=0,
+        space_bw_tiles=0,
+        tgt_n_visual_rf_start=center_full_tile_start[0]
+    )
+
+    contour_containing_tiles = full_tile_starts[image_label.flatten().nonzero()]
+    labeled_image = highlight_tiles(image, full_tile_size, contour_containing_tiles)
+
+    plt.figure()
+    plt.imshow(labeled_image)
+    plt.title("Labeled image")
+
+    input("press any key to exit")
