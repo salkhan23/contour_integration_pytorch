@@ -804,8 +804,9 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size):
 
     min_start_y = y_extent + f_tile_size[1] // 2
     max_start_y = img_size[1] - f_tile_size[1] // 2 - y_extent
-    print("x start range [{}, {}]. y start ranges [{}, {}]".format(
-        min_start_x, max_start_x, min_start_y, max_start_y))
+
+    # print("x start range [{}, {}]. y start ranges [{}, {}]".format(
+    #     min_start_x, max_start_x, min_start_y, max_start_y))
 
     return (min_start_x, max_start_x), (min_start_y, max_start_y)
 
