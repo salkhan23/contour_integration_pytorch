@@ -116,11 +116,11 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
 
         if (-tile_len < x_arr[idx] < img.shape[0]) and (-tile_len < y_arr[idx] < img.shape[1]):
 
-            start_x_loc = max(x_arr[idx], 0)
-            stop_x_loc = min(x_arr[idx] + tile_len, img.shape[0] - 1)
+            start_x_loc = np.int(max(x_arr[idx], 0))
+            stop_x_loc = np.int(min(x_arr[idx] + tile_len, img.shape[0] - 1))
 
-            start_y_loc = max(y_arr[idx], 0)
-            stop_y_loc = min(y_arr[idx] + tile_len, img.shape[1] - 1)
+            start_y_loc = np.int(max(y_arr[idx], 0))
+            stop_y_loc = np.int(min(y_arr[idx] + tile_len, img.shape[1] - 1))
 
             # print("Placing Fragment at location  l1=(%d, %d), y = (%d, %d),"
             #       % (start_x_loc, stop_x_loc, start_y_loc, stop_y_loc))
@@ -708,13 +708,13 @@ def generate_contour_image(
     center_f_tile_start = img_center - (f_tile_size // 2)
 
     f_tile_starts = get_background_tiles_locations(
-        frag_len=full_tile_size[0],
+        frag_len=f_tile_size[0],
         img_len=img_size[0],
         row_offset=0,
         space_bw_tiles=0,
         tgt_n_visual_rf_start=center_f_tile_start[0]
     )
-    f_tile_centers = f_tile_starts + (full_tile_size // 2)
+    f_tile_centers = f_tile_starts + (f_tile_size // 2)
     num_f_tiles = len(f_tile_starts)
     f_tiles_single_dim = np.int(np.sqrt(num_f_tiles))
 
@@ -884,6 +884,7 @@ if __name__ == "__main__":
         img_size=image_size,
         random_alpha_rot=True
     )
+    print(image_label)
 
     plt.figure()
     plt.imshow(image)
