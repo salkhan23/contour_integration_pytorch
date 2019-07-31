@@ -1,9 +1,9 @@
 # ---------------------------------------------------------------------------------------
-# Generate Embedded Contour Stimuli similar to
+# Generate Contour Stimuli embedded in a sea of distractions similar to
 # Field, Hayes & Hess - 1993 - Contour Integration by the Human Visual System: Evidence
 # for a local association field "
 #
-# This is deep learning library independent
+# NOTE: This is deep learning library independent
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt

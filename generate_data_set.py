@@ -6,7 +6,7 @@ import sys
 import shutil
 
 import gabor_fits
-import generate_stimuli
+import fields1993_stimuli
 
 
 if __name__ == "__main__":
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     for c_len in cont_len_arr:
         c_len_name = 'clen_{}'.format(c_len)
 
-        x_start_range, y_start_range = generate_stimuli.get_contour_start_ranges(
+        x_start_range, y_start_range = fields1993_stimuli.get_contour_start_ranges(
             c_len=c_len,
             frag_orient=gabor_parameters[0]['theta_deg'],  # Todo handle the case when there are three orientations
             f_tile_size=full_tile_size,
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                         np.random.randint(y_start_range[0], y_start_range[1]),
                     ])
 
-                    img, img_label = generate_stimuli.generate_contour_image(
+                    img, img_label = fields1993_stimuli.generate_contour_image(
                         frag=fragment,
                         frag_params=gabor_parameters,
                         c_len=c_len,
