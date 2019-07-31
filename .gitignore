@@ -9,7 +9,7 @@ PyCharm MetaData
 #Tensorboard logs
 logs
 
-# Ignore the data directory
-
+# Ignore these directories
+data
 # Ignore the results directory
 
