@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import gabor_fits
 import copy
-from scipy.misc import imrotate
+from skimage.transform import rotate
 
 
 def get_2d_gaussian_kernel(shape, sigma=1.0):
@@ -82,17 +82,17 @@ def randomly_rotate_tile(tile, delta_rotation=45.0):
     :return: rotated tile. Note this is an RGB format and values range b/w [0, 255]
     """
     num_possible_rotations = 360 // delta_rotation
-    return imrotate(tile, angle=(np.random.randint(0, np.int(num_possible_rotations)) * delta_rotation))
+    return rotate(tile, angle=(np.random.randint(0, np.int(num_possible_rotations)) * delta_rotation))
 
 
-def tile_image(img, frag, insert_loc_arr, rotate=True, delta_rotation=45, gaussian_smoothing=True, sigma=4.0):
+def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, gaussian_smoothing=True, sigma=4.0):
     """
     Place tile 'fragments' at the specified starting positions (x, y) in the image.
 
     :param frag: contour fragment to be inserted
     :param insert_loc_arr: array of (x,y) position where tiles should be inserted
     :param img: image where tiles will be placed
-    :param rotate: If true each tile is randomly rotated before insertion.
+    :param rotate_frags: If true each tile is randomly rotated before insertion.
     :param delta_rotation: min rotation value
     :param gaussian_smoothing: If True, each fragment is multiplied with a Gaussian smoothing
             mask to prevent tile edges becoming part of stimuli [they will lie in the center of the RF of
@@ -140,7 +140,7 @@ def tile_image(img, frag, insert_loc_arr, rotate=True, delta_rotation=45, gaussi
             #       tile_x_start, tile_x_start + stop_x_loc - start_x_loc,
             #       tile_y_start, tile_y_start + stop_y_loc - start_y_loc))
 
-            if rotate:
+            if rotate_frags:
                 tile = randomly_rotate_tile(frag, delta_rotation)
             else:
                 tile = frag
@@ -255,7 +255,7 @@ def _add_single_side_of_contour_constant_separation(
             img,
             rotated_frag,
             curr_tile_start,
-            rotate=False,
+            rotate_frags=False,
             gaussian_smoothing=False
         )
 
@@ -330,7 +330,7 @@ def add_contour_path_constant_separation(
         img,
         first_frag,
         center_frag_start,
-        rotate=False,
+        rotate_frags=False,
         gaussian_smoothing=False,
     )
     c_tile_starts = [center_frag_start]
@@ -486,7 +486,7 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
     img_size = np.array(img.shape[0:2])
     img_center = img_size // 2
 
-    center_full_tile_start = img_center - f_tile_size // 2
+    center_f_tile_start = img_center - f_tile_size // 2
 
     # Get start locations of all full tiles
     f_tile_starts = get_background_tiles_locations(
@@ -494,7 +494,7 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
         img_len=max(img_size[0], img_size[1]),
         row_offset=0,
         space_bw_tiles=0,
-        tgt_n_visual_rf_start=center_full_tile_start[0]
+        tgt_n_visual_rf_start=center_f_tile_start[0]
     )
 
     # Displace the stimulus fragment in each full tile
@@ -587,7 +587,7 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
             img,
             rotated_frag,
             start.astype(int),
-            rotate=False,
+            rotate_frags=False,
             gaussian_smoothing=False
         )
 
@@ -731,8 +731,10 @@ def generate_contour_image(
             random_alpha_rot=random_alpha_rot,
             base_contour=base_contour
         )
-    # For all other cases, c_len ==1 and beta !=0, just add background tiles.
-    # which move around within the full tile. No contour integration for single contour fragments
+    else:
+        c_frag_starts = []
+        # For all other cases, c_len ==1 and beta !=0, just add background tiles.
+        # which move around within the full tile. No contour integration for single contour fragments
 
     # Add background fragments
     img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
