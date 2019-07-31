@@ -119,40 +119,6 @@ if __name__ == "__main__":
 
                     n_total_images += 1
 
-    # -------------------------------------------------------------------------------------
-    # image, image_label = generate_stimuli.generate_contour_image(
-    #     frag=fragment,
-    #     frag_params=gabor_parameters,
-    #     c_len=contour_len,
-    #     beta=beta_rotation,
-    #     alpha=alpha_rotation,
-    #     f_tile_size=full_tile_size,
-    #     img_size=image_size,
-    #     random_alpha_rot=False,
-    #     center_frag_start=np.array([x_start_range[0], y_start_range[0]])
-    # )
-    #
-    # plt.figure()
-    # plt.imshow(image)
-    # plt.title("Input Image")
-    #
-    # # Highlight the label
-    # center_full_tile_start = image_size[:2] // 2 - (full_tile_size[0:2] // 2)
-    # full_tile_starts = generate_stimuli.get_background_tiles_locations(
-    #     frag_len=full_tile_size[0],
-    #     img_len=image_size[0],
-    #     row_offset=0,
-    #     space_bw_tiles=0,
-    #     tgt_n_visual_rf_start=center_full_tile_start[0]
-    # )
-    #
-    # contour_containing_tiles = full_tile_starts[image_label.flatten().nonzero()]
-    # labeled_image = generate_stimuli.highlight_tiles(image, full_tile_size, contour_containing_tiles)
-    #
-    # plt.figure()
-    # plt.imshow(labeled_image)
-    # plt.title("Labeled image")
-
     # -----------------------------------------------------------------------------------
     print("{} Images created. Data Generation took {}".format(n_total_images, datetime.now() - start_time))
     input("press any key to exit")
