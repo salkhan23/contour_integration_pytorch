@@ -262,9 +262,10 @@ def _add_single_side_of_contour_constant_separation(
         prev_tile_start = curr_tile_start
         tile_starts.append(curr_tile_start)
 
+        # print("Tile places @ {}".format(curr_tile_start))
         # plt.figure()
         # plt.imshow(img)
-        # raw_input()
+        # input("Next?")
 
     return img, tile_starts
 
@@ -735,6 +736,8 @@ def generate_contour_image(
         c_frag_starts = []
         # For all other cases, c_len ==1 and beta !=0, just add background tiles.
         # which move around within the full tile. No contour integration for single contour fragments
+
+    # print("contour fragment starts:\n{}".format(c_frag_starts))
 
     # Add background fragments
     img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
