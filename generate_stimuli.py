@@ -780,6 +780,36 @@ def generate_contour_image(
     return img, label
 
 
+def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size):
+    """
+    Get the min, max starting offsets so that the defined contours stays within the image
+
+    :param c_len:
+    :param frag_orient:
+    :param f_tile_size:
+    :param img_size:
+
+    :return: two tuples: (x_min, x_max), (y_min, y_max)
+    """
+    x_extent = c_len * f_tile_size[0] * np.cos(frag_orient / 180. * np.pi)
+    y_extent = c_len * f_tile_size[1] * np.sin(frag_orient / 180. * np.pi)
+
+    # Contours are defined starting from the center fragment
+    x_extent = np.int(x_extent / 2)
+    y_extent = np.int(y_extent / 2)
+
+    # min start is half the full tile
+    min_start_x = x_extent + f_tile_size[0] // 2
+    max_start_x = img_size[0] - f_tile_size[0] // 2 - x_extent
+
+    min_start_y = y_extent + f_tile_size[1] // 2
+    max_start_y = img_size[1] - f_tile_size[1] // 2 - y_extent
+    print("x start range [{}, {}]. y start ranges [{}, {}]".format(
+        min_start_x, max_start_x, min_start_y, max_start_y))
+
+    return (min_start_x, max_start_x), (min_start_y, max_start_y)
+
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
