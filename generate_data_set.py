@@ -55,8 +55,11 @@ if __name__ == "__main__":
         else:
             sys.exit()
 
+    data_key = 'data_key.txt'  # Stores the path to all files in the image_set
+
     data_store_dir = os.path.join(base_dir, 'images')
     labels_store_dir = os.path.join(base_dir, 'labels')
+    data_key_file = os.path.join(base_dir, data_key)
 
     start_time = datetime.now()
     n_total_images = 0
@@ -65,6 +68,8 @@ if __name__ == "__main__":
         os.makedirs(data_store_dir)
     if not os.path.exists(labels_store_dir):
         os.makedirs(labels_store_dir)
+
+    f = open(data_key_file, 'w+')
 
     for c_len in cont_len_arr:
         c_len_name = 'clen_{}'.format(c_len)
@@ -116,8 +121,10 @@ if __name__ == "__main__":
                     file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
                     plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
                     np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
+                    f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
 
                     n_total_images += 1
+    f.close()
 
     # -----------------------------------------------------------------------------------
     print("{} Images created. Data Generation took {}".format(n_total_images, datetime.now() - start_time))
