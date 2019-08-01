@@ -4,17 +4,21 @@
 import os
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
 
 import torch
 import torchvision.transforms.functional as transform_functional
 from torch.utils.data import DataLoader, Dataset
 
+import fields1993_stimuli
+
 
 class Fields1993(Dataset):
-    def __init__(self, data_dir, augment=False, transform=None):
+    def __init__(self, data_dir, bg_tile_size, augment=False, transform=None):
         self.data_dir = data_dir
-        self.augment = augment
-        self.transform = transform
+        self.bg_tile_size = bg_tile_size
+        self.transform = transform  # Todo: Make sure this is working
+        self.augment = augment      # Todo: Add
 
         image_dir = os.path.join(self.data_dir, 'images')
         label_dir = os.path.join(self.data_dir, 'labels')
@@ -67,18 +71,19 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
+    plt.ion()
     batch_size = 10
 
     # -------------------------------------------
     print("Setting up the Train Data Loaders")
-    train_set = Fields1993(data_dir="./data/curved_contours/train")
+    train_set = Fields1993(data_dir="./data/curved_contours/train", bg_tile_size=(18, 18))
 
     training_data_loader = DataLoader(
         dataset=train_set,
         num_workers=4,
         batch_size=batch_size,
-        shuffle=True,
-        pin_memory=False
+        shuffle=False,
+        pin_memory=True
     )
 
     train_generator = training_data_loader.__iter__()
@@ -86,26 +91,33 @@ if __name__ == "__main__":
     print("Images shape {}. Labels.shape {} ".format(train_imgs.shape, train_labels.shape))
 
     print("Setting up the Test Data Loader")
-    test_set = Fields1993(data_dir='./data/curved_contours/test')
+    test_set = Fields1993(data_dir='./data/curved_contours/test',  bg_tile_size=(18, 18))
 
     test_data_loader = DataLoader(
         dataset=train_set,
         num_workers=4,
         batch_size=batch_size,
         shuffle=False,
-        pin_memory=False
+        pin_memory=True
     )
 
     test_generator = test_data_loader.__iter__()
     test_imgs, test_labels = test_generator.__next__()
     print("Images shape {}. Labels.shape {} ".format(train_imgs.shape, train_labels.shape))
 
+    for i_idx in np.arange(batch_size):
 
+        image = train_imgs[0, ].numpy()
+        image = np.transpose(image, axes=(1, 2, 0))
 
+        label = train_labels[i_idx, ].numpy()
+        label = np.squeeze(label, axis=0)
 
+        fields1993_stimuli.plot_label_on_image(
+            image,
+            label,
+            train_set.bg_tile_size
+        )
 
-
-
-
-
-
+    # -----------------------------------
+    input("Press any key to exit")

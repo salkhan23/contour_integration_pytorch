@@ -920,6 +920,22 @@ def generate_data_set(
           base_dir, n_total_imgs, datetime.now() - start_time))
 
 
+def plot_label_on_image(img, label, f_tile_size):
+    f_tile_starts = get_background_tiles_locations(
+        frag_len=f_tile_size[0],
+        img_len=np.max(img.shape),
+        row_offset=0,
+        space_bw_tiles=0,
+    )
+
+    contour_containing_tiles = f_tile_starts[label.flatten().nonzero()]
+    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles)
+
+    plt.figure()
+    plt.imshow(labeled_image)
+    plt.title("Labeled image")
+
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -1033,20 +1049,6 @@ if __name__ == "__main__":
     plt.imshow(image)
     plt.title("Input Image")
 
-    # Highlight the label
-    center_full_tile_start = image_size[:2] // 2 - (full_tile_size[0:2] // 2)
-    full_tile_starts = get_background_tiles_locations(
-        frag_len=full_tile_size[0],
-        img_len=image_size[0],
-        row_offset=0,
-        space_bw_tiles=0,
-    )
-
-    contour_containing_tiles = full_tile_starts[image_label.flatten().nonzero()]
-    labeled_image = highlight_tiles(image, full_tile_size, contour_containing_tiles)
-
-    plt.figure()
-    plt.imshow(labeled_image)
-    plt.title("Labeled image")
+    plot_label_on_image(image, image_label, full_tile_size)
 
     input("press any key to exit")
