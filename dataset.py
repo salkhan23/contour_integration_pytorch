@@ -107,7 +107,7 @@ if __name__ == "__main__":
 
     for i_idx in np.arange(batch_size):
 
-        image = train_imgs[0, ].numpy()
+        image = train_imgs[i_idx, ].numpy()
         image = np.transpose(image, axes=(1, 2, 0))
 
         label = train_labels[i_idx, ].numpy()
