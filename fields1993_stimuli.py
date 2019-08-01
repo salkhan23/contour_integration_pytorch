@@ -406,7 +406,7 @@ def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_
     return None
 
 
-def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles, tgt_n_visual_rf_start):
+def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles, tgt_n_visual_rf_start=None):
     """
     Starting locations for non-overlapping fragment tiles to cover the whole image.
     if row_offset is non-zero, tiles in each row are shifted by specified amount as you move further away
@@ -433,6 +433,9 @@ def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles
     n_tiles += add_tiles
     if n_tiles & 1 == 1:  # make even
         n_tiles += 1
+
+    if tgt_n_visual_rf_start is None:
+        tgt_n_visual_rf_start = img_len // 2 - frag_len // 2  # Tile @ center of image
 
     zero_offset_starts = np.arange(
         tgt_n_visual_rf_start - (n_tiles / 2) * frag_spacing,
@@ -1037,7 +1040,6 @@ if __name__ == "__main__":
         img_len=image_size[0],
         row_offset=0,
         space_bw_tiles=0,
-        tgt_n_visual_rf_start=center_full_tile_start[0]
     )
 
     contour_containing_tiles = full_tile_starts[image_label.flatten().nonzero()]
