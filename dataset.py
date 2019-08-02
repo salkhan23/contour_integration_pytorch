@@ -4,7 +4,6 @@
 import os
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
 
 import torch
 import torchvision.transforms.functional as transform_functional
@@ -43,7 +42,10 @@ class Fields1993(Dataset):
 
         assert (len(self.images) == len(self.labels))
 
-        print("DataSet Contains {} Images".format(len(self.images)))
+        self.data_set_mean, self.data_set_std = self.get_data_set_mean_and_std()
+
+        print("DataSet Contains {} Images.\nChannel mean {},\nChannel std {}".format(
+            len(self.images), self.data_set_mean, self.data_set_std))
 
     def __len__(self):
         return len(self.images)
@@ -67,17 +69,50 @@ class Fields1993(Dataset):
 
         return img, target
 
+    def get_data_set_mean_and_std(self):
+        """
+        Compute the data set mean and standard deviation
+        Var[x] = E[X ^ 2] - E ^ 2[X]
+        Ref: https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/9
+        """
+        cnt = 0
+        fst_moment = torch.empty(3)
+        snd_moment = torch.empty(3)
+
+        for idx in range(self.__len__()):
+            img, _ = self.__getitem__(idx)
+
+            c, h, w = img.shape
+            nb_pixels = h * w
+            sum_ = torch.sum(img, dim=[1, 2])
+            sum_of_square = torch.sum(img ** 2, dim=[1, 2])
+            fst_moment = (cnt * fst_moment + sum_) / (cnt + nb_pixels)
+            snd_moment = (cnt * snd_moment + sum_of_square) / (cnt + nb_pixels)
+
+            cnt += nb_pixels
+
+        return fst_moment, torch.sqrt(snd_moment - fst_moment ** 2)
+
 
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    plt.ion()
-    batch_size = 10
+    import matplotlib.pyplot as plt
 
+    plt.ion()
+    batch_size = 16
+
+    # # Imagenet
+    # normalize = transforms.Normalize(
+    #     mean=[0.485, 0.456, 0.406],
+    #     std=[0.229, 0.224, 0.225]
+    # )
+    # Objective of Normalization is to set mean to 0 and standard deviation to 1. These values
+    # are from self.data_set_mean, self.data_set_std
     normalize = transforms.Normalize(
-        mean=[0.485, 0.456, 0.406],
-        std=[0.229, 0.224, 0.225]
+        mean=[0.2587, 0.2587, 0.2587],
+        std=[0.1074, 0.1074, 0.1074]
     )
 
     # -------------------------------------------
@@ -95,6 +130,8 @@ if __name__ == "__main__":
     train_generator = training_data_loader.__iter__()
     train_imgs, train_labels = train_generator.__next__()
     print("Images shape {}. Labels.shape {} ".format(train_imgs.shape, train_labels.shape))
+    print("Batch mean = {}. std = {}".format(
+        torch.mean(train_imgs, dim=[0, 2, 3]), torch.std(train_imgs, dim=[0, 2, 3])))
 
     print("Setting up the Test Data Loader")
     test_set = Fields1993(data_dir='./data/curved_contours/test',  bg_tile_size=(18, 18))
