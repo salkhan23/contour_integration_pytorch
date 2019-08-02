@@ -17,7 +17,7 @@ class Fields1993(Dataset):
     def __init__(self, data_dir, bg_tile_size, augment=False, transform=None):
         self.data_dir = data_dir
         self.bg_tile_size = bg_tile_size
-        self.transform = transform  # Todo: Make sure this is working
+        self.transform = transform
         self.augment = augment      # Todo: Add
 
         image_dir = os.path.join(self.data_dir, 'images')
