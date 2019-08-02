@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 
 import torch
 import torchvision.transforms.functional as transform_functional
+import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, Dataset
 
 import fields1993_stimuli
@@ -74,9 +75,14 @@ if __name__ == "__main__":
     plt.ion()
     batch_size = 10
 
+    normalize = transforms.Normalize(
+        mean=[0.485, 0.456, 0.406],
+        std=[0.229, 0.224, 0.225]
+    )
+
     # -------------------------------------------
     print("Setting up the Train Data Loaders")
-    train_set = Fields1993(data_dir="./data/curved_contours/train", bg_tile_size=(18, 18))
+    train_set = Fields1993(data_dir="./data/curved_contours/train", bg_tile_size=(18, 18), transform=normalize)
 
     training_data_loader = DataLoader(
         dataset=train_set,
