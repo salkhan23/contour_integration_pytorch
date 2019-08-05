@@ -159,7 +159,8 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    batch_size = 16
+    train_batch_size = 16
+    test_batch_size = 1
     device = torch.device("cuda")
     learning_rate = 0.1
     num_epochs = 20
@@ -188,6 +189,7 @@ if __name__ == '__main__':
         mean=meta_data['channel_mean'],
         std=meta_data['channel_std']
     )
+
     train_set = dataset.Fields1993(
         data_dir=os.path.join(data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
@@ -197,7 +199,21 @@ if __name__ == '__main__':
     train_data_loader = DataLoader(
         dataset=train_set,
         num_workers=4,
-        batch_size=batch_size,
+        batch_size=train_batch_size,
+        shuffle=True,
+        pin_memory=True
+    )
+
+    val_set = dataset.Fields1993(
+        data_dir=os.path.join(data_set_dir, 'val'),
+        bg_tile_size=meta_data["full_tile_size"],
+        transform=normalize
+    )
+
+    val_data_loader = DataLoader(
+        dataset=val_set,
+        num_workers=4,
+        batch_size=test_batch_size,
         shuffle=False,
         pin_memory=True
     )
