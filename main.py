@@ -4,6 +4,8 @@
 from datetime import datetime
 import pickle
 import os
+import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -14,6 +16,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 
 import dataset
+import fields1993_stimuli
 
 
 class ClassifierHead(nn.Module):
@@ -50,7 +53,7 @@ class ClassifierHead(nn.Module):
     def forward(self, x):
         x = nn_functional.relu(self.bn1(self.conv1(x)))
         x = nn_functional.relu(self.bn2(self.conv2(x)))
-        x = nn.functional.relu(self.conv3(x))
+        x = torch.sigmoid(self.conv3(x))
         return x
 
 
@@ -156,6 +159,8 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
+    plt.ion()
+
     train_batch_size = 16
     test_batch_size = 1
     device = torch.device("cuda")
@@ -263,19 +268,37 @@ if __name__ == '__main__':
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
-#
-    # # img_file = '/home/salman/workspace/keras/my_projects/contour_integration/data/sample_images/cat.7.jpg'
-    # img_file = '/home/s362khan/workspace/pytorch/contour_integration_pytorch/data/curved_contours/test/' \
-    #            'images/clen_9/beta_15/alpha_0/clen_9_beta_15_alpha_0_15.png'
-    # img = Image.open(img_file).convert('RGB')
-    #
-    # resize = torchvision.transforms.Resize((224, 224))
-    #
-    # img = resize(img)
-    # img = torchvision.transforms.functional.to_tensor(img)
-    # img = torch.unsqueeze(img, dim=0)
-    #
-    # img = img.to(device)
-    # out = cont_int_model(img)
-    #
-    # print("Output shape {}".format(out.shape))
+    # --------------------------------------------------------------------------------------
+    # View Predictions
+    # --------------------------------------------------------------------------------------
+    model.eval()
+    detect_thresh = 0.5
+
+    with torch.no_grad():
+        for batch in val_data_loader:
+            image, label = batch
+            image = image.to(device)
+            label = label.to(device)
+
+            label_out = model(image)
+
+            label_out = label_out.cpu().detach().numpy()
+            label = label.cpu().detach().numpy()
+            image = image.cpu().detach().numpy()
+
+            image = np.squeeze(image, axis=0)
+            image = np.transpose(image, axes=(1, 2, 0))
+
+            label_out = np.squeeze(label_out, axis=(0, 1))
+            label_out = (label_out >= detect_thresh)
+
+            fields1993_stimuli.plot_label_on_image(
+                image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
+            plt.title("Prediction")
+
+            labeled_image = fields1993_stimuli.plot_label_on_image(
+                image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+            plt.title("True Label")
+
+            import pdb
+            pdb.set_trace()
