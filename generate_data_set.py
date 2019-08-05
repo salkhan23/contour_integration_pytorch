@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+import pickle
 
 import gabor_fits
 import fields1993_stimuli
@@ -108,8 +109,6 @@ if __name__ == "__main__":
         img_size=image_size,
     )
 
-    # Save a meta-data file with useful parameters
-    # --------------------------------------------
     # Channel wise mean and standard deviation
     list_of_files = []
 
@@ -120,21 +119,36 @@ if __name__ == "__main__":
     list_of_files.extend(val_images)
 
     mean, std = get_dataset_mean_and_std(list_of_files)
-    # print("Dataset Channel-wise\nmean {} \nstd {}".format(mean, std))
+    # print("Dataset Channel-wise\n mean {} \n std {}".format(mean, std))
 
-    meta_data_file = os.path.join(base_data_dir, 'dataset_meta_data.txt')
-    file_handle = open(meta_data_file, 'w+')
+    # Save a meta-data file with useful parameters
+    # --------------------------------------------
+    meta_data = {
+        'full_tile_size': full_tile_size,
+        'frag_tile_size': frag_size,
+        'image_size': image_size,
+        'c_len_arr': contour_len_arr,
+        'beta_arr': beta_rotation_arr,
+        'alpha_arr': alpha_rotation_arr,
+        'channel_mean': mean,
+        'channel_std': std,
+        'n_train_images': len(train_images),
+        'n_train_images_per_set': num_train_images_per_set,
+        'n_val_images': len(val_images),
+        'n_val_images_per_set': num_val_images_per_set,
+        'g_params': gabor_parameters
+    }
 
-    file_handle.write("Full Tile Size: {}\n".format(full_tile_size))
-    file_handle.write("Fragment Tile Size: {}\n".format(frag_size))
-    file_handle.write("Image Size: {}\n".format(image_size))
-    file_handle.write("c_len: {}\n".format(contour_len_arr))
-    file_handle.write("beta: {}\n".format(beta_rotation_arr))
-    file_handle.write("alpha: {}\n".format(alpha_rotation_arr))
-    file_handle.write("Gabor Params {}\n".format(gabor_parameters))
-    file_handle.write("num test images: per set {}, total {}\n".format(num_train_images_per_set, len(train_images)))
-    file_handle.write("num val images: per set {}, total {}\n".format(num_val_images_per_set, len(val_images)))
+    metadata_filename = 'dataset_meta_data'
+    txt_file = os.path.join(base_data_dir, 'dataset_metadata' + '.txt')
+    pkl_file = os.path.join(base_data_dir, 'dataset_metadata' + '.pickle')
 
-    file_handle.close()
+    handle = open(txt_file, 'w+')
+    for k, v in meta_data.items():
+        handle.write(k + ': ' + str(v) + '\n')
+    handle.close()
+
+    with open(pkl_file, 'wb') as handle:
+        pickle.dump(meta_data, handle)
 
     input("press any key to exit")
