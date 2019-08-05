@@ -920,7 +920,7 @@ def generate_data_set(
           base_dir, n_total_imgs, datetime.now() - start_time))
 
 
-def plot_label_on_image(img, label, f_tile_size):
+def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0)):
     f_tile_starts = get_background_tiles_locations(
         frag_len=f_tile_size[0],
         img_len=np.max(img.shape),
@@ -929,11 +929,13 @@ def plot_label_on_image(img, label, f_tile_size):
     )
 
     contour_containing_tiles = f_tile_starts[label.flatten().nonzero()]
-    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles)
+    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles, edge_color)
 
     plt.figure()
     plt.imshow(labeled_image)
     plt.title("Labeled image")
+
+    return labeled_image
 
 
 if __name__ == "__main__":
@@ -1049,6 +1051,6 @@ if __name__ == "__main__":
     plt.imshow(image)
     plt.title("Input Image")
 
-    plot_label_on_image(image, image_label, full_tile_size)
+    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0))
 
     input("press any key to exit")
