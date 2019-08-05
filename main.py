@@ -3,6 +3,8 @@
 # ------------------------------------------------------------------------------------
 import numpy as np
 from datetime import datetime
+import pickle
+import os
 
 import torch
 import torch.nn as nn
@@ -172,18 +174,27 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Data Loader
     # -----------------------------------------------------------------------------------
-    print("Setting up the Train Data Loaders")
+    print("Setting up data loaders ")
+    data_set_dir = "./data/single_fragment_full"
+
+    # get mean/std of dataset
+    meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
+    with open(meta_data_file, 'rb') as handle:
+        meta_data = pickle.load(handle)
+    # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
+
+    # Pre-processing
     normalize = transforms.Normalize(
-        mean=[0.2587, 0.2587, 0.2587],
-        std=[0.1074, 0.1074, 0.1074]
+        mean=meta_data['channel_mean'],
+        std=meta_data['channel_std']
     )
     train_set = dataset.Fields1993(
-        data_dir="./data/curved_contours/train",
-        bg_tile_size=(18, 18),
+        data_dir=os.path.join(data_set_dir, 'train'),
+        bg_tile_size=meta_data["full_tile_size"],
         transform=normalize
     )
 
-    training_data_loader = DataLoader(
+    train_data_loader = DataLoader(
         dataset=train_set,
         num_workers=4,
         batch_size=batch_size,
@@ -191,7 +202,7 @@ if __name__ == '__main__':
         pin_memory=True
     )
 
-    print("Length of the train data loader {}".format(len(training_data_loader)))
+    print("Length of the train data loader {}".format(len(train_data_loader)))
 
     # -----------------------------------------------------------------------------------
     # Loss / optimizer
@@ -220,7 +231,7 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         epoch_loss = 0
 
-        for iteration, batch in enumerate(training_data_loader, 1):
+        for iteration, batch in enumerate(train_data_loader, 1):
             # zero the parameter gradients
             optimizer.zero_grad()
 
@@ -243,11 +254,11 @@ if __name__ == '__main__':
                 print("Epoch [{} {}/{}]. Running Loss {}".format(
                     epoch,
                     iteration,
-                    len(training_data_loader),
+                    len(train_data_loader),
                     running_loss / 100.)
                 )
 
-        print("Epoch {} Finished, Loss = {}".format(epoch, epoch_loss / len(training_data_loader)))
+        print("Epoch {} Finished, Loss = {}".format(epoch, epoch_loss / len(train_data_loader)))
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
