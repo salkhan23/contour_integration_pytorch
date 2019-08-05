@@ -1,7 +1,6 @@
 # ------------------------------------------------------------------------------------
 # Piech - 2013 - Current Based Model with Subtractive Inhibition
 # ------------------------------------------------------------------------------------
-import numpy as np
 from datetime import datetime
 import pickle
 import os
@@ -15,8 +14,6 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 
 import dataset
-
-from PIL import Image
 
 
 class ClassifierHead(nn.Module):
@@ -236,8 +233,6 @@ if __name__ == '__main__':
     # Training
     # -----------------------------------------------------------------------------------
     print("Starting Training ")
-    running_loss = 0
-    epoch_loss = 0
     epoch_start_time = datetime.now()
 
     # Zero the parameter gradients
@@ -262,17 +257,7 @@ if __name__ == '__main__':
             batch_loss.backward()
             optimizer.step()
 
-            running_loss += batch_loss.item()
             epoch_loss += batch_loss.item()
-
-            # print statistics
-            if iteration % 100 == 0:  # print every 2000 mini-batches
-                print("Epoch [{} {}/{}]. Running Loss {}".format(
-                    epoch,
-                    iteration,
-                    len(train_data_loader),
-                    running_loss / 100.)
-                )
 
         print("Epoch {} Finished, Loss = {}".format(epoch, epoch_loss / len(train_data_loader)))
 
