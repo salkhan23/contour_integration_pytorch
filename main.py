@@ -16,6 +16,7 @@ import torch.optim as optim
 import dataset
 import fields1993_stimuli
 from models.cont_int_model import CurrentSubtractiveInhibition
+from models.control_model import ControlModel
 
 
 def intersection_over_union(outputs, targets):
@@ -49,13 +50,14 @@ if __name__ == '__main__':
     test_batch_size = 1
     device = torch.device("cuda")
     learning_rate = 0.001
-    num_epochs = 100
+    num_epochs = 20
 
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
     print("Loading Model")
     model = CurrentSubtractiveInhibition().to(device)
+    # model = ControlModel().to(device)
     # print(model)
 
     # -----------------------------------------------------------------------------------
@@ -159,37 +161,37 @@ if __name__ == '__main__':
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
-    # --------------------------------------------------------------------------------------
-    # View Predictions
-    # --------------------------------------------------------------------------------------
-    model.eval()
-    detect_thresh = 0.5
-
-    with torch.no_grad():
-        for batch in val_data_loader:
-            image, label = batch
-            image = image.to(device)
-            label = label.to(device)
-
-            label_out = model(image)
-
-            label_out = label_out.cpu().detach().numpy()
-            label = label.cpu().detach().numpy()
-            image = image.cpu().detach().numpy()
-
-            image = np.squeeze(image, axis=0)
-            image = np.transpose(image, axes=(1, 2, 0))
-
-            label_out = np.squeeze(label_out, axis=(0, 1))
-            label_out = (label_out >= detect_thresh)
-
-            fields1993_stimuli.plot_label_on_image(
-                image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
-            plt.title("Prediction")
-
-            labeled_image = fields1993_stimuli.plot_label_on_image(
-                image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
-            plt.title("True Label")
-
-            import pdb
-            pdb.set_trace()
+    # # --------------------------------------------------------------------------------------
+    # # View Predictions
+    # # --------------------------------------------------------------------------------------
+    # model.eval()
+    # detect_thresh = 0.5
+    #
+    # with torch.no_grad():
+    #     for batch in val_data_loader:
+    #         image, label = batch
+    #         image = image.to(device)
+    #         label = label.to(device)
+    #
+    #         label_out = model(image)
+    #
+    #         label_out = label_out.cpu().detach().numpy()
+    #         label = label.cpu().detach().numpy()
+    #         image = image.cpu().detach().numpy()
+    #
+    #         image = np.squeeze(image, axis=0)
+    #         image = np.transpose(image, axes=(1, 2, 0))
+    #
+    #         label_out = np.squeeze(label_out, axis=(0, 1))
+    #         label_out = (label_out >= detect_thresh)
+    #
+    #         fields1993_stimuli.plot_label_on_image(
+    #             image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
+    #         plt.title("Prediction")
+    #
+    #         labeled_image = fields1993_stimuli.plot_label_on_image(
+    #             image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+    #         plt.title("True Label")
+    #
+    #         import pdb
+    #         pdb.set_trace()
