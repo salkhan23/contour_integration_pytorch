@@ -19,6 +19,27 @@ import dataset
 import fields1993_stimuli
 
 
+def intersection_over_union(outputs, targets):
+    """
+    Calculates Jaccard Distance.
+
+    REF:  https://github.com/arturml/pytorch-unet
+
+    :param outputs:
+    :param targets:
+    :return:
+    """
+    outputs = outputs.view(outputs.size(0), -1)
+    targets = targets.view(targets.size(0), -1)
+    intersection = (outputs * targets).sum(1)  # sum across images
+    # -intersection to get rid of double values for correct preds
+    union = (outputs + targets).sum(1) - intersection
+
+    jac = (intersection + 0.001) / (union + 0.001)
+
+    return jac.mean()
+
+
 class ClassifierHead(nn.Module):
     def __init__(self, num_channels):
         super(ClassifierHead, self).__init__()
@@ -165,7 +186,7 @@ if __name__ == '__main__':
     test_batch_size = 1
     device = torch.device("cuda")
     learning_rate = 0.001
-    num_epochs = 20
+    num_epochs = 100
 
     # -----------------------------------------------------------------------------------
     # Model
@@ -247,6 +268,9 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         epoch_loss = 0
 
+        epoch_iou = 0
+        detect_thres = 0.5
+
         for iteration, batch in enumerate(train_data_loader, 1):
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -264,7 +288,11 @@ if __name__ == '__main__':
 
             epoch_loss += batch_loss.item()
 
-        print("Epoch {} Finished, Loss = {}".format(epoch, epoch_loss / len(train_data_loader)))
+            predictions = (label_out > detect_thres)
+            epoch_iou += intersection_over_union(predictions.float(), label.float())
+
+        print("Epoch {}, Loss = {}, IoU={}".format(
+            epoch, epoch_loss / len(train_data_loader), epoch_iou / len(train_data_loader)))
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
