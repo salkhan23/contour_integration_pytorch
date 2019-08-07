@@ -19,7 +19,6 @@ from models.cont_int_model import CurrentSubtractiveInhibition
 import utils
 from models.control_model import ControlModel
 
-
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -35,7 +34,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
-    print("Loading Model")
+    print("====> Loading Model")
     model = CurrentSubtractiveInhibition().to(device)
     # model = ControlModel().to(device)
     # print(model)
@@ -43,7 +42,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Data Loader
     # -----------------------------------------------------------------------------------
-    print("Setting up data loaders ")
+    print("====> Setting up data loaders ")
     data_set_dir = "./data/single_fragment_full"
 
     # get mean/std of dataset
@@ -101,78 +100,143 @@ if __name__ == '__main__':
     criterion = nn.BCEWithLogitsLoss().to(device)
 
     # -----------------------------------------------------------------------------------
-    # Training
+    #  Training Validation Routines
     # -----------------------------------------------------------------------------------
-    print("Starting Training ")
-    epoch_start_time = datetime.now()
+    def train():
+        """ Train for one Epoch  over the train dataset """
+        model.train()
+        e_loss = 0
+        e_iou = 0
 
-    # Zero the parameter gradients
-    optimizer.zero_grad()
-    model.train()
+        for iteration, (img, label) in enumerate(train_data_loader, 1):
+            optimizer.zero_grad()  # zero the parameter gradients
 
-    for epoch in range(num_epochs):
-        epoch_loss = 0
-
-        epoch_iou = 0
-        detect_thres = 0.5
-
-        for iteration, batch in enumerate(train_data_loader, 1):
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            image, label = batch
-            image = image.to(device)
+            img = img.to(device)
             label = label.to(device)
 
-            label_out = model(image)
-
+            label_out = model(img)
             batch_loss = criterion(label_out, label.float())
 
             batch_loss.backward()
             optimizer.step()
 
-            epoch_loss += batch_loss.item()
+            e_loss += batch_loss.item()
 
-            predictions = (label_out > detect_thres)
-            epoch_iou += utils.intersection_over_union(predictions.float(), label.float())
+            preds = (label_out > detect_thres)
+            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
 
-        print("Epoch {}, Loss = {}, IoU={}".format(
-            epoch, epoch_loss / len(train_data_loader), epoch_iou / len(train_data_loader)))
+        e_loss = e_loss / len(train_data_loader)
+        e_iou = e_iou / len(train_data_loader)
+
+        # print("Train Epoch {} Loss = {:0.4f}, IoU={:0.4f}".format(epoch, e_loss, e_iou))
+
+        return e_loss, e_iou
+
+    def validate():
+        """ Get loss over validation set """
+        model.eval()
+        e_loss = 0
+        e_iou = 0
+
+        with torch.no_grad():
+            for iteration, (img, label) in enumerate(val_data_loader, 1):
+                img = img.to(device)
+                label = label.to(device)
+
+                label_out = model(img)
+                batch_loss = criterion(label_out, label.float())
+
+                e_loss += batch_loss.item()
+                preds = (label_out > detect_thres)
+                e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+
+        e_loss = e_loss / len(val_data_loader)
+        e_iou = e_iou / len(val_data_loader)
+
+        # print("Val Loss = {:0.4f}, IoU={:0.4f}".format(e_loss, e_iou))
+
+        return e_loss, e_iou
+
+    # -----------------------------------------------------------------------------------
+    # Main Loop
+    # -----------------------------------------------------------------------------------
+    print("====> Starting Training ")
+    epoch_start_time = datetime.now()
+
+    detect_thres = 0.5
+
+    train_history = []
+    val_history = []
+
+    for epoch in range(num_epochs):
+        train_history.append(train())
+        val_history.append(validate())
+
+        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}".format(
+            epoch, num_epochs,
+            train_history[epoch][0],
+            train_history[epoch][1],
+            val_history[epoch][0],
+            val_history[epoch][1]
+        ))
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
-    # --------------------------------------------------------------------------------------
-    # View Predictions
-    # --------------------------------------------------------------------------------------
-    model.eval()
-    detect_thresh = 0.5
+    # -----------------------------------------------------------------------------------
+    # Plots
+    # -----------------------------------------------------------------------------------
+    plt.ion()
+    train_history = np.array(train_history)
+    val_history = np.array(val_history)
 
-    with torch.no_grad():
-        for batch in val_data_loader:
-            image, label = batch
-            image = image.to(device)
-            label = label.to(device)
+    plt.figure()
+    plt.title("Loss")
+    plt.plot(train_history[:, 0], label='train')
+    plt.plot(val_history[:, 0], label='validation')
+    plt.xlabel('Epoch')
+    plt.legend()
 
-            label_out = model(image)
+    plt.figure()
+    plt.title("IoU")
+    plt.plot(train_history[:, 1], label='train')
+    plt.plot(val_history[:, 1], label='validation')
+    plt.xlabel('Epoch')
+    plt.legend()
 
-            label_out = label_out.cpu().detach().numpy()
-            label = label.cpu().detach().numpy()
-            image = image.cpu().detach().numpy()
+    input("Press any key to continue")
 
-            image = np.squeeze(image, axis=0)
-            image = np.transpose(image, axes=(1, 2, 0))
-            image = utils.normalize_image(image)
-
-            label_out = np.squeeze(label_out, axis=(0, 1))
-            label_out = (label_out >= detect_thresh)
-
-            fields1993_stimuli.plot_label_on_image(
-                image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
-            plt.title("Prediction")
-
-            labeled_image = fields1993_stimuli.plot_label_on_image(
-                image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
-            plt.title("True Label")
-
-            import pdb
-            pdb.set_trace()
+    # # --------------------------------------------------------------------------------------
+    # # View Predictions
+    # # --------------------------------------------------------------------------------------
+    # model.eval()
+    # detect_thresh = 0.5
+    #
+    # with torch.no_grad():
+    #     for batch in val_data_loader:
+    #         image, label = batch
+    #         image = image.to(device)
+    #         label = label.to(device)
+    #
+    #         label_out = model(image)
+    #
+    #         label_out = label_out.cpu().detach().numpy()
+    #         label = label.cpu().detach().numpy()
+    #         image = image.cpu().detach().numpy()
+    #
+    #         image = np.squeeze(image, axis=0)
+    #         image = np.transpose(image, axes=(1, 2, 0))
+    #         image = utils.normalize_image(image)
+    #
+    #         label_out = np.squeeze(label_out, axis=(0, 1))
+    #         label_out = (label_out >= detect_thresh)
+    #
+    #         fields1993_stimuli.plot_label_on_image(
+    #             image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
+    #         plt.title("Prediction")
+    #
+    #         labeled_image = fields1993_stimuli.plot_label_on_image(
+    #             image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+    #         plt.title("True Label")
+    #
+    #         import pdb
+    #         pdb.set_trace()
