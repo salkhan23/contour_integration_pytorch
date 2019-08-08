@@ -14,22 +14,24 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 
 import dataset
-import fields1993_stimuli
-from models.cont_int_model import CurrentSubtractiveInhibition
 import utils
+from models.cont_int_model import CurrentSubtractiveInhibition
 from models.control_model import ControlModel
+
 
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    plt.ion()
-
     train_batch_size = 16
     test_batch_size = 1
     device = torch.device("cuda")
     learning_rate = 0.001
-    num_epochs = 10
+    num_epochs = 20
+
+    results_store_dir = './results'
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # -----------------------------------------------------------------------------------
     # Model
@@ -38,6 +40,10 @@ if __name__ == '__main__':
     model = CurrentSubtractiveInhibition().to(device)
     # model = ControlModel().to(device)
     # print(model)
+
+    results_store_dir = os.path.join(results_store_dir, model.__class__.__name__)
+    if not os.path.exists(results_store_dir):
+        os.makedirs(results_store_dir)
 
     # -----------------------------------------------------------------------------------
     # Data Loader
@@ -81,7 +87,7 @@ if __name__ == '__main__':
         dataset=val_set,
         num_workers=4,
         batch_size=test_batch_size,
-        shuffle=False,
+        shuffle=True,
         pin_memory=True
     )
 
@@ -114,7 +120,7 @@ if __name__ == '__main__':
             img = img.to(device)
             label = label.to(device)
 
-            label_out = model(img)
+            label_out, _ = model(img)
             batch_loss = criterion(label_out, label.float())
 
             batch_loss.backward()
@@ -143,7 +149,7 @@ if __name__ == '__main__':
                 img = img.to(device)
                 label = label.to(device)
 
-                label_out = model(img)
+                label_out, _ = model(img)
                 batch_loss = criterion(label_out, label.float())
 
                 e_loss += batch_loss.item()
@@ -169,6 +175,7 @@ if __name__ == '__main__':
     val_history = []
 
     for epoch in range(num_epochs):
+
         train_history.append(train())
         val_history.append(validate())
 
@@ -182,27 +189,36 @@ if __name__ == '__main__':
 
     print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
 
+    torch.save(
+        model.state_dict(),
+        os.path.join(results_store_dir, 'trained_epochs_{}.pth'.format(num_epochs))
+    )
+
     # -----------------------------------------------------------------------------------
     # Plots
     # -----------------------------------------------------------------------------------
-    plt.ion()
     train_history = np.array(train_history)
     val_history = np.array(val_history)
 
-    plt.figure()
+    f = plt.figure()
     plt.title("Loss")
     plt.plot(train_history[:, 0], label='train')
     plt.plot(val_history[:, 0], label='validation')
     plt.xlabel('Epoch')
     plt.legend()
+    f.savefig(os.path.join(results_store_dir, 'loss.jpg'), format='jpg')
 
-    plt.figure()
+    f = plt.figure()
     plt.title("IoU")
     plt.plot(train_history[:, 1], label='train')
     plt.plot(val_history[:, 1], label='validation')
     plt.xlabel('Epoch')
     plt.legend()
+    f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
 
+    # -----------------------------------------------------------------------------------
+    # End
+    # -----------------------------------------------------------------------------------
     input("Press any key to continue")
 
     # # --------------------------------------------------------------------------------------
@@ -217,7 +233,7 @@ if __name__ == '__main__':
     #         image = image.to(device)
     #         label = label.to(device)
     #
-    #         label_out = model(image)
+    #         label_out, iter_out_arr = model(image)
     #
     #         label_out = label_out.cpu().detach().numpy()
     #         label = label.cpu().detach().numpy()
@@ -230,13 +246,28 @@ if __name__ == '__main__':
     #         label_out = np.squeeze(label_out, axis=(0, 1))
     #         label_out = (label_out >= detect_thresh)
     #
-    #         fields1993_stimuli.plot_label_on_image(
-    #             image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
-    #         plt.title("Prediction")
+    #         for i_idx, iter_out in enumerate(iter_out_arr):
     #
-    #         labeled_image = fields1993_stimuli.plot_label_on_image(
-    #             image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
-    #         plt.title("True Label")
+    #             iter_out = iter_out.cpu().detach().numpy()
+    #             iter_out = np.squeeze(iter_out, axis=(0, 1))
+    #             iter_out = (iter_out >= detect_thresh)
     #
-    #         import pdb
-    #         pdb.set_trace()
+    #             labeled_image = fields1993_stimuli.plot_label_on_image(
+    #                 image, iter_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0), display_figure=False)
+    #
+    #             labeled_image = fields1993_stimuli.plot_label_on_image(
+    #                  labeled_image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+    #             plt.title("Iteration {}".format(i_idx))
+    #
+    #
+    #
+    #         # fields1993_stimuli.plot_label_on_image(
+    #         #     image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0))
+    #         # plt.title("Prediction")
+    #         #
+    #         # labeled_image = fields1993_stimuli.plot_label_on_image(
+    #         #     image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+    #         # plt.title("True Label")
+    #
+    #             import pdb
+    #             pdb.set_trace()

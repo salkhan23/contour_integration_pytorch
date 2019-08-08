@@ -35,10 +35,12 @@ class ControlModel(nn.Module):
         self.control_conv1 = nn.Conv2d(
             in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
         self.control_bn1 = nn.BatchNorm2d(num_features=edge_out_ch)
+        self.control_dp1 = nn.Dropout(p=0.3)
 
         self.control_conv2 = nn.Conv2d(
             in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
         self.control_bn2 = nn.BatchNorm2d(num_features=edge_out_ch)
+        self.control_dp2 = nn.Dropout(p=0.3)
 
         self.post = ClassifierHead(edge_out_ch)
 
@@ -52,15 +54,21 @@ class ControlModel(nn.Module):
         # -------------------------------------------------------------------------------
         # Control Layer
         # -------------------------------------------------------------------------------
+        out_layer_arr = []
+
         ff = self.control_conv1(ff)
         ff = self.control_bn1(ff)
         ff = nn.functional.relu(ff)
+        out_layer_arr.append(self.post(ff))
+        ff = self.control_dp1(ff)
 
         ff = self.control_conv2(ff)
         ff = self.control_bn2(ff)
         ff = nn.functional.relu(ff)
+        out_layer_arr.append(self.post(ff))
+        ff = self.control_dp2(ff)
 
         # Post processing
         out = self.post(ff)
 
-        return out
+        return out, out_layer_arr

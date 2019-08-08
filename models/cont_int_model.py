@@ -46,7 +46,7 @@ class ClassifierHead(nn.Module):
 
 
 class CurrentSubtractiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=3):
+    def __init__(self, edge_out_ch=64, n_iters=5):
 
         super(CurrentSubtractiveInhibition, self).__init__()
 
@@ -111,6 +111,8 @@ class CurrentSubtractiveInhibition(nn.Module):
         y = torch.zeros_like(ff)    # state of inhibitory neurons
         f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
 
+        iterative_out_arr = []
+
         for i in range(self.n_iters):
 
             # print("processing iteration {}".format(i))
@@ -137,7 +139,9 @@ class CurrentSubtractiveInhibition(nn.Module):
 
             f_y = nn.functional.relu(y)
 
+            iterative_out_arr.append(self.post(f_x))
+
         # Post processing
-        out = self.post(f_x)
+        out = self.post(f_x), iterative_out_arr
 
         return out
