@@ -11,5 +11,6 @@ logs
 
 # Ignore these directories
 data
+results
 # Ignore the results directory
 
