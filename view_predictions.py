@@ -14,13 +14,19 @@ import dataset
 import utils
 import fields1993_stimuli
 from models.cont_int_model import CurrentSubtractiveInhibition
-from models.control_model import ControlModel
+import models.control_models as control_models
 
 
 if __name__ == '__main__':
 
-    saved_model = './results/CurrentSubtractiveInhibition/trained_epochs_20.pth'
+    saved_model = './results/CurrentSubtractiveInhibition/trained_epochs_50.pth'
     model = CurrentSubtractiveInhibition()
+
+    # saved_model = './results/CmMatchParameters/trained_epochs_50.pth'
+    # model = control_models.CmMatchParameters()
+
+    # saved_model = './results/CmMatchIterations/trained_epochs_50.pth'
+    # model = control_models.CmMatchIterations()
 
     # ----------------
     plt.ion()
@@ -107,7 +113,7 @@ if __name__ == '__main__':
                 pdb.set_trace()
 
             # # ---------------------------------------------------------------------------
-            # # View Predictions
+            # # View Final Predictions
             # # ---------------------------------------------------------------------------
             # labeled_image = fields1993_stimuli.plot_label_on_image(
             #     image, label_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0), display_figure=False)
@@ -118,4 +124,3 @@ if __name__ == '__main__':
             #
             # import pdb
             # pdb.set_trace()
-

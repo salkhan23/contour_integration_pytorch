@@ -16,7 +16,7 @@ import torch.optim as optim
 import dataset
 import utils
 from models.cont_int_model import CurrentSubtractiveInhibition
-from models.control_model import ControlModel
+import models.control_models as control_models
 
 
 if __name__ == '__main__':
@@ -26,7 +26,7 @@ if __name__ == '__main__':
     train_batch_size = 16
     test_batch_size = 1
     learning_rate = 0.001
-    num_epochs = 20
+    num_epochs = 50
 
     results_store_dir = './results'
 
@@ -37,7 +37,9 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print("====> Loading Model")
     model = CurrentSubtractiveInhibition().to(device)
-    # model = ControlModel().to(device)
+    # model = control_models.CmMatchIterations().to(device)
+    model = control_models.CmMatchParameters().to(device)
+
     # print(model)
 
     results_store_dir = os.path.join(results_store_dir, model.__class__.__name__)
