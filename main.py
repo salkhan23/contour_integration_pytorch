@@ -25,7 +25,6 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     train_batch_size = 16
     test_batch_size = 1
-    device = torch.device("cuda")
     learning_rate = 0.001
     num_epochs = 20
 
