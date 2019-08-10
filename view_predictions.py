@@ -13,11 +13,14 @@ from torch.utils.data import DataLoader
 import dataset
 import utils
 import fields1993_stimuli
-from models.cont_int_model import CurrentSubtractiveInhibition
+from models.cont_int_model import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
 import models.control_models as control_models
 
 
 if __name__ == '__main__':
+
+    # saved_model = './results/CurrentDivisiveInhibition/trained_epochs_50.pth'
+    # model = CurrentDivisiveInhibition()
 
     saved_model = './results/CurrentSubtractiveInhibition/trained_epochs_50.pth'
     model = CurrentSubtractiveInhibition()

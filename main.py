@@ -15,7 +15,7 @@ import torch.optim as optim
 
 import dataset
 import utils
-from models.cont_int_model import CurrentSubtractiveInhibition
+from models.cont_int_model import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
 import models.control_models as control_models
 
 
@@ -36,9 +36,10 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model")
-    model = CurrentSubtractiveInhibition().to(device)
+    # model = CurrentSubtractiveInhibition().to(device)
+    model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
-    model = control_models.CmMatchParameters().to(device)
+    # model = control_models.CmMatchParameters().to(device)
 
     # print(model)
 
