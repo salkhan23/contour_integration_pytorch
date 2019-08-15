@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 import dataset
 import utils
 import fields1993_stimuli
-from models.cont_int_model import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
+from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
 import models.control_models as control_models
 
 

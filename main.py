@@ -15,7 +15,7 @@ import torch.optim as optim
 
 import dataset
 import utils
-from models.cont_int_model import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
+from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
 import models.control_models as control_models
 
 
