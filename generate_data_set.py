@@ -56,11 +56,11 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/single_fragment_full'
+    base_data_dir = './data/single_frag_fulltile_32_fragtile_20'
 
-    frag_size = np.array([11, 11])
-    full_tile_size = np.array([18, 18])
-    image_size = np.array([224, 224, 3])
+    frag_size = np.array([20, 20])
+    full_tile_size = np.array([32, 32])
+    image_size = np.array([512, 512, 3])
 
     num_train_images_per_set = 300
     num_val_images_per_set = 50
@@ -71,15 +71,15 @@ if __name__ == "__main__":
         'y0': 0,
         'theta_deg': 90,
         'amp': 1,
-        'sigma': 2.0,
-        'lambda1': 6,
+        'sigma': 4.0,
+        'lambda1': 8,
         'psi': 0,
         'gamma': 1
     }]
 
     fragment = gabor_fits.get_gabor_fragment(gabor_parameters, frag_size)
 
-    contour_len_arr = [3, 5, 7, 9]
+    contour_len_arr = [3, 5, 7, 9, 12]
     beta_rotation_arr = [0, 15, 30]
     alpha_rotation_arr = [0]
 
@@ -119,10 +119,12 @@ if __name__ == "__main__":
     list_of_files.extend(val_images)
 
     mean, std = get_dataset_mean_and_std(list_of_files)
-    # print("Dataset Channel-wise\n mean {} \n std {}".format(mean, std))
+    print("Dataset Channel-wise\n mean {} \n std {}".format(mean, std))
 
     # Save a meta-data file with useful parameters
     # --------------------------------------------
+    print("Saving Meta Data File")
+
     meta_data = {
         'full_tile_size': full_tile_size,
         'frag_tile_size': frag_size,
