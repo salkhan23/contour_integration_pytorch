@@ -22,35 +22,27 @@ class ClassifierHead(nn.Module):
 
         self.conv1 = nn.Conv2d(
             in_channels=num_channels,
-            out_channels=num_channels // 2,
-            kernel_size=(3, 3),
-            stride=(2, 2),
-            groups=1, bias=False
-        )
-        self.bn1 = nn.BatchNorm2d(num_channels // 2)
-
-        self.conv2 = nn.Conv2d(
-            in_channels=num_channels // 2,
             out_channels=num_channels // 4,
             kernel_size=(3, 3),
-            stride=(2, 2),
-            groups=1, bias=False
+            stride=(4, 4),
+            groups=1,
+            bias=False,
+            padding=(2, 2)
         )
-        self.bn2 = nn.BatchNorm2d(num_channels // 4)
+        self.bn1 = nn.BatchNorm2d(num_channels // 4)
 
-        self.conv3 = nn.Conv2d(
+        self.conv2 = nn.Conv2d(
             in_channels=num_channels // 4,
             out_channels=1,
             kernel_size=(1, 1),
-            stride=(1, 1),
+            stride=(2, 2),
             groups=1,
-            bias=False
+            bias=False,
         )
 
     def forward(self, x):
         x = nn_functional.relu(self.bn1(self.conv1(x)))
-        x = nn_functional.relu(self.bn2(self.conv2(x)))
-        x = torch.sigmoid(self.conv3(x))
+        x = torch.sigmoid(self.conv2(x))
         return x
 
 
