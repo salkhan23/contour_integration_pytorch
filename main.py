@@ -35,13 +35,15 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
-    print("====> Loading Model")
-    # model = CurrentSubtractiveInhibition().to(device)
-    model = CurrentDivisiveInhibition().to(device)
+    print("====> Loading Model ")
+    model = CurrentSubtractiveInhibition().to(device)
+    # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
+    # model = control_models.CmClassificationHeadOnly().to(device)
 
     # print(model)
+    print("Name: {}".format(model.__class__.__name__))
 
     results_store_dir = os.path.join(results_store_dir, model.__class__.__name__)
     if not os.path.exists(results_store_dir):
@@ -51,7 +53,8 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/single_fragment_full"
+    data_set_dir = "./data/single_frag_fulltile_32_fragtile_20"
+    print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
     meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
