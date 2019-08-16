@@ -757,7 +757,7 @@ def generate_contour_image(
 
     # Add background fragments
     img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
-        img, frag, c_frag_starts, f_tile_size, 10, frag_params, bg_frag_relocate)
+        img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
 
     # Label -----------------------------------
     for c_frag_start in c_frag_starts:
