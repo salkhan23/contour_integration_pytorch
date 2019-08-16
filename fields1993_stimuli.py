@@ -223,13 +223,17 @@ def _add_single_side_of_contour_constant_separation(
         # TODO: Should this be gabor params of the chan with the highest amplitude
         loc_angle = rotated_frag_params_list[0]['theta_deg'] - alpha
 
+        # In figure 5, (but not in the text),a random jitter of [+- d/4] is added to the distance between
+        # fragments, this presumably to prevent relying on eqi-distance between fragments.
+        d_jitter = d // 4 * np.random.uniform(-1, 1)
+
         # Note
         # [1] Origin of (x, y) top left corner
         # [2] Dim 0 increases downward direction, Dim 1 increases in the right direction
         # [3] Gabor angles are specified wrt y-axis i.e. 0 orientation is vertical. For position
         #     we need the angles to be relative to the x-axis.
-        tile_offset[0] = d * np.cos(loc_angle / 180.0 * np.pi)
-        tile_offset[1] = d * np.sin(loc_angle / 180.0 * np.pi)
+        tile_offset[0] = (d + d_jitter) * np.cos(loc_angle / 180.0 * np.pi)
+        tile_offset[1] = (d + d_jitter) * np.sin(loc_angle / 180.0 * np.pi)
 
         curr_tile_start = prev_tile_start + tile_offset
         # print("Current tile start {0}. (offsets {1}, previous {2}, loc_angle={3})".format(
