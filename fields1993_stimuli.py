@@ -614,7 +614,7 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
 
     :return: output image with the tiles highlighted
     """
-    out_img = np.copy(in_img)
+    out_img = np.copy(in_img).astype('uint16')  # This to prevent wrap around of values
 
     img_size = in_img.shape[:2]
     tile_len = tile_shape[0]
@@ -625,6 +625,8 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
     else:
         x_arr = insert_loc_arr[:, 0]
         y_arr = insert_loc_arr[:, 1]
+
+    edge_color = np.array(edge_color).astype('uint16')
 
     for idx in range(len(x_arr)):
         # print("idx {}, x={},y={}".format(idx, x_arr[idx], y_arr[idx]))
@@ -645,6 +647,9 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
 
             out_img[start_x_loc, start_y_loc: stop_y_loc, :] += edge_color
             out_img[stop_x_loc, start_y_loc: stop_y_loc, :] += edge_color
+
+    out_img[out_img > 255] = 255
+    out_img = out_img.astype('uint8')
 
     return out_img
 
