@@ -248,12 +248,12 @@ def _add_single_side_of_contour_constant_separation(
         is_overlapping = do_tiles_overlap(l1, r1, l2, r2)
 
         while is_overlapping:
-            print("Tile {0} overlaps with tile at location {1}".format(curr_tile_start, prev_tile_start))
+            # print("Tile {0} overlaps with tile at location {1}".format(curr_tile_start, prev_tile_start))
             tile_offset[0] += d_delta * np.cos(loc_angle / 180.0 * np.pi)
             tile_offset[1] += d_delta * np.sin(loc_angle / 180.0 * np.pi)
 
             curr_tile_start = prev_tile_start + tile_offset
-            print("Current tile relocated to {0}. (offsets {1})".format(curr_tile_start, tile_offset))
+            # print("Current tile relocated to {0}. (offsets {1})".format(curr_tile_start, tile_offset))
 
             l1 = curr_tile_start
             r1 = l1 + frag_size
