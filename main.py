@@ -19,6 +19,11 @@ from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInh
 import models.control_models as control_models
 
 
+def get_lr(opt):
+    for param_group in opt.param_groups:
+        return param_group['lr']
+
+
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -26,7 +31,7 @@ if __name__ == '__main__':
     train_batch_size = 16
     test_batch_size = 1
     learning_rate = 0.001
-    num_epochs = 50
+    num_epochs = 2
 
     results_store_dir = './results'
 
@@ -45,7 +50,9 @@ if __name__ == '__main__':
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
 
-    results_store_dir = os.path.join(results_store_dir, model.__class__.__name__)
+    results_store_dir = os.path.join(
+        results_store_dir,
+        model.__class__.__name__ + datetime.now().strftime("_%Y%m%d_%H%M%S"))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -53,7 +60,7 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/double_frag_fullTile_32_fragTile_20"
+    data_set_dir = "./data/single_frag_fullTile_32_fragTile_20"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
@@ -114,7 +121,7 @@ if __name__ == '__main__':
     #  Training Validation Routines
     # -----------------------------------------------------------------------------------
     def train():
-        """ Train for one Epoch  over the train dataset """
+        """ Train for one Epoch  over the train data set """
         model.train()
         e_loss = 0
         e_iou = 0
@@ -178,11 +185,14 @@ if __name__ == '__main__':
 
     train_history = []
     val_history = []
+    lr_history = []
 
     for epoch in range(num_epochs):
 
         train_history.append(train())
         val_history.append(validate())
+
+        lr_history.append(get_lr(optimizer))
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}".format(
             epoch, num_epochs,
@@ -198,6 +208,36 @@ if __name__ == '__main__':
         model.state_dict(),
         os.path.join(results_store_dir, 'trained_epochs_{}.pth'.format(num_epochs))
     )
+
+    # Write results summary file
+    summary_file = os.path.join(results_store_dir, 'summary.txt')
+    with open(summary_file, 'w+') as handle:
+        handle.write("Data Set         : {}\n".format(data_set_dir))
+        handle.write("Train images     : {}\n".format(len(train_set.images)))
+        handle.write("Val images       : {}\n".format(len(val_set.images)))
+        handle.write("Train batch size : {}\n".format(train_batch_size))
+        handle.write("Val batch size   : {}\n".format(test_batch_size))
+        handle.write("Epochs           : {}\n".format(num_epochs))
+        handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+        handle.write("{}\n".format('-'*80))
+
+        handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
+        handle.write("learning rate    : {}\n".format(learning_rate))
+        handle.write("Loss             : {}\n".format(criterion.__class__.__name__))
+        handle.write("{}\n".format('-' * 80))
+
+        handle.write("IoU Threshold    : {}\n".format(detect_thres))
+        handle.write("{}\n".format('-' * 80))
+
+        for e_idx in range(num_epochs):
+            handle.write("Epoch [{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}, lr={}\n".format(
+                e_idx,
+                train_history[e_idx][0],
+                train_history[e_idx][1],
+                val_history[e_idx][0],
+                val_history[e_idx][1],
+                lr_history[e_idx]
+            ))
 
     # -----------------------------------------------------------------------------------
     # Plots
@@ -224,4 +264,4 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
-    input("Press any key to continue")
+    # input("Press any key to continue")
