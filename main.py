@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/single_frag_fulltile_32_fragtile_20"
+    data_set_dir = "./data/double_frag_fullTile_32_fragTile_20"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
