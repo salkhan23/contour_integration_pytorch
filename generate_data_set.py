@@ -56,13 +56,13 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/double_frag_fullTile_32_fragTile_20'
+    base_data_dir = './data/single_frag_fullTile_32_fragTile_20'
 
     frag_size = np.array([20, 20])
     full_tile_size = np.array([32, 32])
     image_size = np.array([512, 512, 3])
 
-    num_train_images_per_set = 300
+    num_train_images_per_set = 200
     num_val_images_per_set = 50
 
     # Gabor Fragment - list of list of dictionaries one for each channel
@@ -77,16 +77,16 @@ if __name__ == "__main__":
             'psi': 0,
             'gamma': 1
         }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 0,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 10,
-            'psi': 0,
-            'gamma': 1
-        }]
+        # [{
+        #     'x0': 0,
+        #     'y0': 0,
+        #     'theta_deg': 0,
+        #     'amp': 1,
+        #     'sigma': 4.0,
+        #     'lambda1': 10,
+        #     'psi': 0,
+        #     'gamma': 1
+        # }]
     ]
 
     contour_len_arr = [3, 5, 7, 9, 12]
