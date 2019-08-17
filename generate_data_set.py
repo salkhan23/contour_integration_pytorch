@@ -56,7 +56,7 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/single_frag_fulltile_32_fragtile_20'
+    base_data_dir = './data/double_frag_fullTile_32_fragTile_20'
 
     frag_size = np.array([20, 20])
     full_tile_size = np.array([32, 32])
@@ -65,19 +65,29 @@ if __name__ == "__main__":
     num_train_images_per_set = 300
     num_val_images_per_set = 50
 
-    # Gabor Fragment
-    gabor_parameters = [{
-        'x0': 0,
-        'y0': 0,
-        'theta_deg': 90,
-        'amp': 1,
-        'sigma': 4.0,
-        'lambda1': 8,
-        'psi': 0,
-        'gamma': 1
-    }]
-
-    fragment = gabor_fits.get_gabor_fragment(gabor_parameters, frag_size)
+    # Gabor Fragment - list of list of dictionaries one for each channel
+    gabor_parameters_list = [
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 90,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 8,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 0,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 10,
+            'psi': 0,
+            'gamma': 1
+        }]
+    ]
 
     contour_len_arr = [3, 5, 7, 9, 12]
     beta_rotation_arr = [0, 15, 30]
@@ -87,8 +97,8 @@ if __name__ == "__main__":
     fields1993_stimuli.generate_data_set(
         n_imgs_per_set=num_train_images_per_set,
         base_dir=os.path.join(base_data_dir, 'train'),
-        frag=fragment,
-        frag_params=gabor_parameters,
+        frag_tile_size=frag_size,
+        frag_params_list=gabor_parameters_list,
         c_len_arr=contour_len_arr,
         beta_rot_arr=beta_rotation_arr,
         alpha_rot_arr=alpha_rotation_arr,
@@ -100,8 +110,8 @@ if __name__ == "__main__":
     fields1993_stimuli.generate_data_set(
         n_imgs_per_set=num_val_images_per_set,
         base_dir=os.path.join(base_data_dir, 'val'),
-        frag=fragment,
-        frag_params=gabor_parameters,
+        frag_tile_size=frag_size,
+        frag_params_list=gabor_parameters_list,
         c_len_arr=contour_len_arr,
         beta_rot_arr=beta_rotation_arr,
         alpha_rot_arr=alpha_rotation_arr,
@@ -118,8 +128,9 @@ if __name__ == "__main__":
     val_images = get_list_of_image_files(os.path.join(base_data_dir, 'val'))
     list_of_files.extend(val_images)
 
+    print("Calculating DataSet Statistics")
     mean, std = get_dataset_mean_and_std(list_of_files)
-    print("Dataset Channel-wise\n mean {} \n std {}".format(mean, std))
+    print("channel-wise\n mean {} \n std {}".format(mean, std))
 
     # Save a meta-data file with useful parameters
     # --------------------------------------------
@@ -138,7 +149,7 @@ if __name__ == "__main__":
         'n_train_images_per_set': num_train_images_per_set,
         'n_val_images': len(val_images),
         'n_val_images_per_set': num_val_images_per_set,
-        'g_params': gabor_parameters
+        'g_params_list': gabor_parameters_list
     }
 
     metadata_filename = 'dataset_meta_data'
@@ -147,7 +158,11 @@ if __name__ == "__main__":
 
     handle = open(txt_file, 'w+')
     for k, v in meta_data.items():
-        handle.write(k + ': ' + str(v) + '\n')
+        if k is 'g_params_list':
+            for g_param_idx, g_param in enumerate(v):
+                handle.write('g_params_{}'.format(g_param_idx) + ': ' + str(g_param) + '\n')
+        else:
+            handle.write(k + ': ' + str(v) + '\n')
     handle.close()
 
     with open(pkl_file, 'wb') as handle:

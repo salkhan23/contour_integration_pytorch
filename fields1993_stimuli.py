@@ -828,7 +828,7 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size):
 
 
 def generate_data_set(
-        n_imgs_per_set, base_dir, frag, frag_params, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
+        n_imgs_per_set, base_dir, frag_tile_size, frag_params_list, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
         img_size=None):
     """
      Generate Data Set
@@ -837,8 +837,19 @@ def generate_data_set(
 
     :param n_imgs_per_set:
     :param base_dir:
-    :param frag:
-    :param frag_params:
+    :param frag_tile_size:
+    :param frag_params_list: list of list of frag parameters. Each list of frag params can contain
+    one or 3 gabor parameters dictionary of each channel. Each dictionary should have the following parameters:
+        {
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 0,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 10,
+            'psi': 0,
+            'gamma': 1
+        }
     :param c_len_arr:
     :param beta_rot_arr:
     :param alpha_rot_arr:
@@ -871,59 +882,66 @@ def generate_data_set(
 
     f = open(data_key_file, 'w+')
 
-    for c_len in c_len_arr:
-        c_len_name = 'clen_{}'.format(c_len)
+    for frag_param_idx, frag_params in enumerate(frag_params_list):
 
-        x_start_range, y_start_range = get_contour_start_ranges(
-            c_len=c_len,
-            frag_orient=frag_params[0]['theta_deg'],  # Todo handle the case when there are three orientations
-            f_tile_size=f_tile_size,
-            img_size=img_size
-        )
+        # make the frag params folder
+        frag_param_dir = 'frag_{}'.format(frag_param_idx)
 
-        for beta in beta_rot_arr:
-            c_len_beta_rot_dir = os.path.join(c_len_name, 'beta_{}'.format(beta))
+        frag = gabor_fits.get_gabor_fragment(frag_params, frag_tile_size)
 
-            for alpha in alpha_rot_arr:
-                c_len_beta_rot_alpha_rot_dir = os.path.join(c_len_beta_rot_dir, 'alpha_{}'.format(alpha))
+        for c_len in c_len_arr:
+            c_len_name = os.path.join(frag_param_dir, 'clen_{}'.format(c_len))
 
-                store_data_dir_full = os.path.join(data_store_dir, c_len_beta_rot_alpha_rot_dir)
-                store_label_dir_full = os.path.join(labels_store_dir, c_len_beta_rot_alpha_rot_dir)
+            x_start_range, y_start_range = get_contour_start_ranges(
+                c_len=c_len,
+                frag_orient=frag_params[0]['theta_deg'],  # Todo handle the case when there are three orientations
+                f_tile_size=f_tile_size,
+                img_size=img_size
+            )
 
-                if not os.path.exists(store_data_dir_full):
-                    os.makedirs(store_data_dir_full)
-                if not os.path.exists(store_label_dir_full):
-                    os.makedirs(store_label_dir_full)
+            for beta in beta_rot_arr:
+                c_len_beta_rot_dir = os.path.join(c_len_name, 'beta_{}'.format(beta))
 
-                print("Generating {} images with c_len = {}, beta = {}, alpha = {}".format(
-                    n_imgs_per_set, c_len, beta, alpha))
+                for alpha in alpha_rot_arr:
+                    c_len_beta_rot_alpha_rot_dir = os.path.join(c_len_beta_rot_dir, 'alpha_{}'.format(alpha))
 
-                for i_idx in range(n_imgs_per_set):
-                    center_frag_start = np.array([
-                        np.random.randint(x_start_range[0], x_start_range[1]),
-                        np.random.randint(y_start_range[0], y_start_range[1]),
-                    ])
+                    store_data_dir_full = os.path.join(data_store_dir, c_len_beta_rot_alpha_rot_dir)
+                    store_label_dir_full = os.path.join(labels_store_dir, c_len_beta_rot_alpha_rot_dir)
 
-                    img, img_label = generate_contour_image(
-                        frag=frag,
-                        frag_params=frag_params,
-                        c_len=c_len,
-                        beta=beta,
-                        alpha=alpha,
-                        f_tile_size=f_tile_size,
-                        img_size=img_size,
-                        random_alpha_rot=False,
-                        center_frag_start=center_frag_start,
-                        base_contour='random'
-                    )
+                    if not os.path.exists(store_data_dir_full):
+                        os.makedirs(store_data_dir_full)
+                    if not os.path.exists(store_label_dir_full):
+                        os.makedirs(store_label_dir_full)
 
-                    # Save
-                    file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
-                    plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
-                    np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
-                    f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
+                    print("Param Set {}. Generating {} images with c_len = {}, beta = {}, alpha = {}".format(
+                        frag_param_idx, n_imgs_per_set, c_len, beta, alpha))
 
-                    n_total_imgs += 1
+                    for i_idx in range(n_imgs_per_set):
+                        center_frag_start = np.array([
+                            np.random.randint(x_start_range[0], x_start_range[1]),
+                            np.random.randint(y_start_range[0], y_start_range[1]),
+                        ])
+
+                        img, img_label = generate_contour_image(
+                            frag=frag,
+                            frag_params=frag_params,
+                            c_len=c_len,
+                            beta=beta,
+                            alpha=alpha,
+                            f_tile_size=f_tile_size,
+                            img_size=img_size,
+                            random_alpha_rot=False,
+                            center_frag_start=center_frag_start,
+                            base_contour='random'
+                        )
+
+                        # Save
+                        file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
+                        plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
+                        np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
+                        f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
+
+                        n_total_imgs += 1
     f.close()
     print(" Data set created @ {}. Contains {} Images. Time Taken {}".format(
           base_dir, n_total_imgs, datetime.now() - start_time))
