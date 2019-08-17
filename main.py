@@ -31,7 +31,7 @@ if __name__ == '__main__':
     train_batch_size = 16
     test_batch_size = 1
     learning_rate = 0.001
-    num_epochs = 2
+    num_epochs = 50
 
     results_store_dir = './results'
 
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/single_frag_fullTile_32_fragTile_20"
+    data_set_dir = "./data/double_frag_fullTile_32_fragTile_20"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
