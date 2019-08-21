@@ -972,10 +972,10 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 10
 
-    fragment_size = (11, 11)
-    full_tile_size = np.array([18, 18])
+    fragment_size = (20, 20)
+    full_tile_size = np.array([32, 32])
 
-    image_size = np.array([227, 227, 3])
+    image_size = np.array([512, 512, 3])
 
     # Immutable
     plt.ion()
@@ -985,10 +985,10 @@ if __name__ == "__main__":
     gabor_parameters = {
         'x0': 0,
         'y0': 0,
-        'theta_deg': 90,
+        'theta_deg': 0,
         'amp': 1,
-        'sigma': 2.0,
-        'lambda1': 6,
+        'sigma': 4.0,
+        'lambda1': 7,
         'psi': 0,
         'gamma': 1
     }
@@ -1071,7 +1071,8 @@ if __name__ == "__main__":
         alpha=alpha_rotation,
         f_tile_size=full_tile_size,
         img_size=image_size,
-        random_alpha_rot=True
+        random_alpha_rot=True,
+    rand_inter_frag_direction_change=False
     )
     print(image_label)
 
