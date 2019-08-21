@@ -41,11 +41,11 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    model = CurrentSubtractiveInhibition().to(device)
+    # model = CurrentSubtractiveInhibition().to(device)
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
-    # model = control_models.CmClassificationHeadOnly().to(device)
+    model = control_models.CmClassificationHeadOnly().to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/double_frag_fullTile_32_fragTile_20"
+    data_set_dir = "./data/bw_gabors_10_frag_fullTile_32_fragTile_20"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
