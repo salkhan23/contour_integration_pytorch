@@ -56,7 +56,7 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/single_frag_fullTile_32_fragTile_20'
+    base_data_dir = './data/bw_gabors_10_frag_fullTile_32_fragTile_20'
 
     frag_size = np.array([20, 20])
     full_tile_size = np.array([32, 32])
@@ -77,16 +77,97 @@ if __name__ == "__main__":
             'psi': 0,
             'gamma': 1
         }],
-        # [{
-        #     'x0': 0,
-        #     'y0': 0,
-        #     'theta_deg': 0,
-        #     'amp': 1,
-        #     'sigma': 4.0,
-        #     'lambda1': 10,
-        #     'psi': 0,
-        #     'gamma': 1
-        # }]
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 45,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 10,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 30,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 7,
+            'psi': 180,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 150,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 14,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 60,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 10,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 120,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 8,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 80,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 9,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 10,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 8,
+            'psi': 0,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 100,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 12,
+            'psi': 60,
+            'gamma': 1
+        }],
+        [{
+            'x0': 0,
+            'y0': 0,
+            'theta_deg': 90,
+            'amp': 1,
+            'sigma': 4.0,
+            'lambda1': 7,
+            'psi': 90,
+            'gamma': 1
+        }],
+
     ]
 
     contour_len_arr = [3, 5, 7, 9, 12]
