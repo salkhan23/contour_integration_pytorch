@@ -606,11 +606,12 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
     return img, bg_frag_starts, removed_bg_frag_starts, relocate_bg_frag_starts
 
 
-def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
+def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), edge_width=1):
     """
     Highlight specified tiles in the image
 
 
+    :param edge_width:
     :param in_img:
     :param tile_shape:
     :param insert_loc_arr:
@@ -646,11 +647,29 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0)):
             # print("Highlight tile @ tl=({0}, {1}), br=({2},{3})".format(
             #     start_x_loc, start_y_loc, stop_x_loc, stop_y_loc))
 
-            out_img[start_x_loc: stop_x_loc, start_y_loc, :] += edge_color
-            out_img[start_x_loc: stop_x_loc, stop_y_loc, :] += edge_color
+            out_img[
+                start_x_loc: stop_x_loc + 1,
+                start_y_loc: start_y_loc + edge_width,
+                :
+            ] += edge_color
 
-            out_img[start_x_loc, start_y_loc: stop_y_loc, :] += edge_color
-            out_img[stop_x_loc, start_y_loc: stop_y_loc, :] += edge_color
+            out_img[
+                start_x_loc: stop_x_loc + 1,
+                stop_y_loc: stop_y_loc + edge_width,
+                :
+            ] += edge_color
+
+            out_img[
+                start_x_loc: start_x_loc + edge_width,
+                start_y_loc: stop_y_loc + 1,
+                :
+            ] += edge_color
+
+            out_img[
+                stop_x_loc: stop_x_loc + edge_width,
+                start_y_loc: stop_y_loc + 1,
+                :
+            ] += edge_color
 
     out_img[out_img > 255] = 255
     out_img = out_img.astype('uint8')
@@ -947,7 +966,7 @@ def generate_data_set(
           base_dir, n_total_imgs, datetime.now() - start_time))
 
 
-def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), display_figure=True):
+def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), edge_width=1, display_figure=True):
     f_tile_starts = get_background_tiles_locations(
         frag_len=f_tile_size[0],
         img_len=np.max(img.shape),
@@ -956,7 +975,7 @@ def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), display
     )
 
     contour_containing_tiles = f_tile_starts[label.flatten().nonzero()]
-    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles, edge_color)
+    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles, edge_color, edge_width)
 
     if display_figure:
         plt.figure()
