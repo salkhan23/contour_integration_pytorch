@@ -22,7 +22,7 @@ if __name__ == '__main__':
     # saved_model = './results/CurrentDivisiveInhibition/trained_epochs_50.pth'
     # model = CurrentDivisiveInhibition()
 
-    saved_model = './results/CurrentSubtractiveInhibition/trained_epochs_50.pth'
+    saved_model = './results/CurrentSubtractiveInhibition_20190818_151103/trained_epochs_50.pth'
     model = CurrentSubtractiveInhibition()
 
     # saved_model = './results/CmMatchParameters/trained_epochs_50.pth'
@@ -43,7 +43,7 @@ if __name__ == '__main__':
     # Data Loaders
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/single_fragment_full"
+    data_set_dir = "./data/bw_gabors_10_frag_fullTile_32_fragTile_20"
 
     # get mean/std of dataset
     meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
             image = np.squeeze(image, axis=0)
             image = np.transpose(image, axes=(1, 2, 0))
-            image = utils.normalize_image(image)
+            image = utils.normalize_image(image) * 255.0
 
             label_out = np.squeeze(label_out, axis=(0, 1))
             label_out = (label_out >= detect_thresh)
@@ -106,10 +106,11 @@ if __name__ == '__main__':
                 iter_out = (iter_out >= detect_thresh)
 
                 labeled_image = fields1993_stimuli.plot_label_on_image(
-                    image, iter_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0), display_figure=False)
+                    image, iter_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0),
+                    display_figure=False, edge_width=3)
 
                 fields1993_stimuli.plot_label_on_image(
-                     labeled_image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0))
+                     labeled_image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0), edge_width=3)
                 plt.title("Iteration {}. Red=True, Green=Prediction, Yellow=Overlap".format(i_idx))
 
                 import pdb
