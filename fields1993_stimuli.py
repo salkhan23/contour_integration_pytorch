@@ -815,7 +815,7 @@ def generate_contour_image(
     return img, label
 
 
-def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size):
+def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15):
     """
     Get the min, max starting offsets so that the defined contours stays within the image
 
@@ -823,27 +823,56 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size):
     :param frag_orient:
     :param f_tile_size:
     :param img_size:
+    :param beta:
 
     :return: two tuples: (x_min, x_max), (y_min, y_max)
     """
-    x_extent = c_len * f_tile_size[0] * np.cos(frag_orient / 180. * np.pi)
-    y_extent = c_len * f_tile_size[1] * np.sin(frag_orient / 180. * np.pi)
+    # The additional f_tile_size[0] // 4 accounts for the distance jitter added to each fragment
+    max_inter_frag_dist = (f_tile_size[0] + f_tile_size[0] // 4)
 
-    # Contours are defined starting from the center fragment
-    x_extent = np.int(x_extent / 2)
-    y_extent = np.int(y_extent / 2)
+    half_cont_h = (c_len * max_inter_frag_dist * np.cos(frag_orient / 180. * np.pi)) // 2
+    half_cont_w = (c_len * max_inter_frag_dist * np.sin(frag_orient / 180. * np.pi)) // 2
 
-    # min start is half the full tile
-    min_start_x = x_extent + f_tile_size[0] // 2
-    max_start_x = img_size[0] - f_tile_size[0] // 2 - x_extent
+    # Get max displacement if contour is curving
+    acc_angle = frag_orient
+    acc_h_rot = 0
+    acc_w_rot = 0
+    h_rot_list = []
+    w_rot_list = []
 
-    min_start_y = y_extent + f_tile_size[1] // 2
-    max_start_y = img_size[1] - f_tile_size[1] // 2 - y_extent
+    for c_idx in range(c_len // 2):
+        acc_angle += beta
 
-    # print("x start range [{}, {}]. y start ranges [{}, {}]".format(
-    #     min_start_x, max_start_x, min_start_y, max_start_y))
+        acc_h_rot += max_inter_frag_dist * np.cos(acc_angle * np.pi / 180.0)
+        acc_w_rot += max_inter_frag_dist * np.sin(acc_angle * np.pi / 180.0)
 
-    return (min_start_x, max_start_x), (min_start_y, max_start_y)
+        h_rot_list.append(acc_h_rot)
+        w_rot_list.append(acc_w_rot)
+
+    max_h_rot = max(np.abs(h_rot_list))
+    max_w_rot = max(np.abs(w_rot_list))
+
+    # Max any displacement
+    max_h_displace = max(abs(half_cont_h), abs(max_h_rot))
+    max_w_displace = max(abs(half_cont_w), abs(max_w_rot))
+
+    # print("Contour max height {}, max rot displace {}. Choose {}".format(half_cont_h, max_h_rot, max_h_displace))
+    # print("Contour max width {}, max rot displace {}. Choose {}".format(half_cont_w, max_w_rot, max_w_displace))
+
+    # Now calculate min/max starting positions
+    max_h_offset = np.max((img_size[0] // 2) - max_h_displace, 0)
+    max_w_offset = np.max((img_size[0] // 2) - max_w_displace, 0)
+
+    min_start_h = max((img_size[0] // 2) - max_h_offset, f_tile_size[0] // 2)
+    max_start_h = min((img_size[0] // 2) + max_h_offset, img_size[0] - f_tile_size[0] // 2)
+
+    min_start_w = max((img_size[1] // 2) - max_w_offset, f_tile_size[1] // 2)
+    max_start_w = min((img_size[1] // 2) + max_w_offset, img_size[1] - f_tile_size[1] // 2)
+
+    # print("h start range [{}, {}]. w start ranges [{}, {}]".format(
+    #     min_start_h, max_start_h, min_start_w, max_start_w))
+
+    return (min_start_h, max_start_h), (min_start_w, max_start_w)
 
 
 def generate_data_set(
