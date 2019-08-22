@@ -667,7 +667,7 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), 
 
             out_img[
                 stop_x_loc: stop_x_loc + edge_width,
-                start_y_loc: stop_y_loc + 1,
+                start_y_loc: stop_y_loc + edge_width,
                 :
             ] += edge_color
 
@@ -1091,7 +1091,7 @@ if __name__ == "__main__":
         f_tile_size=full_tile_size,
         img_size=image_size,
         random_alpha_rot=True,
-    rand_inter_frag_direction_change=False
+        rand_inter_frag_direction_change=False
     )
     print(image_label)
 
@@ -1099,6 +1099,6 @@ if __name__ == "__main__":
     plt.imshow(image)
     plt.title("Input Image")
 
-    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0))
+    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=3)
 
     input("press any key to exit")
