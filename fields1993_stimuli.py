@@ -785,10 +785,12 @@ def generate_contour_image(
         dist_to_c_frag = np.linalg.norm(f_tile_centers - c_frag_center, axis=1)
         closest_full_tile_idx = np.argmin(dist_to_c_frag)
 
-        # print("Closest Full Tile Index {}. Distance {}".format(
-        #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
+        print("Closest Full Tile Index {}. Distance {}".format(
+            closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
 
-        label[closest_full_tile_idx] = 1
+        if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (full_tile_size[0] / 2.):
+            # print("Added")
+            label[closest_full_tile_idx] = 1
 
     label = label.reshape(f_tiles_single_dim, f_tiles_single_dim)
 
