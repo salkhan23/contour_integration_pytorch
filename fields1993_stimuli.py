@@ -985,13 +985,16 @@ def generate_data_set(
                             base_contour='random'
                         )
 
-                        # Save
-                        file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
-                        plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
-                        np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
-                        f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
+                        if is_label_valid(img_label):
+                            # Save
+                            file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
+                            plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
+                            np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
+                            f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
 
-                        n_total_imgs += 1
+                            n_total_imgs += 1
+                        else:
+                            i_idx = i_idx - 1
     f.close()
     print(" Data set created @ {}. Contains {} Images. Time Taken {}".format(
           base_dir, n_total_imgs, datetime.now() - start_time))
