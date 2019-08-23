@@ -785,8 +785,8 @@ def generate_contour_image(
         dist_to_c_frag = np.linalg.norm(f_tile_centers - c_frag_center, axis=1)
         closest_full_tile_idx = np.argmin(dist_to_c_frag)
 
-        print("Closest Full Tile Index {}. Distance {}".format(
-            closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
+        # print("Closest Full Tile Index {}. Distance {}".format(
+        #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
 
         if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (full_tile_size[0] / 2.):
             # print("Added")
@@ -1016,6 +1016,43 @@ def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), edge_wi
     return labeled_image
 
 
+def is_label_valid(label, n_contours=1):
+    """
+    Looks for any discontinuities between labels.
+
+    :param n_contours:
+    :param label:
+    :return:
+    """
+    is_valid = False
+
+    ones_idxs = np.argwhere(label >= 1)
+    ones_row = ones_idxs[:, 0]
+    ones_col = ones_idxs[:, 1]
+
+    num_ends = 0
+    for tgt_idx in range(len(ones_idxs)):
+        row_idxs = np.arange(ones_row[tgt_idx] - 1, ones_row[tgt_idx] + 2)
+        col_idxs = np.arange(ones_col[tgt_idx] - 1,  ones_col[tgt_idx] + 2)
+
+        neigbors = label[row_idxs[0]:row_idxs[-1] + 1, col_idxs[0]:col_idxs[-1] + 1]
+        if neigbors.sum() == 2:
+            num_ends += 1
+
+        # print("tgt row {}. Indices {}".format(ones_row[tgt_idx], row_idxs))
+        # print("tgt col {}. Indices {}".format(ones_col[tgt_idx], col_idxs))
+        # print("neigbors {}".format(neigbors))
+        # print("Neighbors sum {}".format(neigbors.sum()))
+
+    if num_ends == 2*n_contours:
+        is_valid = True
+    else:
+        print("Contour has discontinuities. Contours with only one neighbor {}. Expected {}".format(
+            num_ends, 2*n_contours))
+
+    return is_valid
+
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -1125,6 +1162,7 @@ if __name__ == "__main__":
         rand_inter_frag_direction_change=False
     )
     print(image_label)
+    print("Label is valid? {}".format(is_label_valid(image_label)))
 
     plt.figure()
     plt.imshow(image)
