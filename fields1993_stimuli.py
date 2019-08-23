@@ -788,7 +788,7 @@ def generate_contour_image(
         # print("Closest Full Tile Index {}. Distance {}".format(
         #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
 
-        if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (full_tile_size[0] / 2.):
+        if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (f_tile_size[0] / 2.):
             # print("Added")
             label[closest_full_tile_idx] = 1
 
