@@ -967,7 +967,8 @@ def generate_data_set(
                     print("Param Set {}. Generating {} images with c_len = {}, beta = {}, alpha = {}".format(
                         frag_param_idx, n_imgs_per_set, c_len, beta, alpha))
 
-                    for i_idx in range(n_imgs_per_set):
+                    n_imgs_current_set = 0
+                    for i_idx in range(n_imgs_per_set + 50):
                         center_frag_start = np.array([
                             np.random.randint(x_start_range[0], x_start_range[1]),
                             np.random.randint(y_start_range[0], y_start_range[1]),
@@ -995,12 +996,14 @@ def generate_data_set(
                             f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
 
                             n_total_imgs += 1
-                        else:
 
+                            n_imgs_current_set += 1
+                            if n_imgs_current_set >= n_imgs_per_set:
+                                break
+
+                        else:
                             n_invalid_imgs += 1
                             print("Number of invalid Images {}.".format(n_invalid_imgs))
-
-                            i_idx -= 1
 
                             # plot_label_on_image(img, img_label, f_tile_size, edge_color=(250, 0, 0), edge_width=3)
                             # import pdb
