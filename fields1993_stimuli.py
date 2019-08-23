@@ -225,7 +225,7 @@ def _add_single_side_of_contour_constant_separation(
 
         # In figure 5, (but not in the text),a random jitter of [+- d/4] is added to the distance between
         # fragments, this presumably to prevent relying on eqi-distance between fragments.
-        d_jitter = d // 4 * np.random.uniform(-1, 1)
+        d_jitter = d // 8 * np.random.uniform(-1, 1)
 
         # Note
         # [1] Origin of (x, y) top left corner
@@ -830,7 +830,7 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
     :return: two tuples: (x_min, x_max), (y_min, y_max)
     """
     # The additional f_tile_size[0] // 4 accounts for the distance jitter added to each fragment
-    max_inter_frag_dist = (f_tile_size[0] + f_tile_size[0] // 4)
+    max_inter_frag_dist = (f_tile_size[0] + f_tile_size[0] // 8)
 
     half_cont_h = (c_len * max_inter_frag_dist * np.cos(frag_orient / 180. * np.pi)) // 2
     half_cont_w = (c_len * max_inter_frag_dist * np.sin(frag_orient / 180. * np.pi)) // 2
@@ -924,6 +924,7 @@ def generate_data_set(
 
     start_time = datetime.now()
     n_total_imgs = 0
+    n_invalid_imgs = 0  # this is only for debug. Invalid images are removed
 
     if not os.path.exists(data_store_dir):
         os.makedirs(data_store_dir)
@@ -988,13 +989,23 @@ def generate_data_set(
                         if is_label_valid(img_label):
                             # Save
                             file_name = 'clen_{}_beta_{}_alpha_{}_{}'.format(c_len, beta, alpha, i_idx)
-                            plt.imsave(fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
+                            plt.imsave(
+                                fname=os.path.join(store_data_dir_full, file_name + '.png'), arr=img, format='PNG')
                             np.save(file=os.path.join(store_label_dir_full, file_name + '.npy'), arr=img_label)
                             f.write(os.path.join(c_len_beta_rot_alpha_rot_dir, file_name) + '\n')
 
                             n_total_imgs += 1
                         else:
-                            i_idx = i_idx - 1
+
+                            n_invalid_imgs += 1
+                            print("Number of invalid Images {}.".format(n_invalid_imgs))
+
+                            i_idx -= 1
+
+                            # plot_label_on_image(img, img_label, f_tile_size, edge_color=(250, 0, 0), edge_width=3)
+                            # import pdb
+                            # pdb.set_trace()
+
     f.close()
     print(" Data set created @ {}. Contains {} Images. Time Taken {}".format(
           base_dir, n_total_imgs, datetime.now() - start_time))
@@ -1039,7 +1050,7 @@ def is_label_valid(label, n_contours=1):
         col_idxs = np.arange(ones_col[tgt_idx] - 1,  ones_col[tgt_idx] + 2)
 
         neigbors = label[row_idxs[0]:row_idxs[-1] + 1, col_idxs[0]:col_idxs[-1] + 1]
-        if neigbors.sum() == 2:
+        if neigbors.sum() <= 2:
             num_ends += 1
 
         # print("tgt row {}. Indices {}".format(ones_row[tgt_idx], row_idxs))
@@ -1047,11 +1058,11 @@ def is_label_valid(label, n_contours=1):
         # print("neigbors {}".format(neigbors))
         # print("Neighbors sum {}".format(neigbors.sum()))
 
-    if num_ends == 2*n_contours:
+    if num_ends <= 2*n_contours:
         is_valid = True
-    else:
-        print("Contour has discontinuities. Contours with only one neighbor {}. Expected {}".format(
-            num_ends, 2*n_contours))
+    # else:
+    #     print("Contour has discontinuities. Contours with only one neighbor {}. Expected {}".format(
+    #          num_ends, 2*n_contours))
 
     return is_valid
 
