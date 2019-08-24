@@ -234,8 +234,10 @@ if __name__ == '__main__':
         handle.write("IoU Threshold    : {}\n".format(detect_thres))
         handle.write("{}\n".format('-' * 80))
 
+        handle.write("Training details\n")
+        handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
         for e_idx in range(num_epochs):
-            handle.write("Epoch [{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}, lr={}\n".format(
+            handle.write("[{}, {:0.4f}, {:0.4f}. {:0.4f}, {:0.4f}, {}],\n".format(
                 e_idx,
                 train_history[e_idx][0],
                 train_history[e_idx][1],
