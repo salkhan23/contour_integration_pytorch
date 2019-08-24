@@ -32,20 +32,25 @@ if __name__ == '__main__':
     test_batch_size = 1
     learning_rate = 0.001
     num_epochs = 50
+    random_seed = 10
 
     results_store_dir = './results'
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    # ------------------------
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    # model = CurrentSubtractiveInhibition().to(device)
+    model = CurrentSubtractiveInhibition().to(device)
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
-    model = control_models.CmClassificationHeadOnly().to(device)
+    #model = control_models.CmClassificationHeadOnly().to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
