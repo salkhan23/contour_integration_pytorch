@@ -57,6 +57,7 @@ if __name__ == "__main__":
     np.random.seed(random_seed)
 
     base_data_dir = './data/bw_gabors_10_frag_fullTile_32_fragTile_20'
+    gabor_params_file = 'bw_10_gabors_params.pickle'
 
     frag_size = np.array([20, 20])
     full_tile_size = np.array([32, 32])
@@ -66,109 +67,8 @@ if __name__ == "__main__":
     num_val_images_per_set = 50
 
     # Gabor Fragment - list of list of dictionaries one for each channel
-    gabor_parameters_list = [
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 90,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 8,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 45,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 10,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 30,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 7,
-            'psi': 180,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 150,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 14,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 60,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 10,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 120,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 8,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 80,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 9,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 10,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 8,
-            'psi': 0,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 100,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 12,
-            'psi': 60,
-            'gamma': 1
-        }],
-        [{
-            'x0': 0,
-            'y0': 0,
-            'theta_deg': 90,
-            'amp': 1,
-            'sigma': 4.0,
-            'lambda1': 7,
-            'psi': 90,
-            'gamma': 1
-        }],
-
-    ]
+    with open(gabor_params_file, 'rb') as handle:
+        gabor_parameters_list = pickle.load(handle)
 
     contour_len_arr = [3, 5, 7, 9, 12]
     beta_rotation_arr = [0, 15, 30]
