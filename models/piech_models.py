@@ -46,6 +46,50 @@ class ClassifierHead(nn.Module):
         return x
 
 
+class ClassifierHeadOld(nn.Module):
+    def __init__(self, num_channels):
+        super(ClassifierHeadOld, self).__init__()
+
+        self.conv1 = nn.Conv2d(
+            in_channels=num_channels,
+            out_channels=num_channels // 2,
+            kernel_size=(3, 3),
+            stride=(2, 2),
+            groups=1,
+            bias=False,
+            padding=(2, 2)
+        )
+
+        self.bn1 = nn.BatchNorm2d(num_channels // 2)
+
+        self.conv2 = nn.Conv2d(
+            in_channels=num_channels // 2,
+            out_channels=num_channels // 4,
+            kernel_size=(3, 3),
+            stride=(2, 2),
+            groups=1,
+            padding=(1, 1),
+            bias=False,
+        )
+        self.bn2 = nn.BatchNorm2d(num_channels // 4)
+
+        self.conv3 = nn.Conv2d(
+            in_channels=num_channels // 4,
+            out_channels=1,
+            kernel_size=(1, 1),
+            stride=(2, 2),
+            groups=1,
+            bias=False,
+        )
+
+    def forward(self, x):
+        x = nn_functional.relu(self.bn1(self.conv1(x)))
+        x = nn_functional.relu(self.bn2(self.conv2(x)))
+        x = torch.sigmoid(self.conv3(x))
+
+        return x
+
+
 class CurrentSubtractiveInhibition(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5):
         """
