@@ -46,8 +46,8 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    model = CurrentSubtractiveInhibition().to(device)
-    # model = CurrentDivisiveInhibition().to(device)
+    # model = CurrentSubtractiveInhibition().to(device)
+    model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
@@ -238,7 +238,7 @@ if __name__ == '__main__':
         handle.write("Training details\n")
         handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
         for e_idx in range(num_epochs):
-            handle.write("[{}, {:0.4f}, {:0.4f}. {:0.4f}, {:0.4f}, {}],\n".format(
+            handle.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {}],\n".format(
                 e_idx,
                 train_history[e_idx][0],
                 train_history[e_idx][1],
