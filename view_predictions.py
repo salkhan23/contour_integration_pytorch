@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------
-# View Iterative perdictions of a model
+# View Iterative predictions of a model
 # ---------------------------------------------------------------------------------------
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,6 +9,7 @@ import os
 import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader
+import torch.nn as nn
 
 import dataset
 import utils
@@ -22,13 +23,13 @@ if __name__ == '__main__':
     # saved_model = './results/CurrentDivisiveInhibition/trained_epochs_50.pth'
     # model = CurrentDivisiveInhibition()
 
-    saved_model = './results/CurrentSubtractiveInhibition_20190818_151103/trained_epochs_50.pth'
+    saved_model = './results/CurrentSubtractiveInhibition_20190823_182503/trained_epochs_50.pth'
     model = CurrentSubtractiveInhibition()
 
     # saved_model = './results/CmMatchParameters/trained_epochs_50.pth'
     # model = control_models.CmMatchParameters()
 
-    # saved_model = './results/CmMatchIterations/trained_epochs_50.pth'
+    # saved_model = './results/CmMatchIterations_20190823_175326/trained_epochs_50.pth'
     # model = control_models.CmMatchIterations()
 
     # ----------------
@@ -43,7 +44,7 @@ if __name__ == '__main__':
     # Data Loaders
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
-    data_set_dir = "./data/bw_gabors_10_frag_fullTile_32_fragTile_20"
+    data_set_dir = "./data/bw_gabors_5_frag_fullTile_32_fragTile_20"
 
     # get mean/std of dataset
     meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
@@ -70,6 +71,33 @@ if __name__ == '__main__':
         shuffle=True,
         pin_memory=True
     )
+
+    # -----------------------------------------------------------------------------------
+    # Get performance
+    # -----------------------------------------------------------------------------------
+    criterion = nn.BCEWithLogitsLoss().to(device)
+
+    model.eval()
+    detect_thresh = 0.5
+    e_loss = 0
+    e_iou = 0
+
+    with torch.no_grad():
+        for iteration, (img, label) in enumerate(val_data_loader, 1):
+            img = img.to(device)
+            label = label.to(device)
+
+            label_out, _ = model(img)
+            batch_loss = criterion(label_out, label.float())
+
+            e_loss += batch_loss.item()
+            preds = (label_out > detect_thresh)
+            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+
+    e_loss = e_loss / len(val_data_loader)
+    e_iou = e_iou / len(val_data_loader)
+
+    print("Val Loss = {:0.4f}, IoU={:0.4f}".format(e_loss, e_iou))
 
     # -----------------------------------------------------------------------------------
     # View Predictions
