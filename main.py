@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
-    #model = control_models.CmClassificationHeadOnly().to(device)
+    # model = control_models.CmClassificationHeadOnly().to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
@@ -224,6 +224,7 @@ if __name__ == '__main__':
         handle.write("Val batch size   : {}\n".format(test_batch_size))
         handle.write("Epochs           : {}\n".format(num_epochs))
         handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+        handle.write("Classifier Head  : {}\n".format(model.post.__class__.__name__))
         handle.write("{}\n".format('-'*80))
 
         handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
