@@ -124,6 +124,9 @@ if __name__ == '__main__':
             label_out = np.squeeze(label_out, axis=(0, 1))
             label_out = (label_out >= detect_thresh)
 
+            n_iter = len(iter_out_arr)
+            f, ax_arr = plt.subplots(1, n_iter, sharey=True, squeeze=True, figsize=(12, 3))
+
             # ---------------------------------------------------------------------------
             # View Iterative Predictions
             # ---------------------------------------------------------------------------
@@ -137,12 +140,20 @@ if __name__ == '__main__':
                     image, iter_out, f_tile_size=val_set.bg_tile_size, edge_color=(0, 255, 0),
                     display_figure=False, edge_width=3)
 
-                fields1993_stimuli.plot_label_on_image(
-                     labeled_image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0), edge_width=3)
-                plt.title("Iteration {}. Red=True, Green=Prediction, Yellow=Overlap".format(i_idx))
+                labeled_image = fields1993_stimuli.plot_label_on_image(
+                     labeled_image, label, f_tile_size=val_set.bg_tile_size, edge_color=(255, 0, 0),
+                     display_figure=False, edge_width=3)
 
-                import pdb
-                pdb.set_trace()
+                ax_arr[i_idx].imshow(labeled_image)
+                ax_arr[i_idx].set_title(i_idx)
+
+            f.suptitle("Red=True, Green=Prediction, Yellow=Overlap")
+            plt.tight_layout()
+
+            import pdb
+            pdb.set_trace()
+
+            plt.close()
 
             # # ---------------------------------------------------------------------------
             # # View Final Predictions
