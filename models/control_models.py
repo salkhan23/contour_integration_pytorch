@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as nn_functional
 import torchvision
 
-from .piech_models import ClassifierHead
+from .piech_models import ClassifierHead, ClassifierHeadOld
 
 
 class CmMatchParameters(nn.Module):
