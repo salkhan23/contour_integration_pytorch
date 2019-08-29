@@ -854,8 +854,8 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
     acc_angle = frag_orient
     acc_h_rot = 0
     acc_w_rot = 0
-    h_rot_list = []
-    w_rot_list = []
+    h_rot_list = [0]
+    w_rot_list = [0]
 
     for c_idx in range(c_len // 2):
         acc_angle += beta
@@ -894,12 +894,15 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
 
 def generate_data_set(
         n_imgs_per_set, base_dir, frag_tile_size, frag_params_list, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
-        img_size=None):
+        img_size=None, use_d_jitter=True, rand_inter_frag_direction_change=True, random_alpha_rot=False):
     """
      Generate Data Set
      TODO: handle the case when multiple gabor fragments / tile sizes are defined.
      TODO: handle the getting orientation for a Gabor with Three channels.
 
+    :param rand_inter_frag_direction_change:
+    :param use_d_jitter:
+    :param random_alpha_rot:
     :param n_imgs_per_set:
     :param base_dir:
     :param frag_tile_size:
@@ -997,9 +1000,11 @@ def generate_data_set(
                             alpha=alpha,
                             f_tile_size=f_tile_size,
                             img_size=img_size,
-                            random_alpha_rot=False,
+                            random_alpha_rot=random_alpha_rot,
                             center_frag_start=center_frag_start,
-                            base_contour='random'
+                            base_contour='random',
+                            use_d_jitter=use_d_jitter,
+                            rand_inter_frag_direction_change=rand_inter_frag_direction_change,
                         )
 
                         if is_label_valid(img_label):
