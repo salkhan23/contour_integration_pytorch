@@ -16,6 +16,10 @@ import sys
 import shutil
 
 
+D_JITTER_SCALE = 8   # Relative to distance (d) between contour fragment.
+# If used adds a random +- d // D_JITTER_SCALE to the distance between contour fragments.
+
+
 def get_2d_gaussian_kernel(shape, sigma=1.0):
     """
     Returns a 2d (un-normalized) Gaussian kernel of the specified shape.
@@ -169,7 +173,7 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
 
 def _add_single_side_of_contour_constant_separation(
         img, center_frag_start, frag, frag_params, c_len, beta, alpha, d, d_delta, frag_size,
-        random_beta_rot=False, random_alpha_rot=True):
+        random_beta_rot=False, random_alpha_rot=True, use_d_jitter=True):
     """
 
     :param img:
@@ -225,7 +229,11 @@ def _add_single_side_of_contour_constant_separation(
 
         # In figure 5, (but not in the text),a random jitter of [+- d/4] is added to the distance between
         # fragments, this presumably to prevent relying on eqi-distance between fragments.
-        d_jitter = d // 8 * np.random.uniform(-1, 1)
+        if use_d_jitter:
+            d_jitter = d // D_JITTER_SCALE * np.random.uniform(-1, 1)
+        else:
+            d_jitter = 0
+        # print("d_jitter {}".format(d_jitter))
 
         # Note
         # [1] Origin of (x, y) top left corner
@@ -279,7 +287,7 @@ def _add_single_side_of_contour_constant_separation(
 
 
 def add_contour_path_constant_separation(
-        img, frag, frag_params, c_len, beta, alpha, d, center_frag_start=None,
+        img, frag, frag_params, c_len, beta, alpha, d, center_frag_start=None, use_d_jitter=True,
         rand_inter_frag_direction_change=True, random_alpha_rot=True, base_contour='random'):
     """
     Add curved contours to the test image as added in the ref. a constant separation (d)
@@ -295,6 +303,7 @@ def add_contour_path_constant_separation(
     :param alpha:
     :param d:
     :param center_frag_start:
+    :param use_d_jitter: if Set, a random d // D_JITTER_SCALE is added to the distance between contour fragments
     :param rand_inter_frag_direction_change:
     :param random_alpha_rot:[True]
     :param base_contour: this determines the shape of the base contour. If set to sigmoid (default), the
@@ -347,7 +356,9 @@ def add_contour_path_constant_separation(
     img, tiles = _add_single_side_of_contour_constant_separation(
         img, center_frag_start, frag, frag_params, c_len, beta, alpha, d, d_delta, frag_size,
         random_beta_rot=rand_inter_frag_direction_change,
-        random_alpha_rot=random_alpha_rot)
+        random_alpha_rot=random_alpha_rot,
+        use_d_jitter=use_d_jitter
+    )
     c_tile_starts.extend(tiles)
 
     if base_contour == 'circle':
@@ -358,7 +369,9 @@ def add_contour_path_constant_separation(
     img, tiles = _add_single_side_of_contour_constant_separation(
         img, center_frag_start, frag, frag_params, c_len, beta, alpha, -d, -d_delta, frag_size,
         random_beta_rot=rand_inter_frag_direction_change,
-        random_alpha_rot=random_alpha_rot)
+        random_alpha_rot=random_alpha_rot,
+        use_d_jitter=use_d_jitter
+    )
     c_tile_starts.extend(tiles)
 
     # ---------------------------
@@ -700,7 +713,7 @@ def get_mean_pixel_value_at_boundary(frag, width=1):
 
 
 def generate_contour_image(
-        frag, frag_params, c_len, beta, alpha, f_tile_size, img_size=None, bg_frag_relocate=True,
+        frag, frag_params, c_len, beta, alpha, f_tile_size, img_size=None, bg_frag_relocate=True, use_d_jitter=True,
         rand_inter_frag_direction_change=True, random_alpha_rot=True, center_frag_start=None, base_contour='random'):
     """
 
@@ -719,10 +732,11 @@ def generate_contour_image(
     :param img_size: [Default = (227, 227, 3)]
     :param bg_frag_relocate: if a bg fragment overlaps with a contour fragment within a tile. Try to
             relocate it before removing it.
-    :param rand_inter_frag_direction_change: Curve Direction changes randomly between component framgents.
+    :param rand_inter_frag_direction_change: Curve Direction changes randomly between component fragments.
             [Default =True]
     :param random_alpha_rot:
     :param center_frag_start: starting location of contour fragments
+    :param use_d_jitter: if set a random d / D_JITTER_SCALE is added to distance between fragments
     :param base_contour:
 
     :return: img, label
@@ -765,7 +779,8 @@ def generate_contour_image(
             center_frag_start=center_frag_start,
             rand_inter_frag_direction_change=rand_inter_frag_direction_change,
             random_alpha_rot=random_alpha_rot,
-            base_contour=base_contour
+            base_contour=base_contour,
+            use_d_jitter=use_d_jitter,
         )
     else:
         c_frag_starts = []
@@ -830,7 +845,7 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
     :return: two tuples: (x_min, x_max), (y_min, y_max)
     """
     # The additional f_tile_size[0] // 4 accounts for the distance jitter added to each fragment
-    max_inter_frag_dist = (f_tile_size[0] + f_tile_size[0] // 8)
+    max_inter_frag_dist = (f_tile_size[0] + f_tile_size[0] // D_JITTER_SCALE)
 
     half_cont_h = (c_len * max_inter_frag_dist * np.cos(frag_orient / 180. * np.pi)) // 2
     half_cont_w = (c_len * max_inter_frag_dist * np.sin(frag_orient / 180. * np.pi)) // 2
@@ -1176,7 +1191,8 @@ if __name__ == "__main__":
         f_tile_size=full_tile_size,
         img_size=image_size,
         random_alpha_rot=True,
-        rand_inter_frag_direction_change=False
+        rand_inter_frag_direction_change=False,
+        use_d_jitter=True,
     )
     print(image_label)
     print("Label is valid? {}".format(is_label_valid(image_label)))
