@@ -894,12 +894,14 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
 
 def generate_data_set(
         n_imgs_per_set, base_dir, frag_tile_size, frag_params_list, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
-        img_size=None, use_d_jitter=True, rand_inter_frag_direction_change=True, random_alpha_rot=False):
+        img_size=None, use_d_jitter=True, rand_inter_frag_direction_change=True, random_alpha_rot=False,
+        center_frag_start=None):
     """
      Generate Data Set
      TODO: handle the case when multiple gabor fragments / tile sizes are defined.
      TODO: handle the getting orientation for a Gabor with Three channels.
 
+    :param center_frag_start:
     :param rand_inter_frag_direction_change:
     :param use_d_jitter:
     :param random_alpha_rot:
@@ -961,12 +963,15 @@ def generate_data_set(
         for c_len in c_len_arr:
             c_len_name = os.path.join(frag_param_dir, 'clen_{}'.format(c_len))
 
-            x_start_range, y_start_range = get_contour_start_ranges(
-                c_len=c_len,
-                frag_orient=frag_params[0]['theta_deg'],  # Todo handle the case when there are three orientations
-                f_tile_size=f_tile_size,
-                img_size=img_size
-            )
+            if center_frag_start is None:
+                x_start_range, y_start_range = get_contour_start_ranges(
+                    c_len=c_len,
+                    frag_orient=frag_params[0]['theta_deg'],  # Todo handle the case when there are three orientations
+                    f_tile_size=f_tile_size,
+                    img_size=img_size
+                )
+            else:
+                x_start_range = y_start_range = 0
 
             for beta in beta_rot_arr:
                 c_len_beta_rot_dir = os.path.join(c_len_name, 'beta_{}'.format(beta))
@@ -987,10 +992,12 @@ def generate_data_set(
 
                     n_imgs_current_set = 0
                     for i_idx in range(n_imgs_per_set + 50):
-                        center_frag_start = np.array([
-                            np.random.randint(x_start_range[0], x_start_range[1]),
-                            np.random.randint(y_start_range[0], y_start_range[1]),
-                        ])
+
+                        if center_frag_start is None:
+                            center_frag_start = np.array([
+                                np.random.randint(x_start_range[0], x_start_range[1]),
+                                np.random.randint(y_start_range[0], y_start_range[1]),
+                            ])
 
                         img, img_label = generate_contour_image(
                             frag=frag,
