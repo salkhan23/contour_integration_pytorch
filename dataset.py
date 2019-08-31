@@ -13,8 +13,37 @@ from torch.utils.data import DataLoader, Dataset
 import fields1993_stimuli
 
 
+def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr):
+    """
+    Filter out all file_names that contained the required c_len, beta and alpha values
+
+    :param file_names:
+    :param c_len_arr:
+    :param beta_arr:
+    :param alpha_arr:
+    :return:
+    """
+    use_set = []
+
+    if c_len_arr:
+        for c_len in c_len_arr:
+            use_set = [x for x in file_names if 'clen_{}'.format(c_len) in x]
+
+    if beta_arr:
+        for beta in beta_arr:
+            use_set = [x for x in use_set if 'beta_{}'.format(beta) in x]
+
+    if alpha_arr:
+        for alpha in alpha_arr:
+            use_set = [x for x in use_set if 'alpha_{}'.format(alpha) in x]
+
+    return use_set
+
+
 class Fields1993(Dataset):
-    def __init__(self, data_dir, bg_tile_size, augment=False, transform=None):
+    def __init__(self, data_dir, bg_tile_size, augment=False, transform=None,
+                 c_len_arr=None, beta_arr=None, alpha_arr=None):
+
         self.data_dir = data_dir
         self.bg_tile_size = bg_tile_size
         self.transform = transform
@@ -36,6 +65,14 @@ class Fields1993(Dataset):
         # get handles to all files in the dataset
         with open(data_key, "r") as f:
             file_names = [x.strip() for x in f.readlines()]
+
+        file_names = get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr)
+
+        # for idx, file_name in enumerate(file_names):
+        #     print("{}: {}".format(idx, file_name))
+
+        if not file_names:
+            raise Exception("No Files in Data set!")
 
         self.images = [os.path.join(image_dir, x + ".png") for x in file_names]
         self.labels = [os.path.join(label_dir, x + ".npy") for x in file_names]
