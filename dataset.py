@@ -23,7 +23,7 @@ def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr):
     :param alpha_arr:
     :return:
     """
-    use_set = []
+    use_set = file_names.copy()
 
     if c_len_arr:
         for c_len in c_len_arr:
