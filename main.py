@@ -137,7 +137,7 @@ if __name__ == '__main__':
             img = img.to(device)
             label = label.to(device)
 
-            label_out, _ = model(img)
+            label_out = model(img)
             batch_loss = criterion(label_out, label.float())
 
             batch_loss.backward()
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                 img = img.to(device)
                 label = label.to(device)
 
-                label_out, _ = model(img)
+                label_out = model(img)
                 batch_loss = criterion(label_out, label.float())
 
                 e_loss += batch_loss.item()

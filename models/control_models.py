@@ -11,6 +11,10 @@ class CmMatchParameters(nn.Module):
 
         super(CmMatchParameters, self).__init__()
 
+        # Technically this should be get layer predictions. But just to match the parameter
+        # of the contour integration models use the same name.
+        self.get_iterative_predictions = False
+
         # Parameters
         self.edge_out_ch = edge_out_ch
 
@@ -57,19 +61,25 @@ class CmMatchParameters(nn.Module):
         ff = self.control_conv1(ff)
         ff = self.control_bn1(ff)
         ff = nn.functional.relu(ff)
-        out_layer_arr.append(self.post(ff))
+        if self.get_iterative_predictions:
+            out_layer_arr.append(self.post(ff))
         ff = self.control_dp1(ff)
 
         ff = self.control_conv2(ff)
         ff = self.control_bn2(ff)
         ff = nn.functional.relu(ff)
-        out_layer_arr.append(self.post(ff))
+        if self.get_iterative_predictions:
+            out_layer_arr.append(self.post(ff))
         ff = self.control_dp2(ff)
 
         # Post processing
-        out = self.post(ff)
+        # Post processing
+        if self.get_iterative_predictions:
+            out = self.post(ff), out_layer_arr
+        else:
+            out = self.post(ff)
 
-        return out, out_layer_arr
+        return out
 
 
 class CmMatchIterations(nn.Module):
@@ -83,6 +93,10 @@ class CmMatchIterations(nn.Module):
         """
 
         super(CmMatchIterations, self).__init__()
+
+        # Technically this should be get layer predictions. But just to match the parameter
+        # of the contour integration models use the same name.
+        self.get_iterative_predictions = False
 
         # Parameters
         self.edge_out_ch = edge_out_ch
@@ -133,14 +147,19 @@ class CmMatchIterations(nn.Module):
 
             ff = self.control_bn1(ff_branch_a - ff_branch_b)
             ff = nn.functional.relu(ff)
-            out_layer_arr.append(self.post(ff))
+
+            if self.get_iterative_predictions:
+                out_layer_arr.append(self.post(ff))
 
             ff = self.control_dp1(ff)
 
         # Post processing
-        out = self.post(ff)
+        if self.get_iterative_predictions:
+            out = self.post(ff), out_layer_arr
+        else:
+            out = self.post(ff)
 
-        return out, out_layer_arr
+        return out
 
 
 class CmClassificationHeadOnly(nn.Module):
@@ -151,6 +170,8 @@ class CmClassificationHeadOnly(nn.Module):
         """
 
         super(CmClassificationHeadOnly, self).__init__()
+
+        self.get_iterative_predictions = False
 
         # Parameters
         self.edge_out_ch = edge_out_ch
@@ -185,6 +206,9 @@ class CmClassificationHeadOnly(nn.Module):
         out_layer_arr = []
 
         # Post processing
-        out = self.post(ff)
+        if self.get_iterative_predictions:
+            out = self.post(ff), out_layer_arr
+        else:
+            out = self.post(ff)
 
         return out, out_layer_arr

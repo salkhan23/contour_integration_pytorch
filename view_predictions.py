@@ -87,7 +87,7 @@ if __name__ == '__main__':
             img = img.to(device)
             label = label.to(device)
 
-            label_out, _ = model(img)
+            label_out = model(img)
             batch_loss = criterion(label_out, label.float())
 
             e_loss += batch_loss.item()
@@ -103,6 +103,7 @@ if __name__ == '__main__':
     # View Predictions
     # -----------------------------------------------------------------------------------
     model.eval()
+    model.get_iterative_predictions = True
     detect_thresh = 0.5
 
     with torch.no_grad():

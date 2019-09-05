@@ -142,6 +142,8 @@ class CurrentSubtractiveInhibition(nn.Module):
 
         super(CurrentSubtractiveInhibition, self).__init__()
 
+        self.get_iterative_predictions = False
+
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
         self.a = 0.5  # Weighting factor for combining excitatory recurrence and feed-forward. Should be [Nx1]
@@ -231,10 +233,14 @@ class CurrentSubtractiveInhibition(nn.Module):
 
             f_y = nn.functional.relu(y)
 
-            iterative_out_arr.append(self.post(f_x))
+            if self.get_iterative_predictions:
+                iterative_out_arr.append(self.post(f_x))
 
         # Post processing
-        out = self.post(f_x), iterative_out_arr
+        if self.get_iterative_predictions:
+            out = self.post(f_x), iterative_out_arr
+        else:
+            out = self.post(f_x)
 
         return out
 
@@ -262,6 +268,8 @@ class CurrentDivisiveInhibition(nn.Module):
         """
 
         super(CurrentDivisiveInhibition, self).__init__()
+
+        self.get_iterative_predictions = False
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
@@ -352,9 +360,13 @@ class CurrentDivisiveInhibition(nn.Module):
 
             f_y = nn.functional.relu(y)
 
-            iterative_out_arr.append(self.post(f_x))
+            if self.get_iterative_predictions:
+                iterative_out_arr.append(self.post(f_x))
 
         # Post processing
-        out = self.post(f_x), iterative_out_arr
+        if self.get_iterative_predictions:
+            out = self.post(f_x), iterative_out_arr
+        else:
+            out = self.post(f_x)
 
         return out
