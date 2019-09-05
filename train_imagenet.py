@@ -13,6 +13,7 @@ import shutil
 import time
 import warnings
 import pickle
+from datetime import datetime
 
 import torch
 import torch.nn as nn
@@ -134,8 +135,23 @@ def main_worker(model, gpu, ngpus_per_node, args):
         print("Use GPU: {} for training".format(args.gpu))
 
     results_store_dir = './results/' + model.__class__.__name__ + '/ImageNet/'
+    results_store_dir = os.path.join(
+        './results',
+        model.__class__.__name__,
+        'ImageNet' + datetime.now().strftime("_%Y%m%d_%H%M%S")
+    )
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
+
+    # Train Summary File
+    summary_file = os.path.join(results_store_dir, 'summary.txt')
+    f = open(summary_file, 'w+')
+
+    # Write the training setting
+    f.write("Input Arguments:\n")
+    for a_idx, arg in enumerate(vars(args)):
+        f.write("\t[{}] {}: {}\n".format(a_idx, arg, getattr(args, arg)))
+    f.write("{}\n".format('-' * 80))
 
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
@@ -250,20 +266,28 @@ def main_worker(model, gpu, ngpus_per_node, args):
         return
 
     print(">>> Start Training {} ".format('.'*80))
+    f.write("Epoch, train_loss, train_accTop1, train_accTop5, val_loss val_accTop1, val_accTop5\n")
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, epoch, args)
 
         # train for one epoch
-        train(train_loader, model, criterion, optimizer, epoch, args)
+        train_loss, train_acc1, train_acc5 = \
+            train(train_loader, model, criterion, optimizer, epoch, args)
 
         # evaluate on validation set
-        acc1 = validate(val_loader, model, criterion, args)
+        val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
+
+        f.write("[{}, {}, {}, {}, {}, {}, {}],\n".format(
+            epoch,
+            train_loss, train_acc1, train_acc5,
+            val_loss, val_acc1, val_acc5
+        ))
 
         # remember best acc@1 and save checkpoint
-        is_best = acc1 > best_acc1
-        best_acc1 = max(acc1, best_acc1)
+        is_best = val_acc1 > best_acc1
+        best_acc1 = max(val_acc1, best_acc1)
 
         # if not args.multiprocessing_distributed or \
         #         (args.multiprocessing_distributed and args.rank % ngpus_per_node == 0):
@@ -280,6 +304,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
                 is_best=is_best,
                 filename=os.path.join(results_store_dir, 'best_accuracy.pth')
             )
+    f.close()
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -328,6 +353,8 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
     print("Epoch Complete Duration {}".format(time.time() - epoch_start_time))
 
+    return losses.avg, top1.avg, top5.avg
+
 
 def validate(val_loader, model, criterion, args):
     batch_time = AverageMeter('Time', ':6.3f')
@@ -368,7 +395,7 @@ def validate(val_loader, model, criterion, args):
         print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
-    return top1.avg
+    return losses.avg, top1.avg, top5.avg
 
 
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
