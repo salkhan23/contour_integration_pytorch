@@ -184,7 +184,7 @@ if __name__ == '__main__':
     # Main Loop
     # -----------------------------------------------------------------------------------
     print("====> Starting Training ")
-    epoch_start_time = datetime.now()
+    training_start_time = datetime.now()
 
     detect_thres = 0.5
 
@@ -194,20 +194,23 @@ if __name__ == '__main__':
 
     for epoch in range(num_epochs):
 
+        epoch_start_time = datetime.now()
+
         train_history.append(train())
         val_history.append(validate())
 
         lr_history.append(get_lr(optimizer))
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}".format(
+        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. Time {}".format(
             epoch, num_epochs,
             train_history[epoch][0],
             train_history[epoch][1],
             val_history[epoch][0],
-            val_history[epoch][1]
+            val_history[epoch][1],
+            datetime.now() - epoch_start_time
         ))
 
-    print('Finished Training. Training took {}'.format(datetime.now() - epoch_start_time))
+    print('Finished Training. Training took {}'.format(datetime.now() - training_start_time))
 
     torch.save(
         model.state_dict(),
