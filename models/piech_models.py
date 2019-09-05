@@ -16,6 +16,15 @@ import torch.nn.functional as nn_functional
 import torchvision
 
 
+class DummyHead(nn.Module):
+    """ Just passes the data through as is """
+    def __init__(self, num_channels):
+        super(DummyHead, self).__init__()
+
+    def forward(self, x):
+        return x
+
+
 class ClassifierHead(nn.Module):
     def __init__(self, num_channels):
         super(ClassifierHead, self).__init__()
@@ -91,7 +100,7 @@ class ClassifierHeadOld(nn.Module):
 
 
 class CurrentSubtractiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5):
+    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True):
         """
         Current based model with Subtractive Inhibition
 
@@ -142,7 +151,12 @@ class CurrentSubtractiveInhibition(nn.Module):
 
         super(CurrentSubtractiveInhibition, self).__init__()
 
+        # If set, will additionally return the predictions of the contour integration layers activation after each
+        # iteration (these are passed though the classification head)
         self.get_iterative_predictions = False
+        # If True, use classification head to get predictions or if False, output will feed into another layer
+        # the dimensions of the edge extracting layer will be preserved
+        self.use_class_head = use_class_head
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
@@ -188,7 +202,10 @@ class CurrentSubtractiveInhibition(nn.Module):
             in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
 
         # Classification head get decision (whether part of a contour or not) for each full tile in the image.
-        self.post = ClassifierHead(edge_out_ch)
+        if use_class_head:
+            self.post = ClassifierHead(edge_out_ch)
+        else:
+            self.post = DummyHead()
 
     def forward(self, in_img):
 
@@ -246,7 +263,7 @@ class CurrentSubtractiveInhibition(nn.Module):
 
 
 class CurrentDivisiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5):
+    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True):
         """
         Current based model with Divisive Inhibition
 
@@ -269,7 +286,12 @@ class CurrentDivisiveInhibition(nn.Module):
 
         super(CurrentDivisiveInhibition, self).__init__()
 
+        # If set, will additionally return the predictions of the contour integration layers activation after each
+        # iteration (these are passed though the classification head)
         self.get_iterative_predictions = False
+        # If True, use classification head to get predictions or if False, output will feed into another layer
+        # the dimensions of the edge extracting layer will be preserved
+        self.use_class_head = use_class_head
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
@@ -315,7 +337,11 @@ class CurrentDivisiveInhibition(nn.Module):
         self.lateral_i = nn.Conv2d(
             in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
 
-        self.post = ClassifierHead(edge_out_ch)
+        # Classification head get decision (whether part of a contour or not) for each full tile in the image.
+        if use_class_head:
+            self.post = ClassifierHead(edge_out_ch)
+        else:
+            self.post = DummyHead()
 
     def forward(self, in_img):
 
