@@ -181,7 +181,7 @@ class CurrentSubtractiveInhibition(nn.Module):
         # First layer is AlexNet Edge Extraction (with out bias)
         self.conv1 = nn.Conv2d(
             in_channels=3,
-            out_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
             kernel_size=11,
             stride=4,
             padding=2,
@@ -192,18 +192,18 @@ class CurrentSubtractiveInhibition(nn.Module):
         self.conv1.weight.data.copy_(alexnet_edge_detect_kernels.weight.data)
 
         # Additional batch normalization Layer
-        self.bn1 = nn.BatchNorm2d(num_features=64)
+        self.bn1 = nn.BatchNorm2d(num_features=self.edge_out_ch)
 
         # Contour Integration Layer
         # TODO: What is the spatial extent of the kernel for one iteration
         self.lateral_e = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
         self.lateral_i = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
 
         # Classification head get decision (whether part of a contour or not) for each full tile in the image.
         if use_class_head:
-            self.post = ClassifierHead(edge_out_ch)
+            self.post = ClassifierHead(self.edge_out_ch)
         else:
             self.post = DummyHead()
 
@@ -229,22 +229,22 @@ class CurrentSubtractiveInhibition(nn.Module):
             # print("processing iteration {}".format(i))
 
             # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
-            x = (1 - self.a.view(1, 64, 1, 1)) * x + \
-                self.a.view(1, 64, 1, 1) * (
-                    (self.j_xx.view(1, 64, 1, 1) * f_x) -
-                    (self.j_xy.view(1, 64, 1, 1) * f_y) +
+            x = (1 - self.a.view(1, self.edge_out_ch, 1, 1)) * x + \
+                self.a.view(1, self.edge_out_ch, 1, 1) * (
+                    (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
+                    (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
                     ff +
-                    self.e_bias.view(1, 64, 1, 1) * torch.ones_like(ff) +
+                    self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_e(f_x))
                 )
             # TODO: first f_x should be one dimensional for eah channel, second one should include neighbors
 
             f_x = nn.functional.relu(x)
 
-            y = (1 - self.b.view(1, 64, 1, 1) * y) + \
-                self.b.view(1, 64, 1, 1) * (
-                    (self.j_yx.view(1, 64, 1, 1) * f_x) +
-                    self.i_bias.view(1, 64, 1, 1) * torch.ones_like(ff) +
+            y = (1 - self.b.view(1, self.edge_out_ch, 1, 1) * y) + \
+                self.b.view(1, self.edge_out_ch, 1, 1) * (
+                    (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
+                    self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_i(f_x))
                 )
 
