@@ -46,8 +46,8 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    # model = CurrentSubtractiveInhibition().to(device)
-    model = CurrentDivisiveInhibition().to(device)
+    model = CurrentSubtractiveInhibition(lateral_e_size=3, lateral_i_size=3).to(device)
+    # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters().to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
@@ -55,6 +55,9 @@ if __name__ == '__main__':
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
     print("Classifier Head: {}".format(model.post.__class__.__name__))
+
+    # from torchsummary import summary
+    # summary(model, input_size=(3, 512, 512))
 
     results_store_dir = os.path.join(
         results_store_dir,
@@ -66,6 +69,8 @@ if __name__ == '__main__':
     # Data Loader
     # -----------------------------------------------------------------------------------
     print("====> Setting up data loaders ")
+    data_load_start_time = datetime.now()
+
     data_set_dir = "./data/bw_gabors_10_frag_fullTile_32_fragTile_20"
     print("Source: {}".format(data_set_dir))
 
@@ -109,7 +114,11 @@ if __name__ == '__main__':
         pin_memory=True
     )
 
-    print("Length of the train data loader {}".format(len(train_data_loader)))
+    print("Data loading Took {}. # Train {}, # Test {}".format(
+        datetime.now() - data_load_start_time,
+        len(train_data_loader) * train_batch_size,
+        len(val_data_loader) * test_batch_size
+    ))
 
     # -----------------------------------------------------------------------------------
     # Loss / optimizer
