@@ -100,7 +100,7 @@ class ClassifierHeadOld(nn.Module):
 
 
 class CurrentSubtractiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True):
+    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True, lateral_e_size=7, lateral_i_size=7):
         """
         Current based model with Subtractive Inhibition
 
@@ -157,6 +157,8 @@ class CurrentSubtractiveInhibition(nn.Module):
         # If True, use classification head to get predictions or if False, output will feed into another layer
         # the dimensions of the edge extracting layer will be preserved
         self.use_class_head = use_class_head
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
@@ -197,9 +199,21 @@ class CurrentSubtractiveInhibition(nn.Module):
         # Contour Integration Layer
         # TODO: What is the spatial extent of the kernel for one iteration
         self.lateral_e = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
         self.lateral_i = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
 
         # Classification head get decision (whether part of a contour or not) for each full tile in the image.
         if use_class_head:
@@ -237,7 +251,7 @@ class CurrentSubtractiveInhibition(nn.Module):
                     self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_e(f_x))
                 )
-            # TODO: first f_x should be one dimensional for eah channel, second one should include neighbors
+            # TODO: first f_x should be one dimensional for each channel, second one should include neighbors
 
             f_x = nn.functional.relu(x)
 
@@ -263,7 +277,7 @@ class CurrentSubtractiveInhibition(nn.Module):
 
 
 class CurrentDivisiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True):
+    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True, lateral_e_size=7, lateral_i_size=7):
         """
         Current based model with Divisive Inhibition
 
@@ -292,6 +306,8 @@ class CurrentDivisiveInhibition(nn.Module):
         # If True, use classification head to get predictions or if False, output will feed into another layer
         # the dimensions of the edge extracting layer will be preserved
         self.use_class_head = use_class_head
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
@@ -333,9 +349,21 @@ class CurrentDivisiveInhibition(nn.Module):
         # TODO: What is the spatial extent of the kernel for one iteration
         # TODO: Adjust padding to match dimensions
         self.lateral_e = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
         self.lateral_i = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=self.edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
 
         # Classification head get decision (whether part of a contour or not) for each full tile in the image.
         if use_class_head:
@@ -373,7 +401,7 @@ class CurrentDivisiveInhibition(nn.Module):
                     + self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff)
                     + nn.functional.relu(self.lateral_e(f_x))
                 ) / (1 + (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y))
-            # TODO: first f_x should be one dimensional for eah channel, second one should include neighbors
+            # TODO: first f_x should be one dimensional for each channel, second one should include neighbors
 
             f_x = nn.functional.relu(x)
 
