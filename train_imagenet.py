@@ -471,21 +471,40 @@ def accuracy(output, target, topk=(1,)):
 
 if __name__ == '__main__':
 
-    net = torchvision_models.resnet50(pretrained=False)
+    # -----------------------------------------------------------------------------------
+    # Model
+    # -----------------------------------------------------------------------------------
+    print(">>> Building the model {}".format('.' * 80))
 
-    # import models.piech_models
-    # cont_int_layer = models.piech_models.CurrentSubtractiveInhibition(use_classification_head=False)
-    # net.conv1 = cont_int_layer
+    # Start with a pre-trained classification model
+    net = torchvision_models.resnet50(pretrained=True)
 
-    # # Print which parameters will be be trained
-    # print("Parameters that will be trained:")
-    # for c_idx, child in enumerate(net.children()):
-    #     print(child)
-    #     for p_idx, param in enumerate(child.parameters()):
-    #         print("[{},{}]. Shape {} Requires Grade = {}".format(c_idx, p_idx, param.shape, param.requires_grad))
-    #
-    #         import pdb
-    #         pdb.set_trace()
+    # Contour Integration model
+    import models.piech_models
+    cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+
+    # replace the first edge extraction layer of the contour integration model with the one from resnet.
+    # This loads pre-trained weights for the edge extraction layer
+    cont_int_model.conv1 = net.conv1
+    # Replace the edge extraction layer with edge extraction + contour integration model
+    net.conv1 = cont_int_model
+
+    # Only Train the Contour Integration Layer
+    for c_idx, child in enumerate(net.children()):
+        if c_idx >= 1:
+            for p_idx, param in enumerate(child.parameters()):
+                param.requires_grad = False
+    # Set the requires gradient parameter of the first edge extraction layer as False
+    net.conv1.conv1.weight.requires_grad = False
+
+    # Check that all the requires gradients have been set correctly
+    print("Parameters that will be trained:")
+    for c_idx, child in enumerate(net.children()):
+        print(child)
+        for p_idx, param in enumerate(child.parameters()):
+            print("[{},{}]. Shape {} Requires Grade = {}".format(c_idx, p_idx, param.shape, param.requires_grad))
+    import pdb
+    pdb.set_trace()
 
     print(">>> Starting main script {}".format('.'*80))
     main(net)
