@@ -6,7 +6,7 @@ from .piech_models import ClassifierHead, ClassifierHeadOld
 
 
 class CmMatchParameters(nn.Module):
-    def __init__(self, edge_out_ch=64, ):
+    def __init__(self, edge_out_ch=64, lateral_e_size=7, lateral_i_size=7):
         """ Match the number of parameters """
 
         super(CmMatchParameters, self).__init__()
@@ -17,13 +17,15 @@ class CmMatchParameters(nn.Module):
 
         # Parameters
         self.edge_out_ch = edge_out_ch
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
 
         # Layers
         # ------
         # First layer is AlexNet Edge Extraction (with out bias)
         self.conv1 = nn.Conv2d(
             in_channels=3,
-            out_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
             kernel_size=11,
             stride=4,
             padding=2,
@@ -37,12 +39,26 @@ class CmMatchParameters(nn.Module):
         self.bn1 = nn.BatchNorm2d(num_features=64)
 
         self.control_conv1 = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,
+            bias=False
+        )
+
         self.control_bn1 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp1 = nn.Dropout(p=0.3)
 
         self.control_conv2 = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,
+            bias=False
+        )
+
         self.control_bn2 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp2 = nn.Dropout(p=0.3)
 
@@ -83,7 +99,7 @@ class CmMatchParameters(nn.Module):
 
 
 class CmMatchIterations(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5):
+    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7):
         """
         A Re-current model with matching number of recurrent iterations and parameters
         Parameters are matched by  using a two convolutional layers whose activities are subtracted
@@ -101,13 +117,15 @@ class CmMatchIterations(nn.Module):
         # Parameters
         self.edge_out_ch = edge_out_ch
         self.n_iters = n_iters
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
 
         # Layers
         # ------
         # First layer is AlexNet Edge Extraction (with out bias)
         self.conv1 = nn.Conv2d(
             in_channels=3,
-            out_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
             kernel_size=11,
             stride=4,
             padding=2,
@@ -122,9 +140,21 @@ class CmMatchIterations(nn.Module):
         self.bn1 = nn.BatchNorm2d(num_features=64)
 
         self.control_conv1 = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,
+            bias=False
+        )
         self.control_conv2 = nn.Conv2d(
-            in_channels=edge_out_ch, out_channels=edge_out_ch, kernel_size=7, stride=1, padding=3, bias=False)
+            in_channels=edge_out_ch,
+            out_channels=edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,
+            bias=False
+        )
 
         self.control_bn1 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp1 = nn.Dropout(p=0.3)
@@ -211,4 +241,4 @@ class CmClassificationHeadOnly(nn.Module):
         else:
             out = self.post(ff)
 
-        return out, out_layer_arr
+        return out
