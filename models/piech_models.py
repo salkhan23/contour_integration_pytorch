@@ -192,6 +192,7 @@ class CurrentSubtractiveInhibition(nn.Module):
         # use pre-trained Alexnet weights
         alexnet_edge_detect_kernels = torchvision.models.alexnet(pretrained=True).features[0]
         self.conv1.weight.data.copy_(alexnet_edge_detect_kernels.weight.data)
+        self.conv1.weight.requires_grad = False
 
         # Additional batch normalization Layer
         self.bn1 = nn.BatchNorm2d(num_features=self.edge_out_ch)
