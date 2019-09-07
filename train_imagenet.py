@@ -279,7 +279,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
         # evaluate on validation set
         val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
 
-        f.write("[{}, {}, {}, {}, {}, {}, {}],\n".format(
+        f.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
             epoch,
             train_loss, train_acc1, train_acc5,
             val_loss, val_acc1, val_acc5
