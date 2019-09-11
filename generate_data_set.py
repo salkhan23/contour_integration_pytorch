@@ -56,7 +56,7 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/bw_gabors_10_frag_fullTile_32_fragTile_20'
+    base_data_dir = './data/bw_gabors_10_frag_fullTile_32_fragTile_20_test'
     gabor_params_file = 'bw_10_gabors_params.pickle'
 
     frag_size = np.array([20, 20])
