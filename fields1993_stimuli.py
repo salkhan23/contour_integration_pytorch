@@ -992,12 +992,15 @@ def generate_data_set(
 
                     n_imgs_current_set = 0
                     for i_idx in range(n_imgs_per_set + 50):
-
                         if center_frag_start is None:
-                            center_frag_start = np.array([
+                            middle_frag_start = np.array([
                                 np.random.randint(x_start_range[0], x_start_range[1]),
                                 np.random.randint(y_start_range[0], y_start_range[1]),
                             ])
+                        else:
+                            middle_frag_start = center_frag_start
+
+                        # print("print middle_frag_start {}".format(middle_frag_start))
 
                         img, img_label = generate_contour_image(
                             frag=frag,
@@ -1008,7 +1011,7 @@ def generate_data_set(
                             f_tile_size=f_tile_size,
                             img_size=img_size,
                             random_alpha_rot=random_alpha_rot,
-                            center_frag_start=center_frag_start,
+                            center_frag_start=middle_frag_start,
                             base_contour='random',
                             use_d_jitter=use_d_jitter,
                             rand_inter_frag_direction_change=rand_inter_frag_direction_change,
