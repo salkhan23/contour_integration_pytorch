@@ -46,10 +46,10 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    # model = CurrentSubtractiveInhibition(lateral_e_size=3, lateral_i_size=3).to(device)
+    model = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
-    model = control_models.CmMatchParameters(lateral_e_size=3, lateral_i_size=3).to(device)
+    # model = control_models.CmMatchParameters(lateral_e_size=3, lateral_i_size=3).to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
 
     # print(model)
@@ -92,7 +92,6 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        c_len_arr=[9]
     )
 
     train_data_loader = DataLoader(
@@ -107,7 +106,6 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'val'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        c_len_arr=[9]
     )
 
     val_data_loader = DataLoader(
