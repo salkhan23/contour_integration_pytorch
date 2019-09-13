@@ -480,8 +480,11 @@ if __name__ == '__main__':
     net = torchvision_models.resnet50(pretrained=True)
 
     # Contour Integration model
-    import models.piech_models
-    cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    # import models.piech_models
+    # cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+
+    import models.control_models
+    cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
 
     # replace the first edge extraction layer of the contour integration model with the one from resnet.
     # This loads pre-trained weights for the edge extraction layer

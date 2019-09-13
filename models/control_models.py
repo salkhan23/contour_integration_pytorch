@@ -2,11 +2,11 @@ import torch.nn as nn
 import torch.nn.functional as nn_functional
 import torchvision
 
-from .piech_models import ClassifierHead, ClassifierHeadOld
+from .piech_models import ClassifierHead, ClassifierHeadOld, DummyHead
 
 
 class CmMatchParameters(nn.Module):
-    def __init__(self, edge_out_ch=64, lateral_e_size=7, lateral_i_size=7):
+    def __init__(self, edge_out_ch=64, lateral_e_size=7, lateral_i_size=7, use_class_head=True):
         """ Match the number of parameters """
 
         super(CmMatchParameters, self).__init__()
@@ -14,6 +14,7 @@ class CmMatchParameters(nn.Module):
         # Technically this should be get layer predictions. But just to match the parameter
         # of the contour integration models use the same name.
         self.get_iterative_predictions = False
+        self.use_class_head = use_class_head
 
         # Parameters
         self.edge_out_ch = edge_out_ch
@@ -62,7 +63,10 @@ class CmMatchParameters(nn.Module):
         self.control_bn2 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp2 = nn.Dropout(p=0.3)
 
-        self.post = ClassifierHead(edge_out_ch)
+        if use_class_head:
+            self.post = ClassifierHead(self.edge_out_ch)
+        else:
+            self.post = DummyHead()
 
     def forward(self, in_img):
 
@@ -99,7 +103,7 @@ class CmMatchParameters(nn.Module):
 
 
 class CmMatchIterations(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7):
+    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, use_class_head=True):
         """
         A Re-current model with matching number of recurrent iterations and parameters
         Parameters are matched by  using a two convolutional layers whose activities are subtracted
@@ -113,6 +117,7 @@ class CmMatchIterations(nn.Module):
         # Technically this should be get layer predictions. But just to match the parameter
         # of the contour integration models use the same name.
         self.get_iterative_predictions = False
+        self.use_class_head = use_class_head
 
         # Parameters
         self.edge_out_ch = edge_out_ch
@@ -159,7 +164,11 @@ class CmMatchIterations(nn.Module):
         self.control_bn1 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp1 = nn.Dropout(p=0.3)
 
-        self.post = ClassifierHead(edge_out_ch)
+        # Classification head get decision (whether part of a contour or not) for each full tile in the image.
+        if use_class_head:
+            self.post = ClassifierHead(self.edge_out_ch)
+        else:
+            self.post = DummyHead()
 
     def forward(self, in_img):
 
