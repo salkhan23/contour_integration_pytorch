@@ -134,11 +134,9 @@ def main_worker(model, gpu, ngpus_per_node, args):
     if args.gpu is not None:
         print("Use GPU: {} for training".format(args.gpu))
 
-    results_store_dir = './results/' + model.__class__.__name__ + '/ImageNet/'
     results_store_dir = os.path.join(
-        './results',
-        model.__class__.__name__,
-        'ImageNet' + datetime.now().strftime("_%Y%m%d_%H%M%S")
+        './results/imagenet_classification/',
+        model.__class__.__name__ + datetime.now().strftime("_%Y%m%d_%H%M%S")
     )
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
