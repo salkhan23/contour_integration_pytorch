@@ -14,6 +14,7 @@ import time
 import warnings
 import pickle
 from datetime import datetime
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -263,8 +264,18 @@ def main_worker(model, gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
         return
 
-    print(">>> Start Training {} ".format('.'*80))
     f.write("Epoch, train_loss, train_accTop1, train_accTop5, val_loss val_accTop1, val_accTop5\n")
+
+    # Evaluate performance on Validation set before Training - This for for models that start
+    # with pre-trained models
+    val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
+    f.write("[{}, {}, {}, {}, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
+        0,
+        np.nan, np.nan, np.nan,
+        val_loss, val_acc1, val_acc5
+    ))
+
+    print(">>> Start Training {} ".format('.'*80))
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
             train_sampler.set_epoch(epoch)
