@@ -485,14 +485,15 @@ if __name__ == '__main__':
     print(">>> Building the model {}".format('.' * 80))
 
     # Start with a pre-trained classification model
-    net = torchvision_models.resnet50(pretrained=True)
+    # net = torchvision_models.resnet50(pretrained=True)
+    net = torchvision_models.alexnet(pretrained=True)
 
     # Contour Integration model
-    # import models.piech_models
-    # cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    import models.piech_models
+    cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
 
-    import models.control_models
-    cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
+    # import models.control_models
+    # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
 
     # replace the first edge extraction layer of the contour integration model with the one from resnet.
     # This loads pre-trained weights for the edge extraction layer
@@ -507,6 +508,7 @@ if __name__ == '__main__':
                 param.requires_grad = False
     # Set the requires gradient parameter of the first edge extraction layer as False
     net.conv1.conv1.weight.requires_grad = False
+    net.conv1.conv1.bias.requires_grad = False
 
     # Check that all the requires gradients have been set correctly
     print("Parameters that will be trained:")
