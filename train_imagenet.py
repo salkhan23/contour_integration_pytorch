@@ -269,9 +269,8 @@ def main_worker(model, gpu, ngpus_per_node, args):
     # Evaluate performance on Validation set before Training - This for for models that start
     # with pre-trained models
     val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
-    f.write("[{}, {}, {}, {}, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
+    f.write("[{}, np.nan, np.nan, np.nan, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
         0,
-        np.nan, np.nan, np.nan,
         val_loss, val_acc1, val_acc5
     ))
 
