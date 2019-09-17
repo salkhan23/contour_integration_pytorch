@@ -63,7 +63,7 @@ if __name__ == "__main__":
     full_tile_size = np.array([32, 32])
     image_size = np.array([512, 512, 3])
 
-    num_train_images_per_set = 200
+    num_train_images_per_set = 300
     num_val_images_per_set = 50
 
     # Gabor Fragment - list of list of dictionaries one for each channel
