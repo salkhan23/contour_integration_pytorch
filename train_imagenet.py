@@ -477,6 +477,90 @@ def accuracy(output, target, topk=(1,)):
         return res
 
 
+def check_requires_grad(model):
+    print("Parameters that will be trained (requires_grads):")
+    for c_idx, child in enumerate(model.children()):
+        print("Layer {}. Type: {}".format(c_idx, child.__class__.__name__))
+
+        if child.__class__.__name__ == 'Sequential':
+            for gc_idx, grand_child in enumerate(child.children()):
+                print("\tGrandChild {}. Type: {}".format(gc_idx, grand_child.__class__.__name__))
+
+                for p_idx, param in enumerate(grand_child.parameters()):
+                    if param.requires_grad:
+                        print("\t\t[{}]. Shape {} Requires Grad = {}".format(
+                            p_idx, param.shape, param.requires_grad))
+        else:
+            for p_idx, param in enumerate(child.parameters()):
+                if param.requires_grad:
+                    print("\t[{}]. Shape {} Requires Grad = {}".format(p_idx, param.shape, param.requires_grad))
+    import pdb
+    pdb.set_trace()
+
+
+def embed_resnet50(model_to_embed):
+    """
+
+    :param model_to_embed:
+    :return:
+    """
+
+    base_model = torchvision_models.resnet50(pretrained=True)
+
+    # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
+    model_to_embed.conv1 = base_model.conv1
+
+    # Replace the base models edge extraction layer with edge extraction + contour integration model
+    base_model.conv1 = model_to_embed
+
+    # Only Train the Contour Integration Layer
+    for c_idx, child in enumerate(base_model.children()):
+        if c_idx >= 1:
+            for p_idx, param in enumerate(child.parameters()):
+                param.requires_grad = False
+
+    # Set the requires gradient parameter of the first edge extraction layer as False
+    base_model.conv1.conv1.weight.requires_grad = False
+
+    check_requires_grad(base_model)
+
+    return base_model
+
+
+def embed_alexnet(model_to_embed):
+    """
+
+    :param model_to_embed:
+    :return:
+    """
+    base_model = torchvision_models.alexnet(pretrained=True)
+
+    # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
+    model_to_embed.conv1 = base_model.features[0]
+
+    # # Replace the edge extraction layer with edge extraction + contour integration model
+    base_model.features[0] = cont_int_model
+
+    # Only Train the Contour Integration Layer
+    for c_idx, child in enumerate(base_model.children()):
+        if c_idx >= 1:
+            for p_idx, param in enumerate(child.parameters()):
+                param.requires_grad = False
+        elif c_idx == 0:
+            for gc_idx, grand_child in enumerate(child.children()):
+                if gc_idx != 0:
+                    for p_idx, param in enumerate(grand_child.parameters()):
+                        param.requires_grad = False
+
+    # Set the requires gradient parameter of the first edge extraction layer as False
+    base_model.features[0].conv1.weight.requires_grad = False
+    base_model.features[0].conv1.bias.requires_grad = False
+
+    check_requires_grad(base_model)
+
+    return base_model
+
+
 if __name__ == '__main__':
 
     # -----------------------------------------------------------------------------------
@@ -484,40 +568,16 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    # Start with a pre-trained classification model
-    # net = torchvision_models.resnet50(pretrained=True)
-    net = torchvision_models.alexnet(pretrained=True)
-
     # Contour Integration model
     import models.piech_models
     cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
 
+    # # Control Model
     # import models.control_models
     # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
 
-    # replace the first edge extraction layer of the contour integration model with the one from resnet.
-    # This loads pre-trained weights for the edge extraction layer
-    cont_int_model.conv1 = net.conv1
-    # Replace the edge extraction layer with edge extraction + contour integration model
-    net.conv1 = cont_int_model
-
-    # Only Train the Contour Integration Layer
-    for c_idx, child in enumerate(net.children()):
-        if c_idx >= 1:
-            for p_idx, param in enumerate(child.parameters()):
-                param.requires_grad = False
-    # Set the requires gradient parameter of the first edge extraction layer as False
-    net.conv1.conv1.weight.requires_grad = False
-    net.conv1.conv1.bias.requires_grad = False
-
-    # Check that all the requires gradients have been set correctly
-    print("Parameters that will be trained:")
-    for c_idx, child in enumerate(net.children()):
-        print(child)
-        for p_idx, param in enumerate(child.parameters()):
-            print("[{},{}]. Shape {} Requires Grade = {}".format(c_idx, p_idx, param.shape, param.requires_grad))
-    import pdb
-    pdb.set_trace()
+    # net = embed_resnet50(cont_int_model)
+    net = embed_alexnet(cont_int_model)
 
     print(">>> Starting main script {}".format('.'*80))
     main(net)
