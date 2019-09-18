@@ -498,14 +498,15 @@ def check_requires_grad(model):
     pdb.set_trace()
 
 
-def embed_resnet50(model_to_embed):
+def embed_resnet50(model_to_embed, pretrained=True):
     """
 
+    :param pretrained:
     :param model_to_embed:
     :return:
     """
 
-    base_model = torchvision_models.resnet50(pretrained=True)
+    base_model = torchvision_models.resnet50(pretrained=pretrained)
 
     # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
     model_to_embed.conv1 = base_model.conv1
@@ -513,11 +514,12 @@ def embed_resnet50(model_to_embed):
     # Replace the base models edge extraction layer with edge extraction + contour integration model
     base_model.conv1 = model_to_embed
 
-    # Only Train the Contour Integration Layer
-    for c_idx, child in enumerate(base_model.children()):
-        if c_idx >= 1:
-            for p_idx, param in enumerate(child.parameters()):
-                param.requires_grad = False
+    if pretrained:
+        # Only Train the Contour Integration Layer
+        for c_idx, child in enumerate(base_model.children()):
+            if c_idx >= 1:
+                for p_idx, param in enumerate(child.parameters()):
+                    param.requires_grad = False
 
     # Set the requires gradient parameter of the first edge extraction layer as False
     base_model.conv1.conv1.weight.requires_grad = False
@@ -527,13 +529,14 @@ def embed_resnet50(model_to_embed):
     return base_model
 
 
-def embed_alexnet(model_to_embed):
+def embed_alexnet(model_to_embed, pretrained=True):
     """
 
+    :param pretrained:
     :param model_to_embed:
     :return:
     """
-    base_model = torchvision_models.alexnet(pretrained=True)
+    base_model = torchvision_models.alexnet(pretrained=pretrained)
 
     # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
     model_to_embed.conv1 = base_model.features[0]
@@ -541,16 +544,17 @@ def embed_alexnet(model_to_embed):
     # # Replace the edge extraction layer with edge extraction + contour integration model
     base_model.features[0] = cont_int_model
 
-    # Only Train the Contour Integration Layer
-    for c_idx, child in enumerate(base_model.children()):
-        if c_idx >= 1:
-            for p_idx, param in enumerate(child.parameters()):
-                param.requires_grad = False
-        elif c_idx == 0:
-            for gc_idx, grand_child in enumerate(child.children()):
-                if gc_idx != 0:
-                    for p_idx, param in enumerate(grand_child.parameters()):
-                        param.requires_grad = False
+    if pretrained:
+        # Only Train the Contour Integration Layer
+        for c_idx, child in enumerate(base_model.children()):
+            if c_idx >= 1:
+                for p_idx, param in enumerate(child.parameters()):
+                    param.requires_grad = False
+            elif c_idx == 0:
+                for gc_idx, grand_child in enumerate(child.children()):
+                    if gc_idx != 0:
+                        for p_idx, param in enumerate(grand_child.parameters()):
+                            param.requires_grad = False
 
     # Set the requires gradient parameter of the first edge extraction layer as False
     base_model.features[0].conv1.weight.requires_grad = False
@@ -577,7 +581,7 @@ if __name__ == '__main__':
     # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
 
     # net = embed_resnet50(cont_int_model)
-    net = embed_alexnet(cont_int_model)
+    net = embed_alexnet(cont_int_model, pretrained=False)
 
     print(">>> Starting main script {}".format('.'*80))
     main(net)
