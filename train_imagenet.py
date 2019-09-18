@@ -508,6 +508,11 @@ def embed_resnet50(model_to_embed, pretrained=True):
 
     base_model = torchvision_models.resnet50(pretrained=pretrained)
 
+    if not pretrained:
+        # Load the edge Extraction of the original model
+        resnet50_edge_detect_layer = torchvision_models.resnet50(pretrained=True).conv1
+        base_model.features[0].weight.data.copy_(resnet50_edge_detect_layer.weight.data)
+
     # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
     model_to_embed.conv1 = base_model.conv1
 
@@ -538,10 +543,16 @@ def embed_alexnet(model_to_embed, pretrained=True):
     """
     base_model = torchvision_models.alexnet(pretrained=pretrained)
 
+    if not pretrained:
+        # Load the edge Extraction of the original model
+        alexnet_edge_detect_layer = torchvision_models.alexnet(pretrained=True).features[0]
+        base_model.features[0].weight.data.copy_(alexnet_edge_detect_layer.weight.data)
+
     # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
     model_to_embed.conv1 = base_model.features[0]
+    model_to_embed.conv1.bias = None   # Original Alexnet used a bias in the first layer. Turn it off.
 
-    # # Replace the edge extraction layer with edge extraction + contour integration model
+    # Replace the edge extraction layer with edge extraction + contour integration model
     base_model.features[0] = cont_int_model
 
     if pretrained:
@@ -558,7 +569,6 @@ def embed_alexnet(model_to_embed, pretrained=True):
 
     # Set the requires gradient parameter of the first edge extraction layer as False
     base_model.features[0].conv1.weight.requires_grad = False
-    base_model.features[0].conv1.bias.requires_grad = False
 
     check_requires_grad(base_model)
 
