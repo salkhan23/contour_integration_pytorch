@@ -65,10 +65,27 @@ resnet50_with_control = np.array([
     [12, 1.0413, 74.9616, 90.7462, 2.2782, 52.3440, 75.7960],
 ])
 
+alexnet_with_contour_integration = np.array([
+    [0, np.nan, np.nan, np.nan, 6.7912, 4.7520, 12.0100],
+    [1, 2.2111, 50.3333, 73.9547, 1.9361, 55.9980, 78.7700],
+    [2, 2.1870, 50.7287, 74.3358, 1.9246, 56.0560, 78.9660],
+    [3, 2.1782, 50.8859, 74.4587, 1.9206, 56.3040, 78.9220],
+    [4, 2.1746, 50.9885, 74.4796, 1.9146, 56.3520, 79.0520],
+    [5, 2.1681, 51.1189, 74.6372, 1.9168, 56.3960, 79.0200],
+    [6, 2.1640, 51.2181, 74.7049, 1.9194, 56.2460, 79.0220],
+    [7, 2.1607, 51.2864, 74.7601, 1.9082, 56.4660, 79.1080],
+    [8, 2.1596, 51.2619, 74.8080, 1.9121, 56.3920, 79.0680],
+    [9, 2.1538, 51.3415, 74.8045, 1.9128, 56.3360, 79.1000],
+    [10, 2.1530, 51.3334, 74.8983, 1.9176, 56.0660, 79.0700],
+    [11, 2.1491, 51.4519, 74.9516, 1.9138, 56.2600, 79.0540],
+    [12, 2.1457, 51.4970, 74.9886, 1.9052, 56.6300, 79.1740],
+])
 
 # ---------------------------------------------------------------------------------------
 plt.ion()
 
+# Resnet50 Pre-trained Results
+# -----------------------------
 f, ax_arr = plt.subplots(2, 1, sharex=True)
 ax_arr[0].plot(resnet50[:, 2], label='train - resnet50')
 ax_arr[0].plot(resnet50_with_contour_integration[:, 2], label='+ contour integration')
@@ -114,6 +131,51 @@ ax_arr[1].grid()
 
 f.suptitle("Top5 Accuracy")
 
+# Alexnet Results
+# ---------------------------------------------------------------------------------------
+f, ax_arr = plt.subplots(2, 1, sharex=True)
+# ax_arr[0].plot(resnet50[:, 2], label='train - resnet50')
+ax_arr[0].plot(alexnet_with_contour_integration[:, 2], label='alexnet + contour integration')
+# ax_arr[0].plot(resnet50_with_control[:, 2], label='+ control')
+ax_arr[0].set_title("Train")
+ax_arr[0].legend()
+ax_arr[0].set_ylabel("Accuracy")
+ax_arr[0].grid()
+
+# ax_arr[1].plot(resnet50[:, 5], label='val - resnet50')
+ax_arr[1].plot(alexnet_with_contour_integration[:, 5], label='alexnet + contour integration')
+# ax_arr[1].plot(resnet50_with_control[:, 5], label='val + control')
+ax_arr[1].axhline((100 - 43.45), linestyle='--', color='black')
+ax_arr[1].text(0, (100 - 43.45), 'Published', color='black')
+ax_arr[1].set_xlabel("Epoch")
+ax_arr[1].set_ylabel("Accuracy")
+ax_arr[1].set_title("Validation")
+ax_arr[1].legend()
+ax_arr[1].grid()
+
+f.suptitle("Top1 Accuracy")
+
+
+f, ax_arr = plt.subplots(2, 1, sharex=True)
+# ax_arr[0].plot(resnet50[:, 3], label='resnet50')
+ax_arr[0].plot(alexnet_with_contour_integration[:, 3], label='alexnet + contour integration')
+# ax_arr[0].plot(resnet50_with_control[:, 3], label='+ control')
+ax_arr[0].set_title("Train")
+ax_arr[0].legend()
+ax_arr[0].set_ylabel("Accuracy")
+ax_arr[0].grid()
+
+# ax_arr[1].plot(resnet50[:, 6], label='resnet50')
+ax_arr[1].plot(alexnet_with_contour_integration[:, 6], label='alexnet + contour control')
+# ax_arr[1].plot(resnet50_with_control[:, 6], label='+ control')
+ax_arr[1].axhline((100 - 20.91), linestyle='--', color='black')
+ax_arr[1].text(0, (100 - 20.91), 'Published', color='black')
+ax_arr[1].set_xlabel("Epoch")
+ax_arr[1].set_ylabel("Accuracy")
+ax_arr[1].set_title("Validation")
+ax_arr[1].legend()
+ax_arr[1].grid()
+
+f.suptitle("Top5 Accuracy")
+
 input("Press any key to exit")
-
-
