@@ -582,16 +582,18 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    # Contour Integration model
-    import models.piech_models
-    cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    # # Contour Integration model
+    # import models.piech_models
+    # cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    #
+    # # # Control Model
+    # # import models.control_models
+    # # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
+    #
+    # # net = embed_resnet50(cont_int_model)
+    # net = embed_alexnet(cont_int_model, pretrained=False)
 
-    # # Control Model
-    # import models.control_models
-    # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
-
-    # net = embed_resnet50(cont_int_model)
-    net = embed_alexnet(cont_int_model, pretrained=False)
+    net = torchvision_models.alexnet()
 
     print(">>> Starting main script {}".format('.'*80))
     main(net)
