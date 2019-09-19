@@ -28,12 +28,19 @@ if __name__ == "__main__":
 
     random_seed = 7
 
-    # cont_int_model = piech_models.CurrentSubtractiveInhibition(use_class_head=False)
-    cont_int_model = control_models.CmMatchParameters(use_class_head=False)
+    # Contour Integration Model
+    model_to_embed = piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    net = train_imagenet.embed_resnet50(model_to_embed)
+    saved_model = \
+        './results/imagenet_classification/' \
+        'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
 
-    net = train_imagenet.embed_resnet50(cont_int_model)
-    saved_model = './results/imagenet_classification/' \
-                  'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
+    # # Control Model
+    # model_to_embed = control_models.CmMatchParameters(use_class_head=False)
+    # net = train_imagenet.embed_resnet50(model_to_embed)
+    # saved_model = \
+    #     './results/imagenet_classification/' \
+    #     'Resnet50_20190911_175651_pretrained_with_control_layer/best_accuracy.pth'
 
     batch_size = 1
     workers = 1
@@ -41,20 +48,9 @@ if __name__ == "__main__":
     momentum = 0.9
     weight_decay = 1e-4
 
-    class Args:
-        def __init__(self):
-            self.print_freq = 5000
-            self.gpu = device
-
-
-    args = Args()
-
     # --------------------------
     plt.ion()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    saved_model = './results/imagenet_classification/' \
-                  'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
 
     # Train_imagenet stores the not the whole state of everything. Not just the weights.
     # this is similar to how resume option is used in the train imagenet script
@@ -70,6 +66,13 @@ if __name__ == "__main__":
 
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
+
+    class Args:
+        def __init__(self):
+            self.print_freq = 5000
+            self.gpu = device
+
+    args = Args()
 
     # Data Loaders
     # -----------------------------------------------------------------------------------
