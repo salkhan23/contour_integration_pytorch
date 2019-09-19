@@ -553,7 +553,7 @@ def embed_alexnet(model_to_embed, pretrained=True):
     model_to_embed.conv1.bias = None   # Original Alexnet used a bias in the first layer. Turn it off.
 
     # Replace the edge extraction layer with edge extraction + contour integration model
-    base_model.features[0] = cont_int_model
+    base_model.features[0] = model_to_embed
 
     if pretrained:
         # Only Train the Contour Integration Layer
@@ -593,7 +593,7 @@ if __name__ == '__main__':
     # # net = embed_resnet50(cont_int_model)
     # net = embed_alexnet(cont_int_model, pretrained=False)
 
-    net = torchvision_models.alexnet()
+    net = torchvision_models.resnet50(pretrained=True)
 
     print(">>> Starting main script {}".format('.'*80))
     main(net)
