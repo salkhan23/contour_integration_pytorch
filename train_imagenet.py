@@ -529,8 +529,6 @@ def embed_resnet50(model_to_embed, pretrained=True):
     # Set the requires gradient parameter of the first edge extraction layer as False
     base_model.conv1.conv1.weight.requires_grad = False
 
-    check_requires_grad(base_model)
-
     return base_model
 
 
@@ -570,8 +568,6 @@ def embed_alexnet(model_to_embed, pretrained=True):
     # Set the requires gradient parameter of the first edge extraction layer as False
     base_model.features[0].conv1.weight.requires_grad = False
 
-    check_requires_grad(base_model)
-
     return base_model
 
 
@@ -585,13 +581,24 @@ if __name__ == '__main__':
     # Contour Integration model
     import models.piech_models
     cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
-    #
+
     # # # Control Model
     # # import models.control_models
     # # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
     #
     net = embed_resnet50(cont_int_model)
     # net = embed_alexnet(cont_int_model, pretrained=False)
+
+    # Train_imagenet stores the not the whole state of everything. Not just the weights.
+    # this is similar to how resume option is used in the train imagenet script
+    print("Loading model weights")
+
+    saved_model = \
+        './results/imagenet_classification/' \
+        'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
+
+    checkpoint = torch.load(saved_model)
+    net.load_state_dict(checkpoint['state_dict'])
 
     # Allow all layers to be trained:
     for c_idx, child in enumerate(net.children()):
@@ -601,4 +608,5 @@ if __name__ == '__main__':
     # net = torchvision_models.resnet50(pretrained=True)
 
     print(">>> Starting main script {}".format('.'*80))
+    check_requires_grad(net)
     main(net)
