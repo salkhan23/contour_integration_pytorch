@@ -593,6 +593,11 @@ if __name__ == '__main__':
     net = embed_resnet50(cont_int_model)
     # net = embed_alexnet(cont_int_model, pretrained=False)
 
+    # Allow all layers to be trained:
+    for c_idx, child in enumerate(net.children()):
+        for p_idx, param in enumerate(child.parameters()):
+            param.requires_grad = True
+
     # net = torchvision_models.resnet50(pretrained=True)
 
     print(">>> Starting main script {}".format('.'*80))
