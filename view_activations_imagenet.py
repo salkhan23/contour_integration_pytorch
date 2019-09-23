@@ -13,7 +13,7 @@ import models.piech_models as piech_models
 import models.control_models as control_models
 
 edge_extract_act = []
-contour_integration_act = []
+contour_int_act = []
 
 
 def edge_extraction_hook(self, input_l, output):
@@ -21,7 +21,7 @@ def edge_extraction_hook(self, input_l, output):
 
 
 def contour_integration_hook(self, input_l, output):
-    contour_integration_act.append(output.cpu().detach().numpy())
+    contour_int_act.append(output.cpu().detach().numpy())
 
 
 if __name__ == "__main__":
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         y1 = np.sum(y, axis=0)  # Sum activations across all channels
 
         # Contour Extraction Out
-        z = np.squeeze(contour_integration_act[i])
+        z = np.squeeze(contour_int_act[i])
         z1 = np.sum(z, axis=0)
 
         # Input image
