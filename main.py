@@ -199,6 +199,8 @@ if __name__ == '__main__':
     val_history = []
     lr_history = []
 
+    best_iou = 0
+
     for epoch in range(num_epochs):
 
         epoch_start_time = datetime.now()
@@ -217,12 +219,14 @@ if __name__ == '__main__':
             datetime.now() - epoch_start_time
         ))
 
-    print('Finished Training. Training took {}'.format(datetime.now() - training_start_time))
+        if val_history[epoch][1] > best_iou:
+            best_iou = val_history[epoch][1]
+            torch.save(
+                model.state_dict(),
+                os.path.join(results_store_dir, 'best_accuracy.pth')
+            )
 
-    torch.save(
-        model.state_dict(),
-        os.path.join(results_store_dir, 'trained_epochs_{}.pth'.format(num_epochs))
-    )
+    print('Finished Training. Training took {}'.format(datetime.now() - training_start_time))
 
     # Write results summary file
     summary_file = os.path.join(results_store_dir, 'summary.txt')
