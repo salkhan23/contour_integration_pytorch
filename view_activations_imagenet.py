@@ -5,6 +5,7 @@ import os
 
 import torchvision.transforms as transforms
 import torch
+import torch.nn as nn
 import torchvision.datasets as datasets
 import torch.nn as nn
 
@@ -12,16 +13,16 @@ import train_imagenet
 import models.piech_models as piech_models
 import models.control_models as control_models
 
-edge_extract_act = []
-contour_int_act = []
+contour_int_in_act = []
+contour_int_out_act = []
 
 
-def edge_extraction_hook(self, input_l, output):
-    edge_extract_act.append(output.cpu().detach().numpy())
+def contour_int_in(self, input_l, output):
+    contour_int_in_act.append(nn.functional.relu(output).cpu().detach().numpy())
 
 
 def contour_integration_hook(self, input_l, output):
-    contour_int_act.append(output.cpu().detach().numpy())
+    contour_int_out_act.append(output.cpu().detach().numpy())
 
 
 if __name__ == "__main__":
@@ -118,7 +119,7 @@ if __name__ == "__main__":
     # Add Activation Hooks
     # ----------------------------------------------------------------------------------
     # Register the hooks
-    net.conv1.conv1.register_forward_hook(edge_extraction_hook)
+    net.conv1.bn1.register_forward_hook(contour_int_in)
     net.conv1.register_forward_hook(contour_integration_hook)
 
     for i, (images, target) in enumerate(val_loader):
@@ -129,11 +130,11 @@ if __name__ == "__main__":
         out = net(images)
 
         # Edge Extraction Output
-        y = np.squeeze(edge_extract_act[i])
+        y = np.squeeze(contour_int_in_act[i])
         y1 = np.sum(y, axis=0)  # Sum activations across all channels
 
         # Contour Extraction Out
-        z = np.squeeze(contour_int_act[i])
+        z = np.squeeze(contour_int_out_act[i])
         z1 = np.sum(z, axis=0)
 
         # Input image
