@@ -73,8 +73,8 @@ if __name__ == '__main__':
 
     # get mean/std of dataset
     meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
-    with open(meta_data_file, 'rb') as handle:
-        meta_data = pickle.load(handle)
+    with open(meta_data_file, 'rb') as file_handle:
+        meta_data = pickle.load(file_handle)
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
     # Pre-processing
@@ -201,6 +201,31 @@ if __name__ == '__main__':
 
     best_iou = 0
 
+    # Summary file
+    summary_file = os.path.join(results_store_dir, 'summary.txt')
+    file_handle = open(summary_file, 'w+')
+    file_handle.write("Data Set         : {}\n".format(data_set_dir))
+    file_handle.write("Train images     : {}\n".format(len(train_set.images)))
+    file_handle.write("Val images       : {}\n".format(len(val_set.images)))
+    file_handle.write("Train batch size : {}\n".format(train_batch_size))
+    file_handle.write("Val batch size   : {}\n".format(test_batch_size))
+    file_handle.write("Epochs           : {}\n".format(num_epochs))
+    file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+    file_handle.write("                 : {}\n")
+    print(model, file=file_handle)
+    file_handle.write("{}\n".format('-' * 80))
+
+    file_handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
+    file_handle.write("learning rate    : {}\n".format(learning_rate))
+    file_handle.write("Loss             : {}\n".format(criterion.__class__.__name__))
+    file_handle.write("{}\n".format('-' * 80))
+
+    file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
+    file_handle.write("{}\n".format('-' * 80))
+
+    file_handle.write("Training details\n")
+    file_handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
+
     for epoch in range(num_epochs):
 
         epoch_start_time = datetime.now()
@@ -226,41 +251,17 @@ if __name__ == '__main__':
                 os.path.join(results_store_dir, 'best_accuracy.pth')
             )
 
+        file_handle.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {}],\n".format(
+            epoch,
+            train_history[epoch][0],
+            train_history[epoch][1],
+            val_history[epoch][0],
+            val_history[epoch][1],
+            lr_history[epoch]
+        ))
+
     print('Finished Training. Training took {}'.format(datetime.now() - training_start_time))
-
-    # Write results summary file
-    summary_file = os.path.join(results_store_dir, 'summary.txt')
-    with open(summary_file, 'w+') as handle:
-        handle.write("Data Set         : {}\n".format(data_set_dir))
-        handle.write("Train images     : {}\n".format(len(train_set.images)))
-        handle.write("Val images       : {}\n".format(len(val_set.images)))
-        handle.write("Train batch size : {}\n".format(train_batch_size))
-        handle.write("Val batch size   : {}\n".format(test_batch_size))
-        handle.write("Epochs           : {}\n".format(num_epochs))
-        handle.write("Model Name       : {}\n".format(model.__class__.__name__))
-        handle.write("                 : {}\n")
-        print(model, file=handle)
-        handle.write("{}\n".format('-'*80))
-
-        handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
-        handle.write("learning rate    : {}\n".format(learning_rate))
-        handle.write("Loss             : {}\n".format(criterion.__class__.__name__))
-        handle.write("{}\n".format('-' * 80))
-
-        handle.write("IoU Threshold    : {}\n".format(detect_thres))
-        handle.write("{}\n".format('-' * 80))
-
-        handle.write("Training details\n")
-        handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
-        for e_idx in range(num_epochs):
-            handle.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {}],\n".format(
-                e_idx,
-                train_history[e_idx][0],
-                train_history[e_idx][1],
-                val_history[e_idx][0],
-                val_history[e_idx][1],
-                lr_history[e_idx]
-            ))
+    file_handle.close()
 
     # -----------------------------------------------------------------------------------
     # Plots
