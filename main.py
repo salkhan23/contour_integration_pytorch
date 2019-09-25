@@ -54,12 +54,7 @@ if __name__ == '__main__':
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
-    print("Classifier Head: {}".format(model.post.__class__.__name__))
-
-    # from torchsummary import summary
-    # summary(model, input_size=(3, 512, 512))
-    # import pdb
-    # pdb.set_trace()
+    print(model)
 
     results_store_dir = os.path.join(
         results_store_dir,
@@ -239,15 +234,8 @@ if __name__ == '__main__':
         handle.write("Val batch size   : {}\n".format(test_batch_size))
         handle.write("Epochs           : {}\n".format(num_epochs))
         handle.write("Model Name       : {}\n".format(model.__class__.__name__))
-        handle.write("Classifier Head  : {}\n".format(model.post.__class__.__name__))
-        try:
-            handle.write("Lateral Excitatory Connections Size: {}\n".format(model.lateral_e.weight.shape))
-        except AttributeError:
-            pass
-        try:
-            handle.write("Lateral Inhibitory Connections Size: {}\n".format(model.lateral_i.weight.shape))
-        except AttributeError:
-            pass
+        handle.write("                 : {}\n")
+        print(model, file=handle)
         handle.write("{}\n".format('-'*80))
 
         handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
