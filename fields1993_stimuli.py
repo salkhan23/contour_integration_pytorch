@@ -1116,21 +1116,54 @@ if __name__ == "__main__":
     np.random.seed(random_seed)
 
     # Gabor Fragment
-    gabor_parameters = {
-        'x0': 0,
-        'y0': 0,
-        'theta_deg': 0,
-        'amp': 1,
-        'sigma': 4.0,
-        'lambda1': 7,
-        'psi': 0,
-        'gamma': 1
-    }
+    # gabor_parameters = {
+    #     'x0': 0,
+    #     'y0': 0,
+    #     'theta_deg': 0,
+    #     'amp': 1,
+    #     'sigma': 4.0,
+    #     'lambda1': 7,
+    #     'psi': 0,
+    #     'gamma': 1
+    # }
 
-    fragment = gabor_fits.get_gabor_fragment(gabor_parameters, fragment_size)
-    # plt.figure()
-    # plt.imshow(fragment)
-    # plt.title("Generated Fragment")
+    gabor_parameters_list = [
+        {
+            'x0': 0.76,
+            'y0': -0.40,
+            'theta_deg': 38.23,
+            'amp': 0.53,
+            'sigma': 4.0,
+            'lambda1': 10.68,
+            'psi': -0.91,
+            'gamma': 1.22
+        },
+        {
+            'x0': 0.28,
+            'y0': 0.28,
+            'theta_deg': 37.22,
+            'amp': 0.28,
+            'sigma': 4.0,
+            'lambda1': 13.44,
+            'psi': 1.80,
+            'gamma': 1.18
+        },
+        {
+            'x0': 1.01,
+            'y0': -0.75,
+            'theta_deg': 38.66,
+            'amp': 0.30,
+            'sigma': 4.0,
+            'lambda1': 9.27,
+            'psi': 2.54,
+            'gamma': 1.32
+        }
+    ]
+
+    fragment = gabor_fits.get_gabor_fragment(gabor_parameters_list, fragment_size)
+    plt.figure()
+    plt.imshow(fragment)
+    plt.title("Generated Fragment")
 
     # # -----------------------------------------------------------------------------------
     # #  Test Stimulus - Manual
@@ -1199,7 +1232,7 @@ if __name__ == "__main__":
 
     image, image_label = generate_contour_image(
         frag=fragment,
-        frag_params=gabor_parameters,
+        frag_params=gabor_parameters_list,
         c_len=contour_len,
         beta=beta_rotation,
         alpha=alpha_rotation,
