@@ -153,6 +153,63 @@ if __name__ == "__main__":
         ax_arr[2].set_title("Cont Int Out (Mean={:0.2f})".format(z1.mean()))
         plt.colorbar(p2, ax=ax_arr[2], orientation='horizontal')
 
+        # Note: Not clear how to look at contour gain across 64 dimensions, try different approaches
+
+        # 1. Based on summed responses
+        gain1 = z1 / (y1 + 1e-5)
+        diff1 = z1 - y1
+
+        f, ax_arr = plt.subplots(1, 2, sharey=True, squeeze=True, figsize=(12, 6))
+        f.suptitle("Activations summed across all 64 channels")
+
+        p0 = ax_arr[0].imshow(gain1, cmap='seismic')
+        plt.colorbar(p0, ax=ax_arr[0], orientation='horizontal')
+        ax_arr[0].set_title('Gain')
+
+        p1 = ax_arr[1].imshow(diff1, cmap='seismic')
+        plt.colorbar(p1, ax=ax_arr[1], orientation='horizontal')
+        ax_arr[1].set_title('Diff')
+
+        # 2. Max active neurons across each channel
+        y2 = np.max(y, axis=0)
+        z2 = np.max(z, axis=0)
+        gain2 = z2 / (y2 + 1e-5)
+        diff2 = z2 - y2
+
+        f, ax_arr = plt.subplots(1, 2, sharey=True, squeeze=True, figsize=(12, 6))
+        f.suptitle("Max active neuron across all 64 channels")
+
+        p0 = ax_arr[0].imshow(gain2, cmap='seismic')
+        plt.colorbar(p0, ax=ax_arr[0], orientation='horizontal')
+        ax_arr[0].set_title('Gain')
+
+        p1 = ax_arr[1].imshow(diff2, cmap='seismic')
+        plt.colorbar(p1, ax=ax_arr[1], orientation='horizontal')
+        ax_arr[1].set_title('Diff')
+
+        # # 3. Individual Channels
+        # for ch_idx in range(y.shape[0]):
+        #     y3 = y[ch_idx, ]
+        #     z3 = z[ch_idx, ]
+        #     gain3 = z3 / (y3 + 1e-5)
+        #     diff3 = z3 - y3
+        #
+        #     f.suptitle("Contour Gain @ channel {}".format(ch_idx))
+        #
+        #     f, ax_arr = plt.subplots(1, 2, sharey=True, squeeze=True, figsize=(12, 6))
+        #
+        #     p0 = ax_arr[0].imshow(gain3, cmap='seismic')
+        #     plt.colorbar(p0, ax=ax_arr[0], orientation='horizontal')
+        #     ax_arr[0].set_title('Gain')
+        #
+        #     p1 = ax_arr[1].imshow(diff3, cmap='seismic')
+        #     plt.colorbar(p1, ax=ax_arr[1], orientation='horizontal')
+        #     ax_arr[1].set_title('Diff')
+        #
+        #     import pdb
+        #     pdb.set_trace()
+        #     plt.close('all')
+
         import pdb
         pdb.set_trace()
         plt.close('all')
