@@ -29,6 +29,9 @@ if __name__ == "__main__":
 
     random_seed = 7
 
+    batch_size = 1
+    workers = 1
+
     # Contour Integration Model
     model_to_embed = piech_models.CurrentSubtractiveInhibition(use_class_head=False)
     net = train_imagenet.embed_resnet50(model_to_embed)
@@ -42,12 +45,6 @@ if __name__ == "__main__":
     # saved_model = \
     #     './results/imagenet_classification/' \
     #     'Resnet50_20190911_175651_pretrained_with_control_layer/best_accuracy.pth'
-
-    batch_size = 1
-    workers = 1
-    lr = 0.1
-    momentum = 0.9
-    weight_decay = 1e-4
 
     # --------------------------
     plt.ion()
@@ -100,19 +97,20 @@ if __name__ == "__main__":
         pin_memory=True
     )
 
-    #  Criterion
-    # -----------------------------------------------------------------------------------
-    criterion = nn.CrossEntropyLoss().cuda(device)
-    optimizer = torch.optim.SGD(
-        net.parameters(),
-        lr,
-        momentum=momentum,
-        weight_decay=weight_decay
-    )
-
-    # # Validate
-    # # ----------------------------------------------------------------------------------
-
+    # #  Validate
+    # # -----------------------------------------------------------------------------------
+    # lr = 0.1
+    # momentum = 0.9
+    # weight_decay = 1e-4
+    #
+    # criterion = nn.CrossEntropyLoss().cuda(device)
+    # optimizer = torch.optim.SGD(
+    #     net.parameters(),
+    #     lr,
+    #     momentum=momentum,
+    #     weight_decay=weight_decay
+    # )
+    #
     # val_loss, val_acc1, val_acc5 = train_imagenet.validate(val_loader, net, criterion, args)
     # print("Loss: {}, val_acc1 {}, val_acc5 {}".format(val_loss, val_acc1, val_acc5))
 
@@ -141,19 +139,19 @@ if __name__ == "__main__":
         image = images.cpu().detach().numpy()
         image = np.squeeze(image)
         image = np.transpose(image, axes=(1, 2, 0))
-        plt.figure()
-        plt.imshow(image)
-        plt.title("Input (normalized) Image")
 
-        # Display Figures
-        f, ax_arr = plt.subplots(1, 2, sharey=True, squeeze=True, figsize=(12, 6))
-        p1 = ax_arr[0].imshow(y1, cmap='seismic', vmax=np.mean(y1) + np.std(y1))
-        ax_arr[0].set_title("Edge Extract Out (Mean={:0.4f})".format(y1.mean()))
-        plt.colorbar(p1, ax=ax_arr[0], orientation='horizontal')
+        f, ax_arr = plt.subplots(1, 3, sharey=True, squeeze=True, figsize=(18, 6))
 
-        p2 = ax_arr[1].imshow(z1, cmap='seismic', vmax=np.mean(z1) + np.std(z1))
-        ax_arr[1].set_title("Contour Integration Out (Mean={:0.4f})".format(z1.mean()))
-        plt.colorbar(p2, ax=ax_arr[1], orientation='horizontal')
+        ax_arr[0].imshow(image)
+        ax_arr[0].set_title('Input Image')
+
+        p1 = ax_arr[1].imshow(y1, cmap='seismic', vmax=np.mean(y1) + np.std(y1))
+        ax_arr[1].set_title("Edge Extract Out (Mean={:0.2f})".format(y1.mean()))
+        plt.colorbar(p1, ax=ax_arr[1], orientation='horizontal')
+
+        p2 = ax_arr[2].imshow(z1, cmap='seismic', vmax=np.mean(z1) + np.std(z1))
+        ax_arr[2].set_title("Cont Int Out (Mean={:0.2f})".format(z1.mean()))
+        plt.colorbar(p2, ax=ax_arr[2], orientation='horizontal')
 
         import pdb
         pdb.set_trace()
