@@ -27,11 +27,11 @@ def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr):
 
     if c_len_arr:
         for c_len in c_len_arr:
-            use_set = [x for x in file_names if 'clen_{}'.format(c_len) in x]
+            use_set = [x for x in file_names if 'clen_{}_'.format(c_len) in x]
 
     if beta_arr:
         for beta in beta_arr:
-            use_set = [x for x in use_set if 'beta_{}'.format(beta) in x]
+            use_set = [x for x in use_set if 'beta_{}_'.format(beta) in x]
 
     if alpha_arr:
         for alpha in alpha_arr:

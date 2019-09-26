@@ -215,7 +215,7 @@ if __name__ == "__main__":
     data_dir = os.path.join(data_set_dir, 'val')
     bg_tile_size = meta_data["full_tile_size"]
 
-    c_len_arr = np.array([1, 3, 5, 7, 9])
+    c_len_arr = np.array([3, 5, 7, 9])
     iou_scores = []
 
     mean_gains_arr = np.zeros((len(c_len_arr), 64))  # 64 is the number of channels
@@ -252,15 +252,20 @@ if __name__ == "__main__":
         std_gains_arr[c_idx, ] = gains_std
 
     plt.figure("IoU vs Contour Length")
+    plt.title("Intersection over Union vs Contour Length")
     plt.plot(c_len_arr, iou_scores)
     plt.xlabel("Contour Length")
     plt.ylabel("IoU Score")
 
-    plt.figure("Mean Gains")
-    plt.xlabel("Contour Length")
-    plt.ylabel("Gain")
+    f, ax_arr = plt.subplots(8, 1, sharex=True)
+    f.suptitle("Channel-wise Mean Contour Integration Gains")
     for ch_idx in range(64):
-        plt.plot(c_len_arr, mean_gains_arr[:, ch_idx], label='ch={}'.format(ch_idx))
+        ax_arr[ch_idx % 8].plot(c_len_arr, mean_gains_arr[:, ch_idx], label='ch={}'.format(ch_idx))
+
+    for ax in ax_arr:
+        # ax.legend()
+        ax.set_ylabel("Gain")
+    ax_arr[-1].set_xlabel("Contour Length")
 
     import pdb
     pdb.set_trace()
