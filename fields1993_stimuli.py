@@ -794,18 +794,19 @@ def generate_contour_image(
         img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
 
     # Label -----------------------------------
-    for c_frag_start in c_frag_starts:
-        c_frag_center = c_frag_start + frag_size // 2
+    if c_len > 1:  # No contour integration for single fragments
+        for c_frag_start in c_frag_starts:
+            c_frag_center = c_frag_start + frag_size // 2
 
-        dist_to_c_frag = np.linalg.norm(f_tile_centers - c_frag_center, axis=1)
-        closest_full_tile_idx = np.argmin(dist_to_c_frag)
+            dist_to_c_frag = np.linalg.norm(f_tile_centers - c_frag_center, axis=1)
+            closest_full_tile_idx = np.argmin(dist_to_c_frag)
 
-        # print("Closest Full Tile Index {}. Distance {}".format(
-        #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
+            # print("Closest Full Tile Index {}. Distance {}".format(
+            #     closest_full_tile_idx, dist_to_c_frag[closest_full_tile_idx]))
 
-        if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (f_tile_size[0] / 2.):
-            # print("Added")
-            label[closest_full_tile_idx] = 1
+            if dist_to_c_frag[closest_full_tile_idx] <= np.sqrt(2) * (f_tile_size[0] / 2.):
+                # print("Added")
+                label[closest_full_tile_idx] = 1
 
     label = label.reshape(f_tiles_single_dim, f_tiles_single_dim)
 
