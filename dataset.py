@@ -13,36 +13,77 @@ from torch.utils.data import DataLoader, Dataset
 import fields1993_stimuli
 
 
-def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr):
+def get_filtered_gabor_sets(file_names, gabor_set_arr):
+    use_set = []
+
+    if gabor_set_arr:
+        for set_idx in gabor_set_arr:
+            use_set.extend([x for x in file_names if 'frag_{}/'.format(set_idx) in x])
+    else:
+        use_set = file_names
+
+    return use_set
+
+
+def get_filtered_c_len_files(file_names, c_len_arr):
+    use_set = []
+
+    if c_len_arr:
+        for c_len in c_len_arr:
+            use_set.extend([x for x in file_names if 'clen_{}_'.format(c_len) in x])
+    else:
+        use_set = file_names
+
+    return use_set
+
+
+def get_filtered_beta_files(file_names, beta_arr):
+    use_set = []
+
+    if beta_arr:
+        for beta in beta_arr:
+            use_set.extend([x for x in file_names if 'beta_{}_'.format(beta) in x])
+    else:
+        use_set = file_names
+
+    return use_set
+
+
+def get_filtered_alpha_files(file_names, alpha_arr):
+    use_set = []
+
+    if alpha_arr:
+        for alpha in alpha_arr:
+            use_set = [x for x in file_names if 'alpha_{}'.format(alpha) in x]
+    else:
+        use_set = file_names
+
+    return use_set
+
+
+def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr, gabor_set_arr):
     """
     Filter out all file_names that contained the required c_len, beta and alpha values
 
+    :param gabor_set_arr:
     :param file_names:
     :param c_len_arr:
     :param beta_arr:
     :param alpha_arr:
     :return:
     """
-    use_set = file_names.copy()
 
-    if c_len_arr:
-        for c_len in c_len_arr:
-            use_set = [x for x in file_names if 'clen_{}_'.format(c_len) in x]
-
-    if beta_arr:
-        for beta in beta_arr:
-            use_set = [x for x in use_set if 'beta_{}_'.format(beta) in x]
-
-    if alpha_arr:
-        for alpha in alpha_arr:
-            use_set = [x for x in use_set if 'alpha_{}'.format(alpha) in x]
+    use_set = get_filtered_gabor_sets(file_names, gabor_set_arr)
+    use_set = get_filtered_c_len_files(use_set, c_len_arr)
+    use_set = get_filtered_beta_files(use_set, beta_arr)
+    use_set = get_filtered_alpha_files(use_set, alpha_arr)
 
     return use_set
 
 
 class Fields1993(Dataset):
     def __init__(self, data_dir, bg_tile_size, augment=False, transform=None,
-                 c_len_arr=None, beta_arr=None, alpha_arr=None):
+                 c_len_arr=None, beta_arr=None, alpha_arr=None, gabor_set_arr=None):
 
         self.data_dir = data_dir
         self.bg_tile_size = bg_tile_size
@@ -66,8 +107,7 @@ class Fields1993(Dataset):
         with open(data_key, "r") as f:
             file_names = [x.strip() for x in f.readlines()]
 
-        file_names = get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr)
-
+        file_names = get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr, gabor_set_arr)
         # for idx, file_name in enumerate(file_names):
         #     print("{}: {}".format(idx, file_name))
 
