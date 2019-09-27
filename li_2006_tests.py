@@ -251,20 +251,33 @@ if __name__ == "__main__":
         mean_gains_arr[c_idx, ] = gains_mean
         std_gains_arr[c_idx, ] = gains_std
 
+    # Contour Length vs IoU
     plt.figure("IoU vs Contour Length")
     plt.title("Intersection over Union vs Contour Length")
     plt.plot(c_len_arr, iou_scores)
     plt.xlabel("Contour Length")
     plt.ylabel("IoU Score")
 
-    f, ax_arr = plt.subplots(8, 1, sharex=True)
-    f.suptitle("Channel-wise Mean Contour Integration Gains")
-    for ch_idx in range(64):
-        ax_arr[ch_idx % 8].plot(c_len_arr, mean_gains_arr[:, ch_idx], label='ch={}'.format(ch_idx))
+    # # Contour Length vs Gain
+    # f, ax_arr = plt.subplots(8, 1, sharex=True)
+    # f.suptitle("Channel-wise Mean Contour Integration Gains")
+    # for ch_idx in range(64):
+    #     ax_arr[ch_idx % 8].plot(c_len_arr, mean_gains_arr[:, ch_idx], label='ch={}'.format(ch_idx))
+    #
+    # for ax in ax_arr:
+    #     # ax.legend()
+    #     ax.set_ylabel("Gain")
+    # ax_arr[-1].set_xlabel("Contour Length")
 
-    for ax in ax_arr:
-        # ax.legend()
-        ax.set_ylabel("Gain")
+    for ch_idx in range(64):
+
+        if ch_idx % 8 == 0:
+            f, ax_arr = plt.subplots(8, 1, sharex=True)
+            f.suptitle("Channel-wise Mean Contour Integration Gains")
+
+        ax_arr[ch_idx % 8].plot(c_len_arr, mean_gains_arr[:, ch_idx], label='ch={}'.format(ch_idx))
+        ax_arr[ch_idx % 8].legend()
+
     ax_arr[-1].set_xlabel("Contour Length")
 
     import pdb
