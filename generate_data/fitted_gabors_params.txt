@@ -1,0 +1,53 @@
+Kernel 2. Amplitude 24.50
+0: (x0,y0) (0.00, 0.00), theta 38.23, psi -0.91, gamma 1.22, A 0.53, lambda 10.68, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta 38.23, psi 1.80, gamma 1.18, A 0.28, lambda 13.44, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 38.23, psi 2.54, gamma 1.32, A 0.30, lambda 9.27, sigma 2.00
+Kernel 11. Amplitude 22.76
+0: (x0,y0) (0.00, 0.00), theta -38.21, psi 0.45, gamma 1.01, A 0.32, lambda 7.50, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -38.21, psi 1.24, gamma 1.04, A 0.19, lambda 6.88, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -38.21, psi 0.00, gamma 0.49, A 0.09, lambda 3.97, sigma 1.24
+Kernel 13. Amplitude 34.37
+0: (x0,y0) (0.00, 0.00), theta -74.45, psi 0.73, gamma 0.65, A 0.29, lambda 4.17, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -74.45, psi 0.81, gamma 0.57, A 0.53, lambda 4.74, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -74.45, psi 1.03, gamma 0.57, A 0.27, lambda 4.39, sigma 2.00
+Kernel 18. Amplitude 41.52
+0: (x0,y0) (0.00, 0.00), theta 27.03, psi 0.18, gamma 1.11, A 0.43, lambda 3.55, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta 27.03, psi -0.16, gamma 0.81, A 0.68, lambda 3.89, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 27.03, psi -0.00, gamma 0.75, A 0.47, lambda 3.74, sigma 2.00
+Kernel 20. Amplitude 38.49
+0: (x0,y0) (0.00, 0.00), theta -27.59, psi -1.47, gamma 1.19, A 0.59, lambda 20.00, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -27.59, psi 1.68, gamma 1.19, A 0.60, lambda 20.00, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -27.59, psi -1.59, gamma 0.93, A 0.18, lambda 20.00, sigma 2.00
+Kernel 23. Amplitude 17.34
+0: (x0,y0) (0.00, 0.00), theta 8.48, psi -0.05, gamma 0.82, A 0.08, lambda 6.67, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta 8.48, psi -0.19, gamma 0.92, A 0.21, lambda 7.78, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 8.48, psi 0.19, gamma 0.80, A 0.14, lambda 7.31, sigma 2.00
+Kernel 34. Amplitude 23.40
+0: (x0,y0) (0.00, 0.00), theta 9.59, psi 3.54, gamma 0.48, A 0.50, lambda 4.07, sigma 1.53
+1: (x0,y0) (0.00, 0.00), theta 9.59, psi 3.19, gamma 0.54, A 0.59, lambda 4.00, sigma 1.60
+2: (x0,y0) (0.00, 0.00), theta 9.59, psi 2.82, gamma 0.73, A 0.28, lambda 3.33, sigma 2.00
+Kernel 41. Amplitude 29.01
+0: (x0,y0) (0.00, 0.00), theta -35.88, psi 2.01, gamma 1.09, A -0.47, lambda 3.77, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -35.88, psi 2.16, gamma 0.95, A -0.73, lambda 4.02, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -35.88, psi 5.00, gamma 1.50, A -0.29, lambda 3.63, sigma 2.00
+Kernel 44. Amplitude 34.50
+0: (x0,y0) (0.00, 0.00), theta 56.44, psi -2.02, gamma 0.79, A 0.21, lambda 6.79, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta 56.44, psi -1.81, gamma 1.16, A 0.41, lambda 14.29, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 56.44, psi 1.54, gamma 0.73, A 0.53, lambda 20.00, sigma 2.00
+Kernel 50. Amplitude 15.49
+0: (x0,y0) (0.00, 0.00), theta 36.64, psi 0.64, gamma 0.82, A -0.26, lambda 7.80, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta 36.64, psi 0.01, gamma 0.87, A -0.23, lambda 7.63, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 36.64, psi -2.25, gamma 0.53, A 0.07, lambda 4.21, sigma 1.37
+Kernel 56. Amplitude 14.73
+0: (x0,y0) (0.00, 0.00), theta -26.82, psi -1.75, gamma 0.62, A 0.23, lambda 20.00, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -26.82, psi -1.86, gamma 0.57, A 0.13, lambda 20.00, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -26.82, psi 1.28, gamma 0.50, A 0.16, lambda 20.00, sigma 2.00
+Kernel 57. Amplitude 28.41
+0: (x0,y0) (0.00, 0.00), theta 61.71, psi 1.04, gamma 0.59, A 0.28, lambda 4.80, sigma 1.79
+1: (x0,y0) (0.00, 0.00), theta 61.71, psi 0.19, gamma 0.69, A 0.40, lambda 5.33, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta 61.71, psi 0.04, gamma 0.62, A 0.33, lambda 5.76, sigma 2.00
+Kernel 63. Amplitude 19.39
+0: (x0,y0) (0.00, 0.00), theta -58.13, psi -4.74, gamma 0.96, A -0.54, lambda 2.86, sigma 2.00
+1: (x0,y0) (0.00, 0.00), theta -58.13, psi 1.28, gamma 0.83, A 0.76, lambda 3.06, sigma 2.00
+2: (x0,y0) (0.00, 0.00), theta -58.13, psi 1.04, gamma 0.81, A 0.61, lambda 2.96, sigma 2.00
+Number of fitted kernels 13
