@@ -72,6 +72,7 @@ if __name__ == "__main__":
 
     matched_gabors = 0
     file_handle = open(write_file, 'w+')
+    file_handle.write("[x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma]\n")
 
     for k_idx in range(out_ch):
 
@@ -119,6 +120,9 @@ if __name__ == "__main__":
             # ax_arr[0].set_title('kernel')
             # ax_arr[1].imshow(frag)
             # ax_arr[1].set_title('fragment')
+            #
+            # import pdb
+            # pdb.set_trace()
 
             # Generate a Test image with Fragment in the center
             # -------------------------------------------------
@@ -163,6 +167,11 @@ if __name__ == "__main__":
                  k_idx, max_active_neuron, k_idx == max_active_neuron)
             print(string)
 
+            # Plot Center Neuron Activations
+            plt.figure()
+            plt.plot(center_neuron_extract_out)
+            plt.title(string)
+
             if k_idx == max_active_neuron:
                 matched_gabors += 1
                 print("Okay Neurons Count {}".format(matched_gabors))
@@ -172,13 +181,13 @@ if __name__ == "__main__":
                 plt.plot(center_neuron_extract_out)
                 plt.title(string)
 
-                # # Plot frag and generated Gabor
-                # f, ax_arr = plt.subplots(1, 2)
-                # display_kernel = (kernel - kernel.min()) / (kernel.max() - kernel.min())
-                # ax_arr[0].imshow(display_kernel)
-                # ax_arr[0].set_title('kernel {}'.format(k_idx))
-                # ax_arr[1].imshow(frag)
-                # ax_arr[1].set_title('fragment')
+                # Plot frag and generated Gabor
+                f, ax_arr = plt.subplots(1, 2)
+                display_kernel = (kernel - kernel.min()) / (kernel.max() - kernel.min())
+                ax_arr[0].imshow(display_kernel)
+                ax_arr[0].set_title('kernel {}'.format(k_idx))
+                ax_arr[1].imshow(frag)
+                ax_arr[1].set_title('fragment')
 
                 # write to file
                 file_handle.write("Kernel {}. Amplitude {:0.2f}\n".format(
@@ -187,23 +196,33 @@ if __name__ == "__main__":
                 # print params
                 for item_idx, item in enumerate(params):
 
-                    string = "{}: (x0,y0) ({:0.2f}, {:0.2f}), theta {:0.2f}, psi {:0.2f}, gamma {:0.2f}, A {:0.2f}, " \
-                             "lambda {:0.2f}, sigma {:0.2f}".format(
-                                item_idx,
-                                item['x0'],
-                                item['y0'],
-                                item['theta_deg'],
-                                item['psi'],
-                                item['gamma'],
-                                item['amp'],
-                                item['lambda1'],
-                                item['sigma'])
+                    print("{}: (x0,y0) ({:0.2f}, {:0.2f}), theta {:0.2f}, amp {:0.2f}, sigma {:0.2f}, "
+                          "lambda {:0.2f}, psi {:0.2f}, gamma {:0.2f}".format(
+                            item_idx,
+                            item['x0'],
+                            item['y0'],
+                            item['theta_deg'],
+                            item['amp'],
+                            item['sigma'],
+                            item['lambda1'],
+                            item['psi'],
+                            item['gamma']))
 
-                    print(string)
-                    print(string, file=file_handle)
+                    # Format [x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma]
+                    file_handle.write(
+                        "[{:0.2f}, {:0.2f}, {:0.2f},{:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}],\n".format(
+                            item['x0'],
+                            item['y0'],
+                            item['theta_deg'],
+                            item['amp'],
+                            item['sigma'],
+                            item['lambda1'],
+                            item['psi'],
+                            item['gamma'],
+                    ))
 
-            # import pdb
-            # pdb.set_trace()
+            import pdb
+            pdb.set_trace()
 
     # -----------------------------------------------------------------------------------
     # End
