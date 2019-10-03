@@ -714,7 +714,8 @@ def get_mean_pixel_value_at_boundary(frag, width=1):
 
 def generate_contour_image(
         frag, frag_params, c_len, beta, alpha, f_tile_size, img_size=None, bg_frag_relocate=True, use_d_jitter=True,
-        rand_inter_frag_direction_change=True, random_alpha_rot=True, center_frag_start=None, base_contour='random'):
+        rand_inter_frag_direction_change=True, random_alpha_rot=True, center_frag_start=None, base_contour='random',
+        bg=None):
     """
 
     Generate image and label for specified fragment parameters.
@@ -723,6 +724,7 @@ def generate_contour_image(
     Here, full tile refers to the large tile & fragment tile refers to the visible stimulus. If the
     fragment is part of the contour, it is called a contour fragment otherwise a background fragment
 
+    :param bg: value to use for bg. If None, will be calculated using boundary pixels of fragment
     :param frag:
     :param frag_params:
     :param c_len:
@@ -752,7 +754,8 @@ def generate_contour_image(
     if center_frag_start is None:
         center_frag_start = img_center - (frag_size // 2)
 
-    bg = get_mean_pixel_value_at_boundary(frag)
+    if bg is None:
+        bg = get_mean_pixel_value_at_boundary(frag)
 
     # Get the full tiles for the image
     center_f_tile_start = img_center - (f_tile_size // 2)
@@ -896,12 +899,14 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
 def generate_data_set(
         n_imgs_per_set, base_dir, frag_tile_size, frag_params_list, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
         img_size=None, use_d_jitter=True, rand_inter_frag_direction_change=True, random_alpha_rot=False,
-        center_frag_start=None):
+        center_frag_start=None, bg_frag_relocate=True, bg=None):
     """
      Generate Data Set
      TODO: handle the case when multiple gabor fragments / tile sizes are defined.
      TODO: handle the getting orientation for a Gabor with Three channels.
 
+    :param bg: bg pixel value to use in images. 
+    :param bg_frag_relocate:
     :param center_frag_start:
     :param rand_inter_frag_direction_change:
     :param use_d_jitter:
@@ -1016,6 +1021,8 @@ def generate_data_set(
                             base_contour='random',
                             use_d_jitter=use_d_jitter,
                             rand_inter_frag_direction_change=rand_inter_frag_direction_change,
+                            bg_frag_relocate=bg_frag_relocate,
+                            bg=None,
                         )
 
                         if is_label_valid(img_label):
