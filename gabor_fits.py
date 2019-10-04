@@ -173,12 +173,13 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
         theta = 0
 
         # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
-        bounds = ([-half_x, -half_y,      -180,     -20,   0.1,       0,   -half_x,     0],
-                  [ half_x,  half_y,       180,      20,     4,      20,    half_x,     6])
+        bounds = ([-half_x, -half_y,      -180,     -2,   0.1,       0,   -half_x,     0],
+                  [ half_x,  half_y,       180,      2,     4,      20,    half_x,     2])
 
         while not opt_params_found:
 
             p0 = [0, 0, theta, 1, 2.5, 8, 0, 1]
+            # p0 = [0, 0, theta, -1, 1, 8, 0, 1] # Better for black on white gabors
 
             try:
                 popt, pcov = optimize.curve_fit(
@@ -423,6 +424,39 @@ def plot_fragment_rotations(frag, frag_params, delta_rot=15):
             ax_arr[row_idx][col_idx].set_title("Angle = {}".format(rot_ang))
             ax_arr[row_idx][col_idx].set_xticks([])
             ax_arr[row_idx][col_idx].set_yticks([])
+
+
+def convert_gabor_params_list_to_dict(params_list):
+    """
+    from [x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma] to
+    {
+        'x0': x0,
+        'y0': y0,
+        'theta_deg': theta_deg,
+        'amp': amp,
+        'sigma': sigma,
+        'lambda1': lambda1,
+        'psi': psi,
+        'gamma': gamma
+    }
+
+    :param params_list:
+    :return:
+    """
+    g_params = []
+    for ch_idx, ch_par in enumerate(params_list):
+        g_params.append({
+            'x0': ch_par[0],
+            'y0': ch_par[1],
+            'theta_deg': ch_par[2],
+            'amp': ch_par[3],
+            'sigma': ch_par[4],
+            'lambda1': ch_par[5],
+            'psi': ch_par[6],
+            'gamma': ch_par[7]
+        })
+
+    return g_params
 
 
 if __name__ == "__main__":
