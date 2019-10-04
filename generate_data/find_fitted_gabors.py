@@ -45,10 +45,10 @@ if __name__ == "__main__":
 
     write_file = 'fitted_gabors_params.txt'
 
-    fragment_size = np.array([11, 11])
-    full_tile_size = np.array([32, 32])
+    fragment_size = np.array([7, 7])
+    full_tile_size = np.array([14, 14])
 
-    image_size = np.array([512, 512, 3])
+    image_size = np.array([256, 256, 3])
 
     # Immutable
     # --------------------
@@ -77,6 +77,8 @@ if __name__ == "__main__":
     for k_idx in range(out_ch):
 
         print("Processing kernel {}".format(k_idx))
+        file_handle.write('Kernel {} {}\n'.format(k_idx, 80 * '-'))
+
         kernel = np.transpose(l1_kernels[k_idx, ], axes=[1, 2, 0])
 
         # Best fit returns a list of 3 Gabor fits: one for each channel.
@@ -84,6 +86,16 @@ if __name__ == "__main__":
         # [x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma]
         best_fit_params_list = gabor_fits.find_best_fit_2d_gabor(kernel, verbose=0)
         valid_best_fits = [item for item in best_fit_params_list if item is not None]
+
+        file_handle.write("raw fit\n")
+        for item_idx, item in enumerate(best_fit_params_list):
+            # Format [x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma]
+            if item is not None:
+                file_handle.write(
+                    "\t[{:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}],\n".format(
+                        item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7]))
+            else:
+                file_handle.write('\tNone\n'.format(k_idx, item_idx))
 
         if len(valid_best_fits) == 3:
 
@@ -100,13 +112,13 @@ if __name__ == "__main__":
             for ch_idx, ch_params in enumerate(valid_best_fits):
                 params.append(
                     {
-                        'x0': 0,
-                        'y0': 0,
+                        'x0': np.min((ch_params[0], 2)),
+                        'y0': np.min((ch_params[1], 2)),
                         'theta_deg': single_theta,
                         'amp': ch_params[3],
                         'sigma': np.min((ch_params[4], 2)),
                         'lambda1': ch_params[5],
-                        'psi': ch_params[6],
+                        'psi': np.min((ch_params[6], 3)),
                         'gamma': ch_params[7]
                     }
                 )
@@ -160,43 +172,44 @@ if __name__ == "__main__":
             edge_extract_act = 0
             label_out = net(input_image)
 
-            center_neuron_extract_out = edge_extract_act[0, :, 127 // 2, 127 // 2]
+            center_neuron_extract_out = \
+                edge_extract_act[0, :, edge_extract_act.shape[2] // 2, edge_extract_act.shape[3] // 2]
 
             max_active_neuron = np.argmax(center_neuron_extract_out)
             string = "Target Neuron: {}. Max Active Neuron {}. is Match = {}".format(
                  k_idx, max_active_neuron, k_idx == max_active_neuron)
             print(string)
 
-            # Plot Center Neuron Activations
-            plt.figure()
-            plt.plot(center_neuron_extract_out)
-            plt.title(string)
+            # # Plot Center Neuron Activations
+            # plt.figure()
+            # plt.plot(center_neuron_extract_out)
+            # plt.title(string)
 
             if k_idx == max_active_neuron:
                 matched_gabors += 1
                 print("Okay Neurons Count {}".format(matched_gabors))
 
-                # Plot Center Neuron Activations
-                plt.figure()
-                plt.plot(center_neuron_extract_out)
-                plt.title(string)
-
-                # Plot frag and generated Gabor
-                f, ax_arr = plt.subplots(1, 2)
-                display_kernel = (kernel - kernel.min()) / (kernel.max() - kernel.min())
-                ax_arr[0].imshow(display_kernel)
-                ax_arr[0].set_title('kernel {}'.format(k_idx))
-                ax_arr[1].imshow(frag)
-                ax_arr[1].set_title('fragment')
+                # # Plot Center Neuron Activations
+                # plt.figure()
+                # plt.plot(center_neuron_extract_out)
+                # plt.title(string)
+                #
+                # # Plot frag and generated Gabor
+                # f, ax_arr = plt.subplots(1, 2)
+                # display_kernel = (kernel - kernel.min()) / (kernel.max() - kernel.min())
+                # ax_arr[0].imshow(display_kernel)
+                # ax_arr[0].set_title('kernel {}'.format(k_idx))
+                # ax_arr[1].imshow(frag)
+                # ax_arr[1].set_title('fragment')
 
                 # write to file
-                file_handle.write("Kernel {}. Amplitude {:0.2f}\n".format(
-                    k_idx, center_neuron_extract_out[max_active_neuron]))
+                file_handle.write("Modified Fit. Amplitude {:0.2f}\n".format(
+                    center_neuron_extract_out[max_active_neuron]))
 
                 # print params
                 for item_idx, item in enumerate(params):
 
-                    print("{}: (x0,y0) ({:0.2f}, {:0.2f}), theta {:0.2f}, amp {:0.2f}, sigma {:0.2f}, "
+                    print("(x0,y0) ({:0.2f}, {:0.2f}), theta {:0.2f}, amp {:0.2f}, sigma {:0.2f}, "
                           "lambda {:0.2f}, psi {:0.2f}, gamma {:0.2f}".format(
                             item_idx,
                             item['x0'],
@@ -210,7 +223,7 @@ if __name__ == "__main__":
 
                     # Format [x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma]
                     file_handle.write(
-                        "[{:0.2f}, {:0.2f}, {:0.2f},{:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}],\n".format(
+                        "\t[{:0.2f}, {:0.2f}, {:0.2f},{:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}, {:0.2f}],\n".format(
                             item['x0'],
                             item['y0'],
                             item['theta_deg'],
@@ -218,11 +231,10 @@ if __name__ == "__main__":
                             item['sigma'],
                             item['lambda1'],
                             item['psi'],
-                            item['gamma'],
-                    ))
+                            item['gamma'],))
 
-            import pdb
-            pdb.set_trace()
+            # import pdb
+            # pdb.set_trace()
 
     # -----------------------------------------------------------------------------------
     # End
