@@ -380,9 +380,10 @@ def add_contour_path_constant_separation(
     return img, c_tile_starts
 
 
-def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_tile_size, max_offset):
+def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_tile_size, max_offset, overlap_th=0.5):
     """
 
+    :param overlap_th:
     :param f_tile_size:
     :param f_tile_start:
     :param c_tile_starts:
@@ -392,6 +393,8 @@ def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_
     """
     # print("get_non_overlapping_bg_fragment: full tile start: {}".format(f_tile_start))
 
+    no_overlapping_starts = []
+
     for r_idx in range(max_offset):
         for c_idx in range(max_offset):
 
@@ -400,7 +403,7 @@ def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_
 
             is_overlapping = False
 
-            # print("Checking start location {}".format(l1))
+            # print("Checking start location (y,x) = {}".format(l1))
 
             if (r1[0] > f_tile_start[0] + f_tile_size[0]) or (r1[1] > f_tile_start[1] + f_tile_size[1]):
                 # new bg tile is outside the full tile
@@ -419,8 +422,21 @@ def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_
 
             if not is_overlapping:
                 # print("Found non-overlapping")
-                return l1
-    return None
+                no_overlapping_starts.append(l1)
+
+    num_no_overlap = len(no_overlapping_starts)
+    total_location_checked = max_offset ** 2
+    no_overlap_percent = num_no_overlap / total_location_checked
+
+    start_loc = None
+    if no_overlap_percent > overlap_th:
+        start_loc_idx = np.random.choice(len(no_overlapping_starts))
+        start_loc = no_overlapping_starts[start_loc_idx]
+
+    # print("Non-overlapping start_loc {}. Locations checked: Non_overlap/Total = {}/{} = {:0.2f}".format(
+    #     start_loc, total_location_checked, num_no_overlap, no_overlap_percent))
+
+    return start_loc
 
 
 def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles, tgt_n_visual_rf_start=None):
@@ -531,66 +547,54 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
 
     # Remove or replace all tiles that overlap with contour path fragments
     # --------------------------------------------------------------------
-    removed_bg_frag_starts = []
-    relocate_bg_frag_starts = []
-
+    # Find background fragments that overlap with contour fragments
+    ovlp_bg_frag_idx_list = []
     for c_frag_start in c_frag_starts:
 
         c_frag_start = np.expand_dims(c_frag_start, axis=0)
 
-        # Find overlapping background fragments
         dist_to_c_frag = np.linalg.norm(c_frag_start - bg_frag_starts, axis=1)
         # for ii, dist in enumerate(dist_to_c_frag):
         #     print("{0}: {1}".format(ii, dist))
 
-        ovlp_bg_frag_idx_arr = np.argwhere(dist_to_c_frag <= np.sqrt(2)*frag.shape[0])
-        # for idx in ovlp_bg_frag_idx_arr:
-        #     print("contour fragment @ {0}, overlaps with bg fragment @ index {1} and location {2}".format(
-        #         c_frag_start, idx, bg_frag_starts[idx, :]))
+        ovlp_bg_frag_idx_list.extend(np.argwhere(dist_to_c_frag <= np.sqrt(2)*frag.shape[0]))
 
-        ovlp_bg_frag_idx_to_remove = []
+    unique_ovlp_bg_frag_idxs = np.unique(ovlp_bg_frag_idx_list)
+    # print("Overlapping bg Tile indices {}".format(unique_ovlp_bg_frag_idxs))
 
-        for ii, bg_frag_idx in enumerate(ovlp_bg_frag_idx_arr):
+    removed_bg_frag_starts = []
+    remove_bg_frag_idxs = []
+    relocate_bg_frag_starts = []
+    for idx in unique_ovlp_bg_frag_idxs:
+        # print("Processing Overlapping bg tile at index {} (y,x = {}). Parent Full tile ({})".format(
+        #     idx, bg_frag_starts[idx, ], f_tile_starts[idx, :]))
 
-            f_tile_start = f_tile_starts[bg_frag_idx, :]
+        f_tile_start = f_tile_starts[idx, :]
 
-            no_ovrlp_bg_frag = None
-            if relocate_allowed:
-                # Is relocation possible?
-                no_ovrlp_bg_frag = get_non_overlapping_bg_fragment(
-                    f_tile_start=np.squeeze(f_tile_start, axis=0),
-                    f_tile_size=f_tile_size,
-                    c_tile_starts=c_frag_starts,
-                    c_tile_size=frag.shape[0:2],
-                    max_offset=max_displace,
-                )
+        no_overlap_bg_frag = None
+        if relocate_allowed:
+            no_overlap_bg_frag = get_non_overlapping_bg_fragment(
+                f_tile_start=f_tile_start,
+                f_tile_size=f_tile_size,
+                c_tile_starts=c_frag_starts,
+                c_tile_size=frag.shape[0:2],
+                max_offset=max_displace,
+            )
 
-            if no_ovrlp_bg_frag is not None:
-                # print("Relocating tile @ {0} to {1}".format(bg_frag_starts[bg_frag_idx, :], no_ovrlp_bg_frag))
+        if no_overlap_bg_frag is None:
+            # print("\tRemove bg tile")
+            # Cannot Delete when indexing over the list
+            # bg_frag_starts = np.delete(bg_frag_starts, idx, axis=0)
+            removed_bg_frag_starts.append(bg_frag_starts[idx, :])
+            remove_bg_frag_idxs.append(idx)
 
-                bg_frag_starts[bg_frag_idx, :] = np.expand_dims(no_ovrlp_bg_frag, axis=0)
-                relocate_bg_frag_starts.append(no_ovrlp_bg_frag)
+        else:
+            # print("\tRelocate bg tile to {}".format(no_overlap_bg_frag))
+            bg_frag_starts[idx, :] = no_overlap_bg_frag
+            relocate_bg_frag_starts.append(no_overlap_bg_frag)
 
-            else:
-                # print("Remove bg fragment at index {0}, location {1}".format(
-                #     bg_frag_idx, bg_frag_starts[bg_frag_idx, :]))
-
-                removed_bg_frag_starts.append(bg_frag_starts[bg_frag_idx, :])
-                ovlp_bg_frag_idx_to_remove.append(bg_frag_idx)
-
-        # Remove the tiles that cannot be replaced from bg_frag and bg_full lists
-        bg_frag_starts = \
-            np.delete(bg_frag_starts, ovlp_bg_frag_idx_to_remove, axis=0)
-
-        f_tile_starts = \
-            np.delete(f_tile_starts, ovlp_bg_frag_idx_to_remove, axis=0)
-
-    removed_bg_frag_starts = np.array(removed_bg_frag_starts)
-
-    if removed_bg_frag_starts.size > 0:
-        removed_bg_frag_starts = np.squeeze(removed_bg_frag_starts, axis=1)
-
-    relocate_bg_frag_starts = np.array(relocate_bg_frag_starts)
+    # Remove the cannot be replaced bg fragments
+    bg_frag_starts = np.delete(bg_frag_starts, remove_bg_frag_idxs, axis=0)
 
     # Now add the background fragment tiles
     # -------------------------------------
@@ -615,6 +619,9 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
             rotate_frags=False,
             gaussian_smoothing=False
         )
+
+    removed_bg_frag_starts = np.array(removed_bg_frag_starts)
+    relocate_bg_frag_starts = np.array(relocate_bg_frag_starts)
 
     return img, bg_frag_starts, removed_bg_frag_starts, relocate_bg_frag_starts
 
@@ -814,6 +821,10 @@ def generate_contour_image(
     label = label.reshape(f_tiles_single_dim, f_tiles_single_dim)
 
     # # Debug ------------------------
+    # plt.figure()
+    # plt.imshow(img)
+    # plt.title("Original Image")
+    #
     # # Highlight Contour tiles - Red
     # img = highlight_tiles(img, frag_size, c_frag_starts,  edge_color=(255, 0, 0))
     #
@@ -832,6 +843,8 @@ def generate_contour_image(
     # plt.figure()
     # plt.imshow(img)
     # print(label)
+    # import pdb
+    # pdb.set_trace()
 
     return img, label
 
@@ -1120,14 +1133,14 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 10
 
-    fragment_size = (20, 20)
-    full_tile_size = np.array([32, 32])
+    fragment_size = (7, 7)
+    full_tile_size = np.array([14, 14])
 
-    image_size = np.array([512, 512, 3])
+    image_size = np.array([256, 256, 3])
 
     # Immutable
     plt.ion()
-    np.random.seed(random_seed)
+    # np.random.seed(random_seed)
 
     # Gabor Fragment
     # gabor_parameters = {
@@ -1255,6 +1268,7 @@ if __name__ == "__main__":
         random_alpha_rot=True,
         rand_inter_frag_direction_change=False,
         use_d_jitter=True,
+        bg=0
     )
     print(image_label)
     print("Label is valid? {}".format(is_label_valid(image_label)))
