@@ -93,6 +93,8 @@ for gabor_set in gabor_parameters_list:
         # Should be a dictionary
         chan_params['bg'] = 0
 
+    gabor_parameters.append(params)
+
 # -----------------------------------------------------------------------------------
 # Save the pickle file
 with open(pickle_file,  'wb') as handle:
