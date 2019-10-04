@@ -626,11 +626,12 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
     return img, bg_frag_starts, removed_bg_frag_starts, relocate_bg_frag_starts
 
 
-def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), edge_width=1):
+def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), edge_width=1, force_color=False):
     """
     Highlight specified tiles in the image
 
 
+    :param force_color:
     :param edge_width:
     :param in_img:
     :param tile_shape:
@@ -643,6 +644,11 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), 
 
     img_size = in_img.shape[:2]
     tile_len = tile_shape[0]
+
+    if in_img.mean() > 200:
+        # white background, force boundary colours to what is specified instead of adding them on.
+        # label will be visible at least but combining multiple label son the image wont work.
+        force_color = True
 
     if insert_loc_arr.ndim == 1:
         x_arr = [insert_loc_arr[0]]
@@ -667,31 +673,58 @@ def highlight_tiles(in_img, tile_shape, insert_loc_arr, edge_color=(255, 0, 0), 
             # print("Highlight tile @ tl=({0}, {1}), br=({2},{3})".format(
             #     start_x_loc, start_y_loc, stop_x_loc, stop_y_loc))
 
-            out_img[
-                start_x_loc: stop_x_loc + 1,
-                start_y_loc: start_y_loc + edge_width,
-                :
-            ] += edge_color
+            if force_color:
+                out_img[
+                    start_x_loc: stop_x_loc + 1,
+                    start_y_loc: start_y_loc + edge_width,
+                    :
+                ] = edge_color
 
-            out_img[
-                start_x_loc: stop_x_loc + 1,
-                stop_y_loc: stop_y_loc + edge_width,
-                :
-            ] += edge_color
+                out_img[
+                    start_x_loc: stop_x_loc + 1,
+                    stop_y_loc: stop_y_loc + edge_width,
+                    :
+                ] = edge_color
 
-            out_img[
-                start_x_loc: start_x_loc + edge_width,
-                start_y_loc: stop_y_loc + 1,
-                :
-            ] += edge_color
+                out_img[
+                    start_x_loc: start_x_loc + edge_width,
+                    start_y_loc: stop_y_loc + 1,
+                    :
+                ] = edge_color
 
-            out_img[
-                stop_x_loc: stop_x_loc + edge_width,
-                start_y_loc: stop_y_loc + edge_width,
-                :
-            ] += edge_color
+                out_img[
+                    stop_x_loc: stop_x_loc + edge_width,
+                    start_y_loc: stop_y_loc + edge_width,
+                    :
+                ] = edge_color
 
-    out_img[out_img > 255] = 255
+            else:
+                out_img[
+                    start_x_loc: stop_x_loc + 1,
+                    start_y_loc: start_y_loc + edge_width,
+                    :
+                ] += edge_color
+
+                out_img[
+                    start_x_loc: stop_x_loc + 1,
+                    stop_y_loc: stop_y_loc + edge_width,
+                    :
+                ] += edge_color
+
+                out_img[
+                    start_x_loc: start_x_loc + edge_width,
+                    start_y_loc: stop_y_loc + 1,
+                    :
+                ] += edge_color
+
+                out_img[
+                    stop_x_loc: stop_x_loc + edge_width,
+                    start_y_loc: stop_y_loc + edge_width,
+                    :
+                ] += edge_color
+
+                out_img[out_img > 255] = 255
+
     out_img = out_img.astype('uint8')
 
     return out_img
@@ -1140,52 +1173,74 @@ if __name__ == "__main__":
 
     # Immutable
     plt.ion()
-    # np.random.seed(random_seed)
+    np.random.seed(random_seed)
 
+    # ----------------------------------------------------------------------------------
     # Gabor Fragment
-    # gabor_parameters = {
+    # -----------------------------------------------------------------------------------
+    # BW Gabor, Single Channel (white on black Background)
+    # ----------------------------------
+    bg_value = 0
+    gabor_parameters_list = [{
+        'x0': 0,
+        'y0': 0,
+        'theta_deg': 0,
+        'amp': 1,
+        'sigma': 4.0,
+        'lambda1': 7,
+        'psi': 0,
+        'gamma': 1
+    }]
+
+    # # BW Gabor, Single Channel (white on black Background)
+    # # ----------------------------------
+    # bg_value = 255
+    # gabor_parameters_list = [{
     #     'x0': 0,
     #     'y0': 0,
-    #     'theta_deg': 0,
-    #     'amp': 1,
-    #     'sigma': 4.0,
-    #     'lambda1': 7,
+    #     'theta_deg': -45,
+    #     'amp': -0.46,
+    #     'sigma': 0.9,
+    #     'lambda1': 20,
     #     'psi': 0,
-    #     'gamma': 1
-    # }
+    #     'gamma': 0
+    # }]
 
-    gabor_parameters_list = [
-        {
-            'x0': 0.76,
-            'y0': -0.40,
-            'theta_deg': 38.23,
-            'amp': 0.53,
-            'sigma': 4.0,
-            'lambda1': 10.68,
-            'psi': -0.91,
-            'gamma': 1.22
-        },
-        {
-            'x0': 0.28,
-            'y0': 0.28,
-            'theta_deg': 37.22,
-            'amp': 0.28,
-            'sigma': 4.0,
-            'lambda1': 13.44,
-            'psi': 1.80,
-            'gamma': 1.18
-        },
-        {
-            'x0': 1.01,
-            'y0': -0.75,
-            'theta_deg': 38.66,
-            'amp': 0.30,
-            'sigma': 4.0,
-            'lambda1': 9.27,
-            'psi': 2.54,
-            'gamma': 1.32
-        }
-    ]
+    # # Colored Gabor, 3 Channels
+    # # ------------------------------------
+    # bg_value = None
+    # gabor_parameters_list = [
+    #     {
+    #         'x0': 0.76,
+    #         'y0': -0.40,
+    #         'theta_deg': 38.23,
+    #         'amp': 0.53,
+    #         'sigma': 4.0,
+    #         'lambda1': 10.68,
+    #         'psi': -0.91,
+    #         'gamma': 1.22
+    #     },
+    #     {
+    #         'x0': 0.28,
+    #         'y0': 0.28,
+    #         'theta_deg': 37.22,
+    #         'amp': 0.28,
+    #         'sigma': 4.0,
+    #         'lambda1': 13.44,
+    #         'psi': 1.80,
+    #         'gamma': 1.18
+    #     },
+    #     {
+    #         'x0': 1.01,
+    #         'y0': -0.75,
+    #         'theta_deg': 38.66,
+    #         'amp': 0.30,
+    #         'sigma': 4.0,
+    #         'lambda1': 9.27,
+    #         'psi': 2.54,
+    #         'gamma': 1.32
+    #     }
+    # ]
 
     fragment = gabor_fits.get_gabor_fragment(gabor_parameters_list, fragment_size)
     plt.figure()
@@ -1268,7 +1323,7 @@ if __name__ == "__main__":
         random_alpha_rot=True,
         rand_inter_frag_direction_change=False,
         use_d_jitter=True,
-        bg=0
+        bg=bg_value
     )
     print(image_label)
     print("Label is valid? {}".format(is_label_valid(image_label)))
@@ -1277,6 +1332,6 @@ if __name__ == "__main__":
     plt.imshow(image)
     plt.title("Input Image")
 
-    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=3)
+    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=1)
 
     input("press any key to exit")
