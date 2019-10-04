@@ -918,7 +918,6 @@ def generate_data_set(
      TODO: handle the case when multiple gabor fragments / tile sizes are defined.
      TODO: handle the getting orientation for a Gabor with Three channels.
 
-    :param bg: bg pixel value to use in images. 
     :param bg_frag_relocate:
     :param center_frag_start:
     :param rand_inter_frag_direction_change:
@@ -938,6 +937,7 @@ def generate_data_set(
             'lambda1': 10,
             'psi': 0,
             'gamma': 1
+            'bg' = optional, bg value to set for generated images.
         }
     :param c_len_arr:
     :param beta_rot_arr:
