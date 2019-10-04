@@ -899,7 +899,7 @@ def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15)
 def generate_data_set(
         n_imgs_per_set, base_dir, frag_tile_size, frag_params_list, c_len_arr, beta_rot_arr, alpha_rot_arr, f_tile_size,
         img_size=None, use_d_jitter=True, rand_inter_frag_direction_change=True, random_alpha_rot=False,
-        center_frag_start=None, bg_frag_relocate=True, bg=None):
+        center_frag_start=None, bg_frag_relocate=True):
     """
      Generate Data Set
      TODO: handle the case when multiple gabor fragments / tile sizes are defined.
@@ -966,6 +966,12 @@ def generate_data_set(
 
         frag = gabor_fits.get_gabor_fragment(frag_params, frag_tile_size)
 
+        # Get background pixel value if it exists value if exists
+        if 'bg' in frag_params[0].keys():
+            bg = frag_params[0]['bg']
+        else:
+            bg = None
+
         for c_len in c_len_arr:
             c_len_name = os.path.join(frag_param_dir, 'clen_{}'.format(c_len))
 
@@ -993,8 +999,8 @@ def generate_data_set(
                     if not os.path.exists(store_label_dir_full):
                         os.makedirs(store_label_dir_full)
 
-                    print("Param Set {}. Generating {} images with c_len = {}, beta = {}, alpha = {}".format(
-                        frag_param_idx, n_imgs_per_set, c_len, beta, alpha))
+                    print("Param Set {}. Generating {} images with c_len = {}, beta = {}, alpha = {}, bg={}".format(
+                        frag_param_idx, n_imgs_per_set, c_len, beta, alpha, bg))
 
                     n_imgs_current_set = 0
                     for i_idx in range(n_imgs_per_set + 50):
@@ -1022,7 +1028,7 @@ def generate_data_set(
                             use_d_jitter=use_d_jitter,
                             rand_inter_frag_direction_change=rand_inter_frag_direction_change,
                             bg_frag_relocate=bg_frag_relocate,
-                            bg=None,
+                            bg=bg,
                         )
 
                         if is_label_valid(img_label):
