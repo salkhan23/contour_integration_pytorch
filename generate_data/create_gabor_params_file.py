@@ -86,12 +86,12 @@ bg_list = [0, 0, 0, 0, 255, None, 0, 255, 0, 255]
 
 
 gabor_parameters = []
-for gabor_set in gabor_parameters_list:
+for set_idx, gabor_set in enumerate(gabor_parameters_list):
     params = gabor_fits.convert_gabor_params_list_to_dict(gabor_set)
 
     for chan_params in params:
         # Should be a dictionary
-        chan_params['bg'] = 0
+        chan_params['bg'] = bg_list[set_idx]
 
     gabor_parameters.append(params)
 
