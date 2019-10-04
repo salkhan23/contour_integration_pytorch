@@ -380,10 +380,11 @@ def add_contour_path_constant_separation(
     return img, c_tile_starts
 
 
-def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_tile_size, max_offset, overlap_th=0.5):
+def get_non_overlapping_bg_fragment(
+        f_tile_start, f_tile_size, c_tile_starts, c_tile_size, max_offset, no_overlap_th=0.4):
     """
 
-    :param overlap_th:
+    :param no_overlap_th:
     :param f_tile_size:
     :param f_tile_start:
     :param c_tile_starts:
@@ -429,7 +430,7 @@ def get_non_overlapping_bg_fragment(f_tile_start, f_tile_size, c_tile_starts, c_
     no_overlap_percent = num_no_overlap / total_location_checked
 
     start_loc = None
-    if no_overlap_percent > overlap_th:
+    if no_overlap_percent > no_overlap_th:
         start_loc_idx = np.random.choice(len(no_overlapping_starts))
         start_loc = no_overlapping_starts[start_loc_idx]
 
