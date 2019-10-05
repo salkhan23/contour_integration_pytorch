@@ -33,7 +33,7 @@ class ClassifierHead(nn.Module):
             in_channels=num_channels,
             out_channels=num_channels // 4,
             kernel_size=(3, 3),
-            stride=(4, 4),
+            stride=(2, 2),
             groups=1,
             bias=False,
             padding=(2, 2)
@@ -47,6 +47,7 @@ class ClassifierHead(nn.Module):
             stride=(2, 2),
             groups=1,
             bias=False,
+            padding=(2, 2)
         )
 
     def forward(self, x):

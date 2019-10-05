@@ -16,6 +16,7 @@ import torch.optim as optim
 import dataset
 import utils
 from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
+from models.new_piech_models import ContourIntegrationCSI
 import models.control_models as control_models
 
 
@@ -31,10 +32,10 @@ if __name__ == '__main__':
     train_batch_size = 16
     test_batch_size = 1
     learning_rate = 0.001
-    num_epochs = 50
+    num_epochs = 20
     random_seed = 10
 
-    results_store_dir = './results'
+    results_store_dir = './results/new_model'
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,15 +47,22 @@ if __name__ == '__main__':
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    model = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
+    # model = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters(lateral_e_size=3, lateral_i_size=3).to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
+    model = ContourIntegrationCSI(lateral_e_size=22, lateral_i_size=22).to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
     print(model)
+
+    from torchsummary import summary
+    summary(model, input_size=(3,256,256))
+
+    import pdb
+    pdb.set_trace()
 
     results_store_dir = os.path.join(
         results_store_dir,
@@ -68,7 +76,7 @@ if __name__ == '__main__':
     print("====> Setting up data loaders ")
     data_load_start_time = datetime.now()
 
-    data_set_dir = "./data/bw_gabors_10_frag_fullTile_32_fragTile_20"
+    data_set_dir = "./data/fitted_gabors_10_full14_frag7_test"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
@@ -145,6 +153,10 @@ if __name__ == '__main__':
             label = label.to(device)
 
             label_out = model(img)
+
+            import pdb
+            pdb.set_trace()
+
             batch_loss = criterion(label_out, label.float())
 
             batch_loss.backward()
