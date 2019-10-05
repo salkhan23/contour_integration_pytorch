@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # model = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
     # model = CurrentDivisiveInhibition().to(device)
     # model = control_models.CmMatchIterations().to(device)
-    # model = control_models.CmMatchParameters(lateral_e_size=3, lateral_i_size=3).to(device)
+    # model = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
     model = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23).to(device)
 
@@ -147,10 +147,6 @@ if __name__ == '__main__':
             label = label.to(device)
 
             label_out = model(img)
-
-            import pdb
-            pdb.set_trace()
-
             batch_loss = criterion(label_out, label.float())
 
             batch_loss.backward()
