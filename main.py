@@ -52,17 +52,11 @@ if __name__ == '__main__':
     # model = control_models.CmMatchIterations().to(device)
     # model = control_models.CmMatchParameters(lateral_e_size=3, lateral_i_size=3).to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
-    model = ContourIntegrationCSI(lateral_e_size=22, lateral_i_size=22).to(device)
+    model = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23).to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
     print(model)
-
-    from torchsummary import summary
-    summary(model, input_size=(3,256,256))
-
-    import pdb
-    pdb.set_trace()
 
     results_store_dir = os.path.join(
         results_store_dir,
