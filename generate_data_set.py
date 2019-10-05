@@ -56,12 +56,12 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    base_data_dir = './data/bw_gabors_10_frag_fullTile_32_fragTile_20_test'
-    gabor_params_file = 'bw_10_gabors_params.pickle'
+    base_data_dir = './data/fitted_gabors_10_full14_frag7_test'
+    gabor_params_file = 'fitted_10_gabors_params.pickle'
 
-    frag_size = np.array([20, 20])
-    full_tile_size = np.array([32, 32])
-    image_size = np.array([512, 512, 3])
+    frag_size = np.array([7, 7])
+    full_tile_size = np.array([14, 14])
+    image_size = np.array([256, 256, 3])
 
     num_train_images_per_set = 300
     num_val_images_per_set = 50
@@ -70,8 +70,8 @@ if __name__ == "__main__":
     with open(gabor_params_file, 'rb') as handle:
         gabor_parameters_list = pickle.load(handle)
 
-    contour_len_arr = [3, 5, 7, 9, 12]
-    beta_rotation_arr = [0, 15, 30]
+    contour_len_arr = [1, 3, 5, 7, 9, 12]
+    beta_rotation_arr = [0, 15]
     alpha_rotation_arr = [0]
 
     # Generate the training Set
