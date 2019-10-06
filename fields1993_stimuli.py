@@ -1007,6 +1007,7 @@ def generate_data_set(
     f = open(data_key_file, 'w+')
 
     for frag_param_idx, frag_params in enumerate(frag_params_list):
+        print("{0} Parameter Set {1} {0}".format('*'*30, frag_param_idx))
 
         # make the frag params folder
         frag_param_dir = 'frag_{}'.format(frag_param_idx)
@@ -1101,7 +1102,7 @@ def generate_data_set(
                             # pdb.set_trace()
 
     f.close()
-    print(" Data set created @ {}. Contains {} Images. Time Taken {}".format(
+    print("Data set created @ {}.\nContains {} Images. Time Taken {}".format(
           base_dir, n_total_imgs, datetime.now() - start_time))
 
 
