@@ -31,8 +31,8 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     train_batch_size = 16
     test_batch_size = 1
-    learning_rate = 0.001
-    num_epochs = 20
+    learning_rate = 0.0001
+    num_epochs = 50
     random_seed = 10
 
     results_store_dir = './results/new_model'
