@@ -70,7 +70,7 @@ if __name__ == '__main__':
     print("====> Setting up data loaders ")
     data_load_start_time = datetime.now()
 
-    data_set_dir = "./data/fitted_gabors_10_full14_frag7_test"
+    data_set_dir = "./data/fitted_gabors_10_full14_frag7"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
@@ -127,7 +127,7 @@ if __name__ == '__main__':
         lr=learning_rate
     )
 
-    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     criterion = nn.BCEWithLogitsLoss().to(device)
 
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     file_handle.write("Val batch size   : {}\n".format(test_batch_size))
     file_handle.write("Epochs           : {}\n".format(num_epochs))
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
-    file_handle.write("                 : {}\n")
+    file_handle.write("\n")
     print(model, file=file_handle)
     file_handle.write("{}\n".format('-' * 80))
 
@@ -236,6 +236,7 @@ if __name__ == '__main__':
         val_history.append(validate())
 
         lr_history.append(get_lr(optimizer))
+        lr_scheduler.step(epoch)
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. Time {}".format(
             epoch, num_epochs,
