@@ -32,16 +32,16 @@ import gabor_fits
 #
 # Max active Edge Extraction Neurons (Alexnet)
 # --------------------------------------------
-# [1] Max Active 18, Value = 40.44, Bg = 0
-# [2] Max Active 57, Value = 46.50, Bg = 0
-# [3] Max Active 41, Value = 46.92, Bg = 0
-# [4] Max Active 23, Value = 32.27, Bg = 0
-# [5] Max Active 33, Value = 36.25, Bg = 255
-# [6] Max Active 13, Value = 32.08, Bg = None
-# [7] Max Active 11, Value = 36.54, Bg = 0
-# [8] Max Active  3, Value = 37.89, Bg = 0
-# [9] Max Active 63, Value = 39.73, Bg = 0
-# [10] Max Active 6, Value = 34.97, Bg = 0
+# [0] Max Active 18, Value = 40.44, Bg = 0
+# [1] Max Active 57, Value = 46.50, Bg = 0
+# [2] Max Active 41, Value = 46.92, Bg = 0
+# [3] Max Active 23, Value = 32.27, Bg = 0
+# [4] Max Active 33, Value = 36.25, Bg = 255
+# [5] Max Active 13, Value = 32.08, Bg = None
+# [6] Max Active 11, Value = 36.54, Bg = 0
+# [7] Max Active  3, Value = 37.89, Bg = 0
+# [8] Max Active 63, Value = 39.73, Bg = 0
+# [9] Max Active 6, Value = 34.97, Bg = 0
 
 # -----------------------------------------------------------------------------------
 pickle_file = 'fitted_10_gabors_params.pickle'
