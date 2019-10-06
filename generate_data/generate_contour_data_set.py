@@ -6,6 +6,8 @@ import numpy as np
 import os
 import pickle
 
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 import fields1993_stimuli
 
 
