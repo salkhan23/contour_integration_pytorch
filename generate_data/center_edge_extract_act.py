@@ -16,6 +16,10 @@ import matplotlib.pyplot as plt
 from torchvision.models import alexnet
 import torch
 
+import os
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
 import gabor_fits
 import fields1993_stimuli
 
@@ -25,9 +29,9 @@ def define_gabor_parameters(frag_size):
 
     :return:
     """
-    bg_value = 255
+    bg_value = 0
     gabor_params_list = np.array([
-        [0, 0, -45, -0.46, 0.9, 25, 1, 0]
+        [0, -1., 145, 0.33, 2.00, 15.25, 0, 0]
     ])
 
     # ---------------------------------
@@ -116,8 +120,8 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     #  Gabor Params
     # -----------------------------------------------------------------------------------
-    # fragment, gabor_params, bg = define_gabor_parameters()
-    fragment, gabor_params, bg = define_gabor_fragment()
+    fragment, gabor_params, bg = define_gabor_parameters(fragment_size)
+    # fragment, gabor_params, bg = define_gabor_fragment()
 
     # -----------------------------------------------------------------------------------
     #  Test Image
