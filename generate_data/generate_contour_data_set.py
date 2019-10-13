@@ -72,30 +72,31 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    num_train_images_per_set = 300
-    num_val_images_per_set = 50
+    num_train_images_per_set = 100
+    num_val_images_per_set = 10
 
     frag_size = np.array([7, 7])
     full_tile_size = np.array([14, 14])
     image_size = np.array([256, 256, 3])
     image_center = image_size[0:2] // 2
 
-    gabor_params_file = './generate_data/fitted_10_gabors_params.pickle'
+    # gabor_params_file = './generate_data/fitted_10_gabors_params.pickle'
+    gabor_params_file = 'channel_wise_optimal_stimuli.pickle'
 
-    # Centrally Located contours (Li 2006 Stimuli)
-    base_data_dir = './data/fitted_gabors_10_full14_frag7_centered_test'
-    center_frag_start = image_center - (frag_size // 2)
+    # # Centrally Located contours (Li 2006 Stimuli)
+    # base_data_dir = './data/fitted_gabors_10_full14_frag7_centered_test'
+    # center_frag_start = image_center - (frag_size // 2)
 
     # # Randomly Located Contours
-    # base_data_dir = './data/fitted_gabors_10_full14_frag7_test'
-    # center_frag_start = None
+    base_data_dir = './data/channel_wise_optimal_full14_frag7_test'
+    center_frag_start = None
 
     # -----------------------------------------------------------------------------------
     # gabor_parameters_list - list of list of dictionaries one for each channel
     with open(gabor_params_file, 'rb') as handle:
         gabor_parameters_list = pickle.load(handle)
 
-    contour_len_arr = [1, 3, 5, 7, 9, 12]
+    contour_len_arr = [1, 3, 5, 7, 9]
     beta_rotation_arr = [0, 15]
     alpha_rotation_arr = [0]
 
