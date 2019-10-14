@@ -72,8 +72,8 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    num_train_images_per_set = 100
-    num_val_images_per_set = 10
+    num_train_images_per_set = 0
+    num_val_images_per_set = 50
 
     frag_size = np.array([7, 7])
     full_tile_size = np.array([14, 14])
@@ -83,13 +83,13 @@ if __name__ == "__main__":
     # gabor_params_file = './generate_data/fitted_10_gabors_params.pickle'
     gabor_params_file = 'channel_wise_optimal_stimuli.pickle'
 
-    # # Centrally Located contours (Li 2006 Stimuli)
-    # base_data_dir = './data/fitted_gabors_10_full14_frag7_centered_test'
-    # center_frag_start = image_center - (frag_size // 2)
+    # Centrally Located contours (Li 2006 Stimuli)
+    base_data_dir = './data//channel_wise_optimal_full14_frag7_centered_test'
+    center_frag_start = image_center - (frag_size // 2)
 
     # # Randomly Located Contours
-    base_data_dir = './data/channel_wise_optimal_full14_frag7_test'
-    center_frag_start = None
+    # base_data_dir = './data/channel_wise_optimal_full14_frag7_test'
+    # center_frag_start = None
 
     # -----------------------------------------------------------------------------------
     # gabor_parameters_list - list of list of dictionaries one for each channel
@@ -106,19 +106,23 @@ if __name__ == "__main__":
     # beta_rotation_arr = [0]
     # alpha_rotation_arr = [0]
 
+    train_images = []
+    val_images = []
+
     # Generate the training Set
-    fields1993_stimuli.generate_data_set(
-        n_imgs_per_set=num_train_images_per_set,
-        base_dir=os.path.join(base_data_dir, 'train'),
-        frag_tile_size=frag_size,
-        frag_params_list=gabor_parameters_list,
-        c_len_arr=contour_len_arr,
-        beta_rot_arr=beta_rotation_arr,
-        alpha_rot_arr=alpha_rotation_arr,
-        f_tile_size=full_tile_size,
-        img_size=image_size,
-        center_frag_start=center_frag_start
-    )
+    if num_train_images_per_set != 0:
+        fields1993_stimuli.generate_data_set(
+            n_imgs_per_set=num_train_images_per_set,
+            base_dir=os.path.join(base_data_dir, 'train'),
+            frag_tile_size=frag_size,
+            frag_params_list=gabor_parameters_list,
+            c_len_arr=contour_len_arr,
+            beta_rot_arr=beta_rotation_arr,
+            alpha_rot_arr=alpha_rotation_arr,
+            f_tile_size=full_tile_size,
+            img_size=image_size,
+            center_frag_start=center_frag_start
+        )
 
     # Generate the Validation Set
     fields1993_stimuli.generate_data_set(
@@ -137,17 +141,21 @@ if __name__ == "__main__":
     # Channel wise mean and standard deviation
     list_of_files = []
 
-    train_images = get_list_of_image_files(os.path.join(base_data_dir, 'train'))
-    list_of_files.extend(train_images)
+    train_dir = os.path.join(base_data_dir, 'train')
+    if os.path.exists(train_dir):
+        train_images = get_list_of_image_files(train_dir)
+        list_of_files.extend(train_images)
 
-    val_images = get_list_of_image_files(os.path.join(base_data_dir, 'val'))
-    list_of_files.extend(val_images)
+    val_dir = os.path.join(base_data_dir, 'val')
+    if os.path.exists(val_dir):
+        val_images = get_list_of_image_files(os.path.join(base_data_dir, 'val'))
+        list_of_files.extend(val_images)
 
     print("Calculating DataSet Statistics ...")
     mean, std = get_dataset_mean_and_std(list_of_files)
     print("Overall channel-wise\n mean {} \n std {}".format(mean, std))
 
-    # Get Mean and standard deviation of each Gabor set individually
+    # Get Mean and standard deviation of each gabor set individually
     # --------------------------------------------------------------
     gabor_set_specific_mean_list = []
     gabor_set_specific_std_list = []
