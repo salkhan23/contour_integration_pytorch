@@ -278,66 +278,66 @@ if __name__ == "__main__":
         plot_gain_vs_contour_length(contour_len_arr, mean_gains, std_gains, gain_vs_len_dir, fig_name, img_title)
         plot_iou_vs_contour_length(contour_len_arr, ious, iou_vs_len_dir, fig_name, img_title)
 
+        # import pdb
+        # pdb.set_trace()
+
     # -----------------------------------------------------------------------------------
-    # Population Results  (n_channels, c_len_arr). Avg over images already done
+    # Population Results  (n_channels, c_len_arr).
+    # Avg over images already done
     # -----------------------------------------------------------------------------------
     mean_gain_results = np.array(mean_gain_results)
     std_gain_results = np.array(std_gain_results)
     iou_results = np.array(iou_results)
 
     # Identify Outliers
-    gain_outlier_threshold = 100
+    gain_outlier_threshold = 50
     outliers = [idx for idx, item in enumerate(mean_gain_results) if np.any(item > gain_outlier_threshold)]
     print("{} Outliers (gain > {}) detected. @ {}".format(len(outliers), gain_outlier_threshold, outliers))
 
-    # [1] Overall - Average for all Neurons
-    # --------------------------------------
-    # # Raw
-    # all_iou, all_gain_mu, all_gain_sigma = get_averaged_results(iou_results, mean_gain_results, std_gain_results)
-    # fig_name = 'all_neurons_raw'
-    # plot_gain_vs_contour_length(contour_len_arr, all_gain_mu, all_gain_sigma, results_store_dir, fig_name)
-    # plot_iou_vs_contour_length(contour_len_arr, all_iou, results_store_dir, fig_name)
+    # [1] Overall - Average All Neurons
+    # -------------------------------------------------
+    all_neurons = np.arange(mean_gain_results.shape[0])
+    filt_all_neurons = [idx for idx in all_neurons if idx not in outliers]
 
-    # Remove Outliers
-    filtered_mu_gains = []
-    filtered_sigma_gains = []
-    filtered_iou = []
+    filt_mu_gains = mean_gain_results[filt_all_neurons, ]
+    filt_sigma_gains = std_gain_results[filt_all_neurons, ]
+    filt_iou = iou_results[filt_all_neurons, ]
+    all_iou, all_gain_mu, all_gain_sigma = get_averaged_results(filt_iou, filt_mu_gains, filt_sigma_gains)
 
-    for n_idx in range(mean_gain_results.shape[0]):
-        if n_idx not in outliers:
-            filtered_mu_gains.append(mean_gain_results[n_idx, ])
-            filtered_sigma_gains.append(std_gain_results[n_idx, ])
-            filtered_iou.append(iou_results[n_idx, ])
+    fig_name = 'average_all_neurons'
+    f_title = 'Average over all neurons'
+    plot_gain_vs_contour_length(contour_len_arr, all_gain_mu, all_gain_sigma, results_store_dir, fig_name, f_title)
+    plot_iou_vs_contour_length(contour_len_arr, all_iou, results_store_dir, fig_name, f_title)
 
-    all_iou, all_gain_mu, all_gain_sigma = get_averaged_results(filtered_iou, filtered_mu_gains, filtered_sigma_gains)
-
-    fig_name = 'all_neurons'
-    plot_gain_vs_contour_length(contour_len_arr, all_gain_mu, all_gain_sigma, results_store_dir, fig_name)
-    plot_iou_vs_contour_length(contour_len_arr, all_iou, results_store_dir, fig_name)
-
-    # [2] Only neuron that are max active for their preferred Stimuli
-    # --------------------------------------------------------------
+    # [2] Only neurons that are max active to their preferred stimuli
+    # ---------------------------------------------------------------
     max_active_neurons = [idx for idx, item in enumerate(meta_data['g_params_list']) if item[0]['is_max_active']]
+    filt_max_active_neurons = [idx for idx in max_active_neurons if idx not in outliers]
 
-    filtered_mean_gain_results = []
-    filtered_std_gain_results = []
-    filtered_iou = []
-
-    for n_idx in max_active_neurons:
-        if n_idx not in outliers:
-            filtered_mean_gain_results.append(mean_gain_results[n_idx, ])
-            filtered_std_gain_results.append(std_gain_results[n_idx, ])
-            filtered_iou.append(iou_results[n_idx, ])
-
+    filt_mu_gains = mean_gain_results[filt_max_active_neurons, ]
+    filt_sigma_gains = std_gain_results[filt_max_active_neurons, ]
+    filt_iou = iou_results[filt_max_active_neurons, ]
     max_active_iou, max_active_gain_mu, max_active_gain_sigma = \
-        get_averaged_results(filtered_mean_gain_results, filtered_std_gain_results, filtered_iou)
+        get_averaged_results(filt_iou, filt_mu_gains, filt_sigma_gains)
 
-    fig_name = 'Only max_active_neurons'
-    title = '{} Neurons are max active for their preferred stimuli'.format(len(max_active_neurons))
-
+    fig_name = 'average_max_active_neurons'
+    title = 'Average over all neurons max active for their stimuli (N={})'.format(len(max_active_neurons))
     plot_gain_vs_contour_length(
         contour_len_arr, max_active_gain_mu, max_active_gain_sigma, results_store_dir, fig_name, title)
-    plot_iou_vs_contour_length(contour_len_arr, max_active_iou, results_store_dir, fig_name)
+    plot_iou_vs_contour_length(contour_len_arr, max_active_iou, results_store_dir, fig_name, title)
+
+    # [3] Plot gain curves individually
+    # ----------------------------------
+    filt_mu_gains = np.array(filt_mu_gains)
+    fig = plt.figure()
+    for idx, n_idx in enumerate(filt_max_active_neurons):
+        plt.plot(contour_len_arr, filt_mu_gains[idx, ], label=''.format(n_idx))
+    plt.xlabel("Length")
+    plt.ylabel("Gain")
+    plt.title("Individual Gain Curves - Max Active Neurons")
+    plt.legend()
+    fig.savefig(os.path.join(results_store_dir, 'individual_gain_curves.jpg'), format='jpg')
+    plt.close()
 
     # -----------------------------------------------------------------------------------
     # End
