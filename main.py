@@ -70,7 +70,7 @@ if __name__ == '__main__':
     print("====> Setting up data loaders ")
     data_load_start_time = datetime.now()
 
-    data_set_dir = "./data/fitted_gabors_10_full14_frag7"
+    data_set_dir = "./data/channel_wise_optimal_full14_frag7"
     print("Source: {}".format(data_set_dir))
 
     # get mean/std of dataset
@@ -78,6 +78,12 @@ if __name__ == '__main__':
     with open(meta_data_file, 'rb') as file_handle:
         meta_data = pickle.load(file_handle)
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
+
+    gabor_sets = [
+          0,   3,  6,  9, 12, 11, 13, 14, 16, 18,
+          22, 23, 24, 25, 27, 28, 30, 31, 33, 34,
+          39, 41, 45, 48, 50, 54, 55, 57, 61, 63
+    ]
 
     # Pre-processing
     normalize = transforms.Normalize(
@@ -89,6 +95,7 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
+        gabor_set_arr=gabor_sets,
     )
 
     train_data_loader = DataLoader(
@@ -103,6 +110,7 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'val'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
+        gabor_set_arr=gabor_sets
     )
 
     val_data_loader = DataLoader(
