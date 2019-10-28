@@ -72,8 +72,8 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    num_train_images_per_set = 0
-    num_val_images_per_set = 50
+    num_train_images_per_set = 100
+    num_val_images_per_set = 10
 
     frag_size = np.array([7, 7])
     full_tile_size = np.array([14, 14])
@@ -83,13 +83,13 @@ if __name__ == "__main__":
     # gabor_params_file = './generate_data/fitted_10_gabors_params.pickle'
     gabor_params_file = 'channel_wise_optimal_stimuli.pickle'
 
-    # Centrally Located contours (Li 2006 Stimuli)
-    base_data_dir = './data//channel_wise_optimal_full14_frag7_centered_test'
-    center_frag_start = image_center - (frag_size // 2)
+    # # Centrally Located contours (Li 2006 Stimuli)
+    # base_data_dir = './data//channel_wise_optimal_full14_frag7_centered_test'
+    # center_frag_start = image_center - (frag_size // 2)
 
     # # Randomly Located Contours
-    # base_data_dir = './data/channel_wise_optimal_full14_frag7_test'
-    # center_frag_start = None
+    base_data_dir = './data/channel_wise_optimal_full14_frag7_test'
+    center_frag_start = None
 
     # -----------------------------------------------------------------------------------
     # gabor_parameters_list - list of list of dictionaries one for each channel
