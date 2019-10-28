@@ -83,7 +83,7 @@ def get_filtered_file_names(file_names, c_len_arr, beta_arr, alpha_arr, gabor_se
 
 class Fields1993(Dataset):
     def __init__(self, data_dir, bg_tile_size, augment=False, transform=None,
-                 c_len_arr=None, beta_arr=None, alpha_arr=None, gabor_set_arr=None):
+                 c_len_arr=None, beta_arr=None, alpha_arr=None, gabor_set_arr=None, subset_size=None):
 
         self.data_dir = data_dir
         self.bg_tile_size = bg_tile_size
@@ -113,6 +113,14 @@ class Fields1993(Dataset):
 
         if not file_names:
             raise Exception("No Files in Data set!")
+
+        if subset_size is not None:
+            assert subset_size < len(file_names), 'subset size {} is greater than dataset size {}'.format(
+                subset_size, len(file_names))
+
+            use_idxs = np.random.choice(np.arange(len(file_names)), size=subset_size, replace=False)
+            use_file_names = [file_names[idx] for idx in use_idxs]
+            file_names = use_file_names
 
         self.images = [os.path.join(image_dir, x + ".png") for x in file_names]
         self.labels = [os.path.join(label_dir, x + ".npy") for x in file_names]

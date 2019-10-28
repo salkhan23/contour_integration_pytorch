@@ -31,7 +31,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     train_batch_size = 16
     test_batch_size = 1
-    learning_rate = 0.0001
+    learning_rate = 0.00001
     num_epochs = 50
     random_seed = 10
 
@@ -79,12 +79,6 @@ if __name__ == '__main__':
         meta_data = pickle.load(file_handle)
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
-    gabor_sets = [
-          0,   3,  6,  9, 12, 11, 13, 14, 16, 18,
-          22, 23, 24, 25, 27, 28, 30, 31, 33, 34,
-          39, 41, 45, 48, 50, 54, 55, 57, 61, 63
-    ]
-
     # Pre-processing
     normalize = transforms.Normalize(
         mean=meta_data['channel_mean'],
@@ -95,7 +89,7 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        gabor_set_arr=gabor_sets,
+        subset_size=20000
     )
 
     train_data_loader = DataLoader(
@@ -110,7 +104,7 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'val'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        gabor_set_arr=gabor_sets
+        subset_size=2000
     )
 
     val_data_loader = DataLoader(
