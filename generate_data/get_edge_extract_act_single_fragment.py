@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------------------
-# This is a debug script for checking responses to gabors fragments.
-# Two possible starting points (for defining gabors)
-#    (1) Specify Gabor parameters (Function: define_gabor_parameters)
-#    (2) Specify the fragment (Function: define Gabor Fragment)
+# This is a debug script for checking responses to a single gabor fragment.
 #
-#  Given gabor parameters,
-#   [1] Construct a test contour image (centered contour)
-#   [2] Get/plot the responses of all centered neurons of the Fist /edge extracting
-#   layer of a model
+# The gabor can be specified by:
+#     (1) individual pixels values (define_gabor_fragment)
+#     (2) gabor parameters (define_gabor_parameters)
+#
+# Given a gabor fragment, create a test image with a contour in the center
+# Pass through the model and display center neuron responses of the edge extracting
+# layer (at the output of the first convolutional layer)
 #
 # ---------------------------------------------------------------------------------------
 import numpy as np
@@ -48,7 +48,7 @@ def define_gabor_parameters(frag_size):
 
 def define_gabor_fragment(frag_size):
     """
-     Explicitly Define Fragment.
+     Explicitly Define Fragment (pixel by pixel).
      A Gabor Fit will be found.
 
     :param frag_size:
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         edge_extract_act[0, :, edge_extract_act.shape[2] // 2, edge_extract_act.shape[3] // 2]
 
     max_active_neuron = np.argmax(center_neuron_extract_out)
-    string = "Max Active Neuron {}. Value={:0.2f}.".format(
+    string = "Edge Extract Activationsof Center Neuron.\nMax Active Neuron {}. Value={:0.2f}.".format(
         max_active_neuron, center_neuron_extract_out[max_active_neuron])
 
     print(string)
@@ -212,6 +212,8 @@ if __name__ == "__main__":
     plt.plot(center_neuron_extract_out)
     plt.title(string)
     plt.xlabel("Channel Index")
+    plt.axvline(max_active_neuron, color='red')
+    plt.grid()
 
     import pdb
     pdb.set_trace()
