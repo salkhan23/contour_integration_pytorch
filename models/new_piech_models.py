@@ -196,8 +196,8 @@ class ContourIntegrationCSI(nn.Module):
 
         # First Convolutional Layer of Alexnet
         self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
-        self.edge_extract.weight.requires_grad = True
-        self.edge_extract.bias.requires_grad = True
+        self.edge_extract.weight.requires_grad = False
+        self.edge_extract.bias.requires_grad = False
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
 
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
