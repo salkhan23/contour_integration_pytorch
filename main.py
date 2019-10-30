@@ -17,6 +17,7 @@ import dataset
 import utils
 from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
 from models.new_piech_models import ContourIntegrationCSI
+from models.new_control_models import ControlMatchParametersModel
 import models.control_models as control_models
 
 
@@ -53,6 +54,7 @@ if __name__ == '__main__':
     # model = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
     # model = control_models.CmClassificationHeadOnly().to(device)
     model = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23).to(device)
+    # model = ControlMatchParametersModel(lateral_e_size=23, lateral_i_size=23).to(device)
 
     # print(model)
     print("Name: {}".format(model.__class__.__name__))
