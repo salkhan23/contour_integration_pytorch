@@ -14,6 +14,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as nn_functional
 import torchvision
+import torch.nn.init as init
 
 
 class DummyHead(nn.Module):
@@ -74,11 +75,11 @@ class CurrentSubtractInhibitLayer(nn.Module):
         Subtractive Inhibition means the inhibitory neurons influence is subtracted from the membrane potential of the
         excitatory neuron.
 
-        x_t = (1 - a) x_{t-1} +
-              a (J_{xx}f_x(x_{t-1}) - J_{xy}f_y(y_{t-1}) + e_bias + f_x(F_x(x_{t-1})* W_e + I_{ext} )
+        x_t = (1 - a)x_{t-1} +
+              a ( J_{xx}f_x(x_{t-1}) - J_{xy}f_y(y_{t-1}) + e_bias + f_x(X_{t-1}) * W_e) + I_{ext} )
 
         y_t = (1 - b)y_{t-1} +
-              b (J_{yx}f(x_{t-1})+ i_bias + f_y(F_y(y_{t-1}) )
+              b (J_{yx}f(x_{t-1}) + i_bias + f_y(Y_{t-1}) * W_i) )
 
         x = membrane potential of excitatory neuron
         y = membrane potential of the inhibitory neuron
@@ -90,8 +91,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
         f_x(x) = Activation function of the excitatory neuron, Relu. It is the output of the same neuron
         f_y(y) = Activation function of the inhibitory neuron, Relu. It is the output of the same neuron
 
-        F_x(x) = Output of all excitatory neurons.
-        F_y(y) = Output of all inhibitory neurons
+        X_{t} = Output of all excitatory neurons at time t
+        Y_{y} = Output of all inhibitory neurons
 
         W_e = Connection strengths of nearby excitatory neurons to excitatory neurons.
         W_i = Connection strength of nearby excitatory neurons to inhibitory neurons.
@@ -110,23 +111,29 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
         self.lateral_e_size = lateral_e_size
         self.lateral_i_size = lateral_i_size
+        self.edge_out_ch = edge_out_ch
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
-        self.a = 0.5  # Weighting factor for combining excitatory recurrence and feed-forward. Should be [Nx1]
-        self.b = 0.5  # Weighting factor for combining inhibitory recurrence and feed-forward  Should be [Nx1]
-        # TODO: a and b should be learnt not constant
-
-        self.edge_out_ch = edge_out_ch
+        # self.a = 0.5  # Weighting factor for combining excitatory recurrence and feed-forward. Should be [Nx1]
+        # self.b = 0.5  # Weighting factor for combining inhibitory recurrence and feed-forward  Should be [Nx1]
+        # # TODO: a and b should be learnt not constant
         self.a = nn.Parameter(torch.rand(edge_out_ch))
+        # init.xavier_normal_(self.a.view(1, edge_out_ch))
         self.b = nn.Parameter(torch.rand(edge_out_ch))
+        # init.xavier_normal_(self.b.view(1, edge_out_ch))
 
         self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
-        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
-        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
 
-        self.e_bias = nn.Parameter(torch.rand(edge_out_ch))
-        self.i_bias = nn.Parameter(torch.rand(edge_out_ch))
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+
+        self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
+        self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
 
         # Components
         self.lateral_e = nn.Conv2d(
