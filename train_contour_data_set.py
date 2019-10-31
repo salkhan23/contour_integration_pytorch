@@ -298,7 +298,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             lr_history[epoch]
         ))
 
-    print('Finished Training. Training took {}'.format(datetime.now() - training_start_time))
+    training_time = datetime.now() - training_start_time
+    print('Finished Training. Training took {}'.format(training_time))
+
+    file_handle.write("{}\n".format('-' * 80))
+    file_handle.write("Train Duration       : {}\n".format(training_time))
     file_handle.close()
 
     # -----------------------------------------------------------------------------------
