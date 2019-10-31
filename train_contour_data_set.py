@@ -26,7 +26,7 @@ def get_lr(opt):
         return param_group['lr']
 
 
-def main(model, training_params, data_set_params, base_results_store_dir='./results'):
+def main(model, train_params, data_set_params, base_results_store_dir='./results'):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -53,11 +53,11 @@ def main(model, training_params, data_set_params, base_results_store_dir='./resu
     # ----------------------------
     required_training_params = ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
     for key in required_training_params:
-        assert key in training_params, 'training_params does not have required key {}'.format(key)
-    train_batch_size = training_params['train_batch_size']
-    test_batch_size = training_params['test_batch_size']
-    learning_rate = training_params['learning_rate']
-    num_epochs = training_params['num_epochs']
+        assert key in train_params, 'training_params does not have required key {}'.format(key)
+    train_batch_size = train_params['train_batch_size']
+    test_batch_size = train_params['test_batch_size']
+    learning_rate = train_params['learning_rate']
+    num_epochs = train_params['num_epochs']
 
     # -----------------------------------------------------------------------------------
     # Model
@@ -340,7 +340,7 @@ if __name__ == '__main__':
         'train_batch_size': 16,
         'test_batch_size': 1,
         'learning_rate': 0.00003,
-        'num_epochs': 1,
+        'num_epochs': 50,
     }
 
     # net = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
@@ -352,7 +352,7 @@ if __name__ == '__main__':
     net = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23)
     # net = ControlMatchParametersModel(lateral_e_size=23, lateral_i_size=23)
 
-    main(net, training_params=train_parameters, data_set_params=data_set_parameters,
+    main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/new_model')
 
     # -----------------------------------------------------------------------------------
