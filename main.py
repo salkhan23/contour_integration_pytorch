@@ -32,7 +32,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     train_batch_size = 16
     test_batch_size = 1
-    learning_rate = 0.00001
+    learning_rate = 0.00003
     num_epochs = 50
     random_seed = 10
 
