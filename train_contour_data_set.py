@@ -26,42 +26,48 @@ def get_lr(opt):
         return param_group['lr']
 
 
-if __name__ == '__main__':
-    # -----------------------------------------------------------------------------------
-    # Initialization
-    # -----------------------------------------------------------------------------------
-    train_batch_size = 16
-    test_batch_size = 1
-    learning_rate = 0.00003
-    num_epochs = 50
-    random_seed = 10
-
-    results_store_dir = './results/new_model'
+def main(model, training_params, data_set_params, base_results_store_dir='./results'):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
 
-    # ------------------------
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
+    # -----------------------------------------------------------------------------------
+    # Sanity Checks
+    # -----------------------------------------------------------------------------------
+    # Validate Data set parameters
+    # ----------------------------
+    required_data_set_params = ['data_set_dir']
+    for key in required_data_set_params:
+        assert key in data_set_params, 'data_set_params does not have required key {}'.format(key)
+    data_set_dir = data_set_params['data_set_dir']
+
+    # Optional
+    train_subset_size = data_set_params.get('train_subset_size', None)
+    test_subset_size = data_set_params.get('test_subset_size', None)
+    c_len_arr = data_set_params.get('c_len_arr', None)
+    beta_arr = data_set_params.get('beta_arr', None)
+    alpha_arr = data_set_params.get('alpha_arr', None)
+    gabor_set_arr = data_set_params.get('gabor_set_arr', None)
+
+    # Validate training parameters
+    # ----------------------------
+    required_training_params = ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
+    for key in required_training_params:
+        assert key in training_params, 'training_params does not have required key {}'.format(key)
+    train_batch_size = training_params['train_batch_size']
+    test_batch_size = training_params['test_batch_size']
+    learning_rate = training_params['learning_rate']
+    num_epochs = training_params['num_epochs']
 
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    # model = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
-    # model = CurrentDivisiveInhibition().to(device)
-    # model = control_models.CmMatchIterations().to(device)
-    # model = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
-    # model = control_models.CmClassificationHeadOnly().to(device)
-    model = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23).to(device)
-    # model = ControlMatchParametersModel(lateral_e_size=23, lateral_i_size=23).to(device)
-
-    # print(model)
     print("Name: {}".format(model.__class__.__name__))
     print(model)
 
     results_store_dir = os.path.join(
-        results_store_dir,
+        base_results_store_dir,
         model.__class__.__name__ + datetime.now().strftime("_%Y%m%d_%H%M%S"))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
@@ -72,8 +78,10 @@ if __name__ == '__main__':
     print("====> Setting up data loaders ")
     data_load_start_time = datetime.now()
 
-    data_set_dir = "./data/channel_wise_optimal_full14_frag7"
-    print("Source: {}".format(data_set_dir))
+    print("Data Source: {}".format(data_set_dir))
+    print("Restrictions:\n clen={},\n beta={},\n alpha={},\n gabor_sets={},\n train_subset={},\n "
+          "test subset={}\n".format(
+            c_len_arr, beta_arr, alpha_arr, gabor_set_arr, train_subset_size, test_subset_size))
 
     # get mean/std of dataset
     meta_data_file = os.path.join(data_set_dir, 'dataset_metadata.pickle')
@@ -91,7 +99,11 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        subset_size=20000
+        subset_size=train_subset_size,
+        c_len_arr=c_len_arr,
+        beta_arr=beta_arr,
+        alpha_arr=alpha_arr,
+        gabor_set_arr=gabor_set_arr
     )
 
     train_data_loader = DataLoader(
@@ -106,7 +118,11 @@ if __name__ == '__main__':
         data_dir=os.path.join(data_set_dir, 'val'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=normalize,
-        subset_size=2000
+        subset_size=test_subset_size,
+        c_len_arr=c_len_arr,
+        beta_arr=beta_arr,
+        alpha_arr=alpha_arr,
+        gabor_set_arr=gabor_set_arr
     )
 
     val_data_loader = DataLoader(
@@ -139,7 +155,7 @@ if __name__ == '__main__':
     #  Training Validation Routines
     # -----------------------------------------------------------------------------------
     def train():
-        """ Train for one Epoch  over the train data set """
+        """ Train for one Epoch over the train data set """
         model.train()
         e_loss = 0
         e_iou = 0
@@ -210,27 +226,42 @@ if __name__ == '__main__':
     # Summary file
     summary_file = os.path.join(results_store_dir, 'summary.txt')
     file_handle = open(summary_file, 'w+')
-    file_handle.write("Data Set         : {}\n".format(data_set_dir))
+
+    file_handle.write("Data Set Parameters {}\n".format('-' * 60))
+    file_handle.write("Source           : {}\n".format(data_set_dir))
+    file_handle.write("Restrictions     :\n")
+    file_handle.write("  Lengths        : {}\n".format(c_len_arr))
+    file_handle.write("  Beta           : {}\n".format(beta_arr))
+    file_handle.write("  Alpha          : {}\n".format(alpha_arr))
+    file_handle.write("  Gabor Sets     : {}\n".format(gabor_set_arr))
+    file_handle.write("  Train Set Size : {}\n".format(train_subset_size))
+    file_handle.write("  Test Set Size  : {}\n".format(test_subset_size))
+
+    file_handle.write("Training Parameters {}\n".format('-' * 60))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
     file_handle.write("Val images       : {}\n".format(len(val_set.images)))
     file_handle.write("Train batch size : {}\n".format(train_batch_size))
     file_handle.write("Val batch size   : {}\n".format(test_batch_size))
     file_handle.write("Epochs           : {}\n".format(num_epochs))
+    file_handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
+    file_handle.write("learning rate    : {}\n".format(learning_rate))
+    file_handle.write("Loss Fcn         : {}\n".format(criterion.__class__.__name__))
+    file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
+
+    file_handle.write("Model Parameters {}\n".format('-' * 63))
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
     file_handle.write("\n")
     print(model, file=file_handle)
-    file_handle.write("{}\n".format('-' * 80))
+    cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+    for var in cont_int_layer_vars:
+        file_handle.write("{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
 
-    file_handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
-    file_handle.write("learning rate    : {}\n".format(learning_rate))
-    file_handle.write("Loss             : {}\n".format(criterion.__class__.__name__))
     file_handle.write("{}\n".format('-' * 80))
-
-    file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
-    file_handle.write("{}\n".format('-' * 80))
-
     file_handle.write("Training details\n")
     file_handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
+
+    print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
+        train_batch_size, test_batch_size, learning_rate, num_epochs))
 
     for epoch in range(num_epochs):
 
@@ -292,7 +323,40 @@ if __name__ == '__main__':
     plt.legend()
     f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
 
+
+if __name__ == '__main__':
+
+    random_seed = 10
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+
+    data_set_parameters = {
+        'data_set_dir':  "./data/channel_wise_optimal_full14_frag7",
+        'train_subset_size': 20000,
+        'test_subset_size': 2000
+    }
+
+    train_parameters = {
+        'train_batch_size': 16,
+        'test_batch_size': 1,
+        'learning_rate': 0.00003,
+        'num_epochs': 1,
+    }
+
+    # net = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
+    # net = CurrentDivisiveInhibition().to(device)
+    # net = control_models.CmMatchIterations().to(device)
+    # net = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
+    # net = control_models.CmClassificationHeadOnly().to(device)
+    # New
+    net = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23)
+    # net = ControlMatchParametersModel(lateral_e_size=23, lateral_i_size=23)
+
+    main(net, training_params=train_parameters, data_set_params=data_set_parameters,
+         base_results_store_dir='./results/new_model')
+
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
-    # input("Press any key to continue")
+    import pdb
+    pdb.set_trace()
