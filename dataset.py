@@ -90,6 +90,14 @@ class Fields1993(Dataset):
         self.transform = transform
         self.augment = augment      # Todo: Add
 
+        self.restrictions = {
+            'c_len_arr': c_len_arr,
+            'beta_att': beta_arr,
+            'alpha_arr': alpha_arr,
+            'gabor_set_arr': gabor_set_arr,
+            'subset_size': subset_size
+        }
+
         image_dir = os.path.join(self.data_dir, 'images')
         label_dir = os.path.join(self.data_dir, 'labels')
         data_key = os.path.join(self.data_dir, 'data_key.txt')
