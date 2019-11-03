@@ -236,6 +236,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("  Gabor Sets     : {}\n".format(gabor_set_arr))
     file_handle.write("  Train Set Size : {}\n".format(train_subset_size))
     file_handle.write("  Test Set Size  : {}\n".format(test_subset_size))
+    file_handle.write("Train Set Mean {}, std {}\n".format(train_set.data_set_mean, train_set.data_set_std))
+    file_handle.write("Validation Set Mean {}, std {}\n".format(val_set.data_set_mean, train_set.data_set_std))
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
@@ -347,7 +349,6 @@ if __name__ == '__main__':
         'num_epochs': 50,
     }
 
-    # net = CurrentSubtractiveInhibition(lateral_e_size=7, lateral_i_size=7).to(device)
     # net = CurrentDivisiveInhibition().to(device)
     # net = control_models.CmMatchIterations().to(device)
     # net = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
