@@ -13,7 +13,7 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    lateral_rf_size_arr = [3, 5, 7, 11, 15, 19, 23]
+    lateral_rf_size_arr = [11, 11]
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
