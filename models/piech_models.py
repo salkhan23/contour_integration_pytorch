@@ -15,6 +15,8 @@ import torch.nn as nn
 import torch.nn.functional as nn_functional
 import torchvision
 
+from .new_piech_models import ClassifierHead as newClassifierHead
+
 
 class DummyHead(nn.Module):
     """ Just passes the data through as is """
@@ -218,7 +220,8 @@ class CurrentSubtractiveInhibition(nn.Module):
 
         # Classification head get decision (whether part of a contour or not) for each full tile in the image.
         if use_class_head:
-            self.post = ClassifierHead(self.edge_out_ch)
+            # self.post = ClassifierHead(self.edge_out_ch)
+            self.post = newClassifierHead(self.edge_out_ch)
         else:
             self.post = DummyHead()
 
