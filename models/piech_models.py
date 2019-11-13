@@ -102,7 +102,7 @@ class ClassifierHeadOld(nn.Module):
 
 
 class CurrentSubtractiveInhibition(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True, lateral_e_size=7, lateral_i_size=7):
+    def __init__(self, edge_out_ch=64, n_iters=5, use_class_head=True, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
         """
         Current based model with Subtractive Inhibition
 
@@ -161,16 +161,28 @@ class CurrentSubtractiveInhibition(nn.Module):
         self.use_class_head = use_class_head
         self.lateral_e_size = lateral_e_size
         self.lateral_i_size = lateral_i_size
+        self.edge_out_ch = edge_out_ch
 
         # Parameters
         self.n_iters = n_iters  # Number of recurrent steps
-        self.a = 0.5  # Weighting factor for combining excitatory recurrence and feed-forward. Should be [Nx1]
-        self.b = 0.5  # Weighting factor for combining inhibitory recurrence and feed-forward  Should be [Nx1]
-        # TODO: a and b should be learnt not constant
 
-        self.edge_out_ch = edge_out_ch
-        self.a = nn.Parameter(torch.rand(edge_out_ch))
-        self.b = nn.Parameter(torch.rand(edge_out_ch))
+        if a is not None:
+            assert type(a) == float, 'a must be an float'
+            assert 0 <= a <= 1.0, 'a must be between [0, 1]'
+
+            self.a = nn.Parameter(torch.ones(edge_out_ch) * a)
+            self.a.requires_grad = False
+        else:
+            self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+
+        if b is not None:
+            assert type(b) == float, 'b must be an float'
+            assert 0 <= b <= 1.0, 'b must be between [0, 1]'
+
+            self.b = nn.Parameter(torch.ones(edge_out_ch) * b)
+            self.b.requires_grad = False
+        else:
+            self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
 
         self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
         self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
