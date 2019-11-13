@@ -190,8 +190,6 @@ class CurrentSubtractInhibitLayer(nn.Module):
                         nn.functional.relu(self.lateral_e(f_x))
                 )
 
-            f_x = nn.functional.relu(x)
-
             y = (1 - self.b.view(1, self.edge_out_ch, 1, 1) * y) + \
                 self.b.view(1, self.edge_out_ch, 1, 1) * (
                         (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
@@ -199,6 +197,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
                         nn.functional.relu(self.lateral_i(f_x))
                 )
 
+            f_x = nn.functional.relu(x)
             f_y = nn.functional.relu(y)
 
         return f_x
@@ -213,9 +212,15 @@ class ContourIntegrationCSI(nn.Module):
         super(ContourIntegrationCSI, self).__init__()
 
         # First Convolutional Layer of Alexnet
-        self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
-        self.edge_extract.weight.requires_grad = False
-        self.edge_extract.bias.requires_grad = False
+        # self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
+        # self.edge_extract.weight.requires_grad = False
+        # self.edge_extract.bias.requires_grad = False
+
+        self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
+        alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
+        self.edge_extract.weight.data = alexnet_kernel.weight.data
+        self.edge_extract.requires_grad = False
+
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
 
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
