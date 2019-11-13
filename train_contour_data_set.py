@@ -254,9 +254,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
     file_handle.write("\n")
     print(model, file=file_handle)
-    cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
-    for var in cont_int_layer_vars:
-        file_handle.write("{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
+
+    temp = vars(model)  # Returns a dictionary.
+    layers = temp['_modules']  # Returns all top level modules (layers)
+    if 'contour_integration_layer' in layers :
+        cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+        for var in cont_int_layer_vars:
+            file_handle.write("{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
 
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Training details\n")
