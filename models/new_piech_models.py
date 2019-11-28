@@ -122,6 +122,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             self.a = nn.Parameter(torch.ones(edge_out_ch) * a)
             self.a.requires_grad = False
+            self.fixed_a = a
         else:
             self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
 
@@ -131,6 +132,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             self.b = nn.Parameter(torch.ones(edge_out_ch) * b)
             self.b.requires_grad = False
+            self.fixed_b = b
         else:
             self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
 

@@ -257,10 +257,19 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     temp = vars(model)  # Returns a dictionary.
     layers = temp['_modules']  # Returns all top level modules (layers)
-    if 'contour_integration_layer' in layers :
+    if 'contour_integration_layer' in layers:
+
+        # print fixed hyper parameters
+        file_handle.write("Contour Integration Layer Hyper parameters\n")
         cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
-        for var in cont_int_layer_vars:
-            file_handle.write("{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
+        for var in sorted(cont_int_layer_vars):
+            file_handle.write("\t{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
+
+        # print parameter names and whether they are trainable
+        file_handle.write("Contour Integration Layer Parameters\n")
+        layer_params = vars(model.contour_integration_layer)['_parameters']
+        for k, v in sorted(layer_params.items()):
+            file_handle.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
 
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Training details\n")
