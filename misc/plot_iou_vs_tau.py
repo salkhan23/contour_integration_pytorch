@@ -484,6 +484,10 @@ if __name__ == "__main__":
 
     best_train_iou = []
     best_val_iou = []
+
+    best_training_loss = []
+    best_val_loss = []
+
     tau_arr = []
 
     for key, value in sorted(tau_results.items()):
@@ -491,10 +495,16 @@ if __name__ == "__main__":
         validation_iou_arr = value[:, 4]
         train_iou_arr = value[:, 2]
 
+        validation_loss_arr = value[:, 3]
+        train_loss_arr = value[:, 1]
+
         tau_arr.append(key)
         best_train_iou.append(np.max(train_iou_arr))
         best_val_iou.append(np.max(validation_iou_arr))
+        best_training_loss.append(np.min(train_loss_arr))
+        best_val_loss.append(np.min(validation_loss_arr))
 
+    # Plot best Iou vs Tau
     plt.figure()
     plt.plot(tau_arr, best_train_iou, label='train_iou', marker='x', markersize=10)
     plt.plot(tau_arr, best_val_iou, label='val_iou', marker='x', markersize=10)
@@ -502,5 +512,58 @@ if __name__ == "__main__":
     plt.ylabel("IoU")
     plt.legend()
 
+    # Plot lowest loss vs Tau
+    plt.figure()
+    plt.plot(tau_arr, best_training_loss, label='train_loss', marker='x', markersize=10)
+    plt.plot(tau_arr, best_val_loss, label='val_loss', marker='x', markersize=10)
+    plt.xlabel("a,b=")
+    plt.ylabel("Loss")
+    plt.legend()
+
+    # Plot Individual Loss/Iou Curves
+    num_keys = len(tau_results.keys())
+    single_dim = np.ceil(np.sqrt(num_keys))
+
+    fig1 = plt.figure()
+    fig2 = plt.figure()
+
+    for k_idx, key in enumerate(sorted(tau_results.keys())):
+        ax1 = fig1.add_subplot(single_dim, single_dim, k_idx + 1)
+        ax2 = fig2.add_subplot(single_dim, single_dim, k_idx + 1)
+
+        ax1.plot(
+            tau_results[key][:, 0],
+            tau_results[key][:, 2],
+            label='train_iou')
+
+        ax1.plot(
+            tau_results[key][:, 0],
+            tau_results[key][:, 4],
+            label='val_iou')
+
+        ax1.set_title("rf_size={}".format(key))
+
+        ax2.plot(
+            tau_results[key][:, 0],
+            tau_results[key][:, 1],
+            label='train_loss')
+
+        ax2.plot(
+            tau_results[key][:, 0],
+            tau_results[key][:, 3],
+            label='val_iou_loss')
+
+        # ax2.set_yscale('log')
+
+        ax1.set_title("a,b ={}".format(key))
+        ax2.set_title("a,b ={}".format(key))
+
+    ax1.legend()
+    ax2.legend()
+
+    fig1.suptitle("Iou Vs Tau (a, b) Individual Curves")
+    fig2.suptitle("Loss Vs Tau (a,b) Individual Curves")
+
+    # ----------------------------------------------------------------------
     import pdb
     pdb.set_trace()

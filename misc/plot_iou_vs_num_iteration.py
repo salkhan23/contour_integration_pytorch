@@ -385,6 +385,10 @@ if __name__ == "__main__":
 
     best_train_iou = []
     best_val_iou = []
+
+    best_training_loss = []
+    best_val_loss = []
+
     n_iter_arr = []
 
     for key, value in sorted(n_iter_results.items()):
@@ -392,16 +396,76 @@ if __name__ == "__main__":
         validation_iou_arr = value[:, 4]
         train_iou_arr = value[:, 2]
 
+        validation_loss_arr = value[:, 3]
+        train_loss_arr = value[:, 1]
+
         n_iter_arr.append(key)
         best_train_iou.append(np.max(train_iou_arr))
         best_val_iou.append(np.max(validation_iou_arr))
+        best_training_loss.append(np.min(train_loss_arr))
+        best_val_loss.append(np.min(validation_loss_arr))
 
+    # Plot best Iou vs num iterations
     plt.figure()
     plt.plot(n_iter_arr, best_train_iou, label='train_iou', marker='x', markersize=10)
     plt.plot(n_iter_arr, best_val_iou, label='val_iou', marker='x', markersize=10)
     plt.xlabel("Number of iterations")
     plt.ylabel("IoU")
+    plt.title("IoU vs Number of iterations")
     plt.legend()
 
+    # Plot lowest loss vs num iterations
+    plt.figure()
+    plt.plot(n_iter_arr, best_training_loss, label='train_loss', marker='x', markersize=10)
+    plt.plot(n_iter_arr, best_val_loss, label='val_loss', marker='x', markersize=10)
+    plt.xlabel("number of iterations =")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Number of iterations")
+    plt.legend()
+
+    # Plot Individual Loss/Iou Curves
+    num_keys = len(n_iter_results.keys())
+    single_dim = np.ceil(np.sqrt(num_keys))
+
+    fig1 = plt.figure()
+    fig2 = plt.figure()
+
+    for k_idx, key in enumerate(sorted(n_iter_results.keys())):
+        ax1 = fig1.add_subplot(single_dim, single_dim, k_idx + 1)
+        ax2 = fig2.add_subplot(single_dim, single_dim, k_idx + 1)
+
+        ax1.plot(
+            n_iter_results[key][:, 0],
+            n_iter_results[key][:, 2],
+            label='train_iou')
+
+        ax1.plot(
+            n_iter_results[key][:, 0],
+            n_iter_results[key][:, 4],
+            label='val_iou')
+
+        ax1.set_title("rf_size={}".format(key))
+
+        ax2.plot(
+            n_iter_results[key][:, 0],
+            n_iter_results[key][:, 1],
+            label='train_loss')
+
+        ax2.plot(
+            n_iter_results[key][:, 0],
+            n_iter_results[key][:, 3],
+            label='val_iou_loss')
+
+        # ax2.set_yscale('log')
+
+        ax1.set_title("rf_size={}".format(key))
+        ax2.set_title("rf_size={}".format(key))
+
+    ax1.legend()
+    ax2.legend()
+    fig1.suptitle("Iou Vs number of iterations - Individual Curves")
+    fig2.suptitle("Loss Vs number of iterations - Individual Curves")
+
+    # ----------------------------------------------------------------------
     import pdb
     pdb.set_trace()
