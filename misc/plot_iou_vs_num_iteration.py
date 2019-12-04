@@ -458,8 +458,8 @@ if __name__ == "__main__":
 
         # ax2.set_yscale('log')
 
-        ax1.set_title("rf_size={}".format(key))
-        ax2.set_title("rf_size={}".format(key))
+        ax1.set_title("num_iter={}".format(key))
+        ax2.set_title("num_iter={}".format(key))
 
     ax1.legend()
     ax2.legend()
