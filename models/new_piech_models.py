@@ -187,20 +187,23 @@ class CurrentSubtractInhibitLayer(nn.Module):
             # print("processing iteration {}".format(i))
 
             # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
-            x = (1 - self.a.view(1, self.edge_out_ch, 1, 1)) * x + \
-                self.a.view(1, self.edge_out_ch, 1, 1) * (
-                        (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
-                        (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
-                        ff +
-                        self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                        nn.functional.relu(self.lateral_e(f_x))
+            gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
+            gated_b = torch.sigmoid(self.b.view(1, self.edge_out_ch, 1, 1))
+
+            x = (1 - gated_a) * x + \
+                gated_a * (
+                    (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
+                    (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
+                    ff +
+                    self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
+                    nn.functional.relu(self.lateral_e(f_x))
                 )
 
-            y = (1 - self.b.view(1, self.edge_out_ch, 1, 1) * y) + \
-                self.b.view(1, self.edge_out_ch, 1, 1) * (
-                        (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
-                        self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                        nn.functional.relu(self.lateral_i(f_x))
+            y = (1 - gated_b) * y + \
+                gated_b * (
+                    (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
+                    self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
+                    nn.functional.relu(self.lateral_i(f_x))
                 )
 
             f_x = nn.functional.relu(x)
