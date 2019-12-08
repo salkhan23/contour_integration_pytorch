@@ -57,7 +57,7 @@ class ClassifierHead(nn.Module):
         # Sigmoid is included with loss function (BCEWithLogitsLoss)
         x = torch.sigmoid(self.conv2(x))
         x = self.conv2(x)
-        
+
         return x
 
 
