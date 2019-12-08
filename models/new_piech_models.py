@@ -53,7 +53,11 @@ class ClassifierHead(nn.Module):
 
     def forward(self, x):
         x = nn_functional.relu(self.bn1(self.conv1(x)))
-        x = torch.sigmoid(self.conv2(x))
+
+        # Sigmoid is included with loss function (BCEWithLogitsLoss)
+        # x = torch.sigmoid(self.conv2(x))
+        x = self.conv2(x)
+
         return x
 
 
