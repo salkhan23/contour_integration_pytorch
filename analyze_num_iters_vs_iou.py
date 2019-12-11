@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
         base_results_dir = './results/num_iteration_explore_2/n_iters_{}'.format(n_iters)
 
-        model = ContourIntegrationCSI(n_iters=n_iters, lateral_e_size=15, lateral_i_size=15, a=0.8, b=0.8)
+        model = ContourIntegrationCSI(n_iters=n_iters, lateral_e_size=15, lateral_i_size=15)
         # model = CurrentSubtractiveInhibition(edge_out_ch=64, n_iters=5, lateral_e_size=15, lateral_i_size=15)
 
         main(
