@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
         base_results_dir = './results/tau_explore/tau_{}'.format(tau)
 
-        model = ContourIntegrationCSI(n_iters=5, lateral_e_size=23, lateral_i_size=15, a=tau, b=tau)
+        model = ContourIntegrationCSI(n_iters=5, lateral_e_size=23, lateral_i_size=23, a=tau, b=tau)
         # model = CurrentSubtractiveInhibition(
         #     edge_out_ch=64, n_iters=3, lateral_e_size=15, lateral_i_size=15, a=tau, b=tau)
 
