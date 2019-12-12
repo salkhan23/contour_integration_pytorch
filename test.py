@@ -175,8 +175,8 @@ def get_contour_gain_vs_length(
     # Gain
     tgt_n_out_mat = tgt_n_out_mat / (avg_resp_noise_pattern + epsilon)
 
-    mean_gain_per_len_arr = np.mean(tgt_n_out_mat, axis=0)
-    std_gain_per_len_arr = np.mean(tgt_n_out_mat, axis=0)
+    mean_gain_per_len_arr = np.mean(tgt_n_out_mat, axis=1)
+    std_gain_per_len_arr = np.std(tgt_n_out_mat, axis=1)
 
     return iou_per_len_arr, np.array(mean_gain_per_len_arr), np.array(std_gain_per_len_arr)
 
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 10
 
-    results_dir = './results/test'
+    results_dir = './results/li_2006_experiment'
 
     # -------------------------------
     plt.ion()
