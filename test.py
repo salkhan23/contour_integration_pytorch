@@ -165,6 +165,7 @@ def get_contour_gain_vs_length(
     # Gain Calculation
     # -------------------
     tgt_n_out_mat = np.array([tgt_n_out_mat])
+    tgt_n_out_mat = np.squeeze(tgt_n_out_mat)
 
     # In Li2006, Gain was defined as output of neuron / mean output to noise pattern
     # where the noise pattern was defined as optimal stimulus at center of RF and all
@@ -216,7 +217,7 @@ if __name__ == "__main__":
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Setting up the Model ...")
-    net = new_piech_models.ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23)
+    net = new_piech_models.ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15)
 
     # Load Saved Model
     saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
