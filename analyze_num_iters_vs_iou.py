@@ -12,7 +12,6 @@ from models.piech_models import CurrentSubtractiveInhibition
 if __name__ == '__main__':
     random_seed = 10
     torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
 
     n_iters_arr = [1, 2, 3, 5, 8, 10, 15, 20, 25, 30]
     # n_iters_arr = n_iters_arr[::-1]
