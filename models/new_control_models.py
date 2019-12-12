@@ -62,10 +62,16 @@ class ControlMatchParametersModel(nn.Module):
     def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7):
         super(ControlMatchParametersModel, self).__init__()
 
-        # First Convolutional Layer of Alexnet
-        self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
-        self.edge_extract.weight.requires_grad = False
-        self.edge_extract.bias.requires_grad = False
+        # # First Convolutional Layer of Alexnet
+        # self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
+        # self.edge_extract.weight.requires_grad = False
+        # self.edge_extract.bias.requires_grad = False
+
+        self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
+        alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
+        self.edge_extract.weight.data = alexnet_kernel.weight.data
+        self.edge_extract.requires_grad = False
+
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
 
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
