@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
     # Load Saved Model
     saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-                  'n_iters_15/ContourIntegrationCSI_20191210_052543'
+                  'n_iters_15/ContourIntegrationCSI_20191210_052543/best_accuracy.pth'
 
     net = net.to(device)
     net.load_state_dict(torch.load(saved_model))
