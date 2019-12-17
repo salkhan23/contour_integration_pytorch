@@ -366,9 +366,10 @@ if __name__ == '__main__':
     # net = control_models.CmMatchIterations().to(device)
     # net = control_models.CmMatchParameters(lateral_e_size=23, lateral_i_size=23).to(device)
     # net = control_models.CmClassificationHeadOnly().to(device)
+
     # New
-    net = ContourIntegrationCSI(lateral_e_size=23, lateral_i_size=23)
-    # net = ControlMatchParametersModel(lateral_e_size=23, lateral_i_size=23)
+    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=8)
+    net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/new_model')
