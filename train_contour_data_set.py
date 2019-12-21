@@ -358,7 +358,7 @@ if __name__ == '__main__':
     train_parameters = {
         'train_batch_size': 16,
         'test_batch_size': 1,
-        'learning_rate': 0.00003,
+        'learning_rate': 0.00001,
         'num_epochs': 50,
     }
 
@@ -368,8 +368,8 @@ if __name__ == '__main__':
     # net = control_models.CmClassificationHeadOnly().to(device)
 
     # New
-    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=8)
-    net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
+    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/new_model')
