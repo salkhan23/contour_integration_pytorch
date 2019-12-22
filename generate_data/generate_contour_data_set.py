@@ -94,7 +94,16 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # gabor_parameters_list - list of list of dictionaries one for each channel
     with open(gabor_params_file, 'rb') as handle:
-        gabor_parameters_list = pickle.load(handle)
+        data = pickle.load(handle)
+
+    base_gabors_params_list = None
+    if type(data) is list:
+        gabor_parameters_list = data
+    elif type(data) is dict:
+        gabor_parameters_list = data['list_of_optimal_stimuli']
+        base_gabors_params_list = data['base_gabor_params']
+    else:
+        raise Exception("Unknown pickle File type")
 
     contour_len_arr = [1, 3, 5, 7, 9]
     beta_rotation_arr = [0, 15]
@@ -189,6 +198,9 @@ if __name__ == "__main__":
         'set_specific_means': gabor_set_specific_mean_list,
         'set_specific_std': gabor_set_specific_std_list,
     }
+
+    if base_gabors_params_list is not None:
+        meta_data['base_gabors_params_list'] = base_gabors_params_list
 
     metadata_filename = 'dataset_meta_data'
     txt_file = os.path.join(base_data_dir, 'dataset_metadata' + '.txt')

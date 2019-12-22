@@ -3,7 +3,7 @@
 #  the result in the highest response. Each base param set is tunable for
 #    (1) Orientation.
 #
-#   Each Base Gabor Set generates fragments that look like line segments.
+#   Each Base Gabor set generates fragments that look like line segments.
 #
 #
 # ---------------------------------------------------------------------------------------
@@ -23,7 +23,7 @@ edge_extract_act = 0
 
 
 def edge_extract_cb(self, layer_in, layer_out):
-    """ Attach at edge_extract layer """
+    """ Attach at edge_extract layer . Includes the effect of the bias"""
     global edge_extract_act
     edge_extract_act = layer_out.cpu().detach().numpy()
 
@@ -61,18 +61,19 @@ if __name__ == "__main__":
     random_seed = 10
 
     frag_size = np.array([7, 7])
-
     image_size = np.array([256, 256, 3])
-    image_center = image_size[0:2] // 2
 
     plt.ion()
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
+    image_center = image_size[0:2] // 2
 
     # -----------------------------------------------------------------------------------
     # Base Gabors
     # -----------------------------------------------------------------------------------
-    gabor_parameters_list = [
+    # This is converted to dictionary based later in the script.
+    # Easier to modify in this form
+    base_gabor_params_list = [
         [
             [0, -1.03, 27, 0.33, 1.00, 8.25, 0, 0]
         ],
@@ -107,23 +108,24 @@ if __name__ == "__main__":
         ]
     ]
 
-    bg_list = [0, 0, 0, 0, 255, None, 0, 255, 0, 255]
+    base_gabor_bg_list = [0, 0, 0, 0, 255, None, 0, 255, 0, 255]
 
     gabor_parameters = []
-    for set_idx, gabor_set in enumerate(gabor_parameters_list):
+    for set_idx, gabor_set in enumerate(base_gabor_params_list):
         params = gabor_fits.convert_gabor_params_list_to_dict(gabor_set)
 
         for chan_params in params:
-            chan_params['bg'] = bg_list[set_idx]
+            chan_params['bg'] = base_gabor_bg_list[set_idx]
 
         gabor_parameters.append(params)
 
-    # Debug - Plot all Gabor Fragments
-    fig = plt.figure(figsize=(10, 5))
-    for p_idx, params in enumerate(gabor_parameters):
-        fig.add_subplot(2, 5, p_idx + 1)
-        plt.imshow(gabor_fits.get_gabor_fragment(params, frag_size))
-
+    # # Debug - Plot all Gabor Fragments
+    # fig = plt.figure(figsize=(10, 5))
+    # for p_idx, params in enumerate(gabor_parameters):
+    #     fig.add_subplot(2, 5, p_idx + 1)
+    #     plt.imshow(gabor_fits.get_gabor_fragment(params, frag_size))
+    # fig.suptitle("Base Gabor Fragments")
+    #
     # import pdb
     # pdb.set_trace()
 
@@ -201,23 +203,29 @@ if __name__ == "__main__":
                 tgt_neuron_act = center_neuron_responses[k_idx]
                 tgt_neuron_acts[base_gp_idx, o_idx] = tgt_neuron_act
 
-                # check for optimal Stimulus
+                # check for optimal stimulus
                 if tgt_neuron_act > tgt_neuron_max_act:
                     tgt_neuron_max_act = tgt_neuron_act
 
                     kernel_optimal_params = copy.deepcopy(gabor_params)
 
                     # Attach some additional Meta Data
-                    for ch_idx in range(len(gabor_params)):
-                        kernel_optimal_params[ch_idx]['optimal_stimulus_act'] = tgt_neuron_max_act
-                        kernel_optimal_params[ch_idx]['base_gabor_set'] = base_gp_idx
+                    for ch_idx in range(len(kernel_optimal_params)):
 
                         max_active_neuron = np.argmax(center_neuron_responses)
-                        kernel_optimal_params[ch_idx]['is_max_active'] = (max_active_neuron == k_idx)
-                        kernel_optimal_params[ch_idx]['max_active_act'] = \
-                            center_neuron_responses[max_active_neuron]
 
-                # Debug - Display All channel responses to individual test image
+                        extra_info = {
+                            'optim_stim_act_value': tgt_neuron_max_act,
+                            'optim_stim_base_gabor_set': base_gp_idx,
+                            'optim_stim_act_orient': orient,
+                            'max_active_neuron_is_target': (max_active_neuron == k_idx),
+                            'max_active_neuron_value': center_neuron_responses[max_active_neuron],
+                            'max_active_neuron_idx': max_active_neuron
+                        }
+
+                        kernel_optimal_params[ch_idx]['extra_info'] = extra_info
+
+                # # Debug - Display all channel responses to individual test image
                 # plt.figure()
                 # plt.plot(center_neuron_responses)
                 # plt.title("Center Neuron Activations. Base Gabor Set {}. Orientation {}".format(
@@ -233,63 +241,101 @@ if __name__ == "__main__":
 
         # # ---------------------------------------
         # Save optimal tuning curve
-        # Note stored only for first channel
-        optimal_base_gabor_set = kernel_optimal_params[0]['base_gabor_set']
-        kernel_optimal_params[0]['orient_arr'] = orient_arr
-        kernel_optimal_params[0]['orient_tuning_curve'] = tgt_neuron_acts[optimal_base_gabor_set,]
+        for ch_idx in range(len(kernel_optimal_params)):
+            optimal_base_gabor_set = kernel_optimal_params[ch_idx]['extra_info']['optim_stim_base_gabor_set']
+            kernel_optimal_params[ch_idx]['extra_info']['orient_tuning_curve_x'] = orient_arr
+            kernel_optimal_params[ch_idx]['extra_info']['orient_tuning_curve_y'] = \
+                tgt_neuron_acts[optimal_base_gabor_set, ]
+
+        # # Debug - Print the structure of the dictionary
+        # print("Channel 0 Gabor Params keys")
+        # for key in kernel_optimal_params[0].keys():
+        #     print(key)
+        # print("Channel 0 Extra Params keys")
+        # for k in sorted(kernel_optimal_params[0]['extra_info']):
+        #     print(k, kernel_optimal_params[0]['extra_info'][k])
+        # import pdb
+        # pdb.set_trace()
 
         # TODO: Mark Good Neurons: (1) Amp can be check using optimal_stimulus_act
         # TODO: How to check for clear orientation tuning preference
         # Li2006 - " Neurons that were not responsive to single bars or did not
         # show a clear orientation tuning preference were skipped."
-
-        # Store the optimal params
         list_of_optimal_stimuli.append(kernel_optimal_params)
 
+        # ----------------------------------------------------------------------------------
+        # DEBUG
+        # ----------------------------------------------------------------------------------
         # # Debug - 1: plot tuning curves for all gabor sets
+        # # --------------------------------------------------------------------------------
         # plt.figure()
         # for base_gp_idx, base_gabor_params in enumerate(gabor_parameters):
         #
-        #     if base_gp_idx == kernel_optimal_params[0]['base_gabor_set']:
+        #     if base_gp_idx == kernel_optimal_params[0]['extra_info']['optim_stim_base_gabor_set']:
         #         line_width = 5
+        #         plt.plot(
+        #             kernel_optimal_params[0]['extra_info']['optim_stim_act_orient'],
+        #             kernel_optimal_params[0]['extra_info']['max_active_neuron_value'],
+        #             marker='x', markersize=10,
+        #             label='max active neuron Index {}'.format(
+        #                 kernel_optimal_params[0]['extra_info']['max_active_neuron_idx'])
+        #         )
         #     else:
         #         line_width = 2
         #
-        #     plt.plot(orient_arr, tgt_neuron_acts[base_gp_idx, ],
-        #              label='param set {}'.format(base_gp_idx), linewidth=line_width)
+        #     plt.plot(
+        #         orient_arr, tgt_neuron_acts[base_gp_idx, ],
+        #         label='param set {}'.format(base_gp_idx), linewidth=line_width
+        #     )
         #
         # plt.legend()
-        # plt.title("Kernel {}. Max Active Base Set {}. Is most Responsive to this stimulus {}".format(
-        #     k_idx, kernel_optimal_params[0]['base_gabor_set'], kernel_optimal_params[0]['is_max_active']))
+        # plt.grid(True)
+        # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
+        #     k_idx,
+        #     kernel_optimal_params[0]['extra_info']['optim_stim_base_gabor_set'],
+        #     kernel_optimal_params[0]['extra_info']['max_active_neuron_is_target'])
+        # )
         #
         # import pdb
         # pdb.set_trace()
 
         # # Debug 2: plot tuning curve for optimal gabor set
+        # # ------------------------------------------------
         # plt.figure()
         # plt.title(
         #     "Kernel {}: Tuning Curve.\n Base Gabor Param set {}. Is Max Responsive Neuron {}. "
         #     "Max Activation {:0.2f}".format(
         #         k_idx,
-        #         kernel_optimal_params[0]['base_gabor_set'],
-        #         kernel_optimal_params[0]['is_max_active'],
-        #         kernel_optimal_params[0]['optimal_stimulus_act']))
+        #         kernel_optimal_params[0]['extra_info']['optim_stim_base_gabor_set'],
+        #         kernel_optimal_params[0]['extra_info']['max_active_neuron_is_target'],
+        #         kernel_optimal_params[0]['extra_info']['max_active_neuron_value'])
+        # )
         #
-        # plt.plot(orient_arr, kernel_optimal_params[0]['orient_tuning_curve'])
+        # plt.plot(
+        #     kernel_optimal_params[0]['extra_info']['orient_tuning_curve_x'],
+        #     kernel_optimal_params[0]['extra_info']['orient_tuning_curve_y']
+        # )
+        #
+        # plt.grid(True)
         #
         # import pdb
         # pdb.set_trace()
 
     # --------------------------------------------------
+    data = {
+        'list_of_optimal_stimuli': list_of_optimal_stimuli,
+        'base_gabor_params': gabor_parameters
+    }
+
     # Save Pickle File
     params_pickle_file = 'channel_wise_optimal_stimuli.pickle'
     with open(params_pickle_file, 'wb') as handle:
-        pickle.dump(list_of_optimal_stimuli, handle)
+        pickle.dump(data, handle)
 
     # Some Statistical Details
 
     # Distribution of base gabor sets used
-    preferred_base_gabors = [item[0]['base_gabor_set'] for item in list_of_optimal_stimuli]
+    preferred_base_gabors = [item[0]['extra_info']['optim_stim_base_gabor_set'] for item in list_of_optimal_stimuli]
     unique, counts = np.unique(preferred_base_gabors, return_counts=True)
     plt.figure()
     plt.plot(unique, counts)
@@ -299,11 +345,12 @@ if __name__ == "__main__":
     print("Base Gabor Sets counts {}".format(counts))
 
     # How many neurons are most active fore their optimal stimulus
-    is_max_active_list = [item[0]['is_max_active'] for item in list_of_optimal_stimuli]
+    is_max_active_list = [item[0]['extra_info']['max_active_neuron_is_target'] for item in list_of_optimal_stimuli]
     print("{} Neurons are most active for their optimal stimulus".format(np.array(is_max_active_list).sum()))
 
     # How many Neurons have activation above a threshold
-    preferred_stimuli_acts = np.array([item[0]['optimal_stimulus_act'] for item in list_of_optimal_stimuli])
+    preferred_stimuli_acts = \
+        np.array([item[0]['extra_info']['optim_stim_act_value'] for item in list_of_optimal_stimuli])
 
     plt.figure()
     plt.plot(preferred_stimuli_acts)
