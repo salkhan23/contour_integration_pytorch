@@ -16,12 +16,13 @@ import matplotlib.pyplot as plt
 from torchvision.models import alexnet
 import torch
 
-import gabor_fits
-import fields1993_stimuli
-
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+
+# These modules need to be added after the path is appended
+import gabor_fits
+import fields1993_stimuli
 
 
 def define_gabor_parameters(frag_size):
