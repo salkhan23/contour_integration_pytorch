@@ -16,12 +16,12 @@ import matplotlib.pyplot as plt
 from torchvision.models import alexnet
 import torch
 
+import gabor_fits
+import fields1993_stimuli
+
 import os
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
-
-import gabor_fits
-import fields1993_stimuli
 
 
 def define_gabor_parameters(frag_size):
@@ -104,7 +104,7 @@ edge_extract_act = 0
 
 def edge_extract_cb(self, layer_in, layer_out):
     global edge_extract_act
-    edge_extract_act = layer_out.cpu().detach().numpy()
+    edge_extract_act = torch.relu(layer_out).cpu().detach().numpy()
 
 
 if __name__ == "__main__":
@@ -127,7 +127,7 @@ if __name__ == "__main__":
     #  Test Image
     # -----------------------------------------------------------------------------------
     contour_len = 9
-    beta_rotation = 15
+    beta_rotation = 0
     alpha_rotation = 0
 
     image, image_label = fields1993_stimuli.generate_contour_image(
@@ -186,9 +186,12 @@ if __name__ == "__main__":
     # Pre-process image
     # ------------------
     test_image = (image - image.min()) / (image.max() - image.min())  # [0,1] Pixel Range
+
+    ch_mean = np.array([0.4208942, 0.4208942, 0.4208942])
+    ch_std = np.array([0.15286704, 0.15286704, 0.15286704])
+
     # Normalize using ImageNet mean/std
-    input_image = (test_image - np.array([[0.4208942, 0.4208942, 0.4208942]])) / \
-        np.array([0.15286704, 0.15286704, 0.15286704])
+    input_image = (test_image - ch_mean) / ch_std
 
     input_image = torch.from_numpy(np.transpose(input_image, axes=(2, 0, 1)))
     input_image = input_image.to(device)
@@ -202,7 +205,7 @@ if __name__ == "__main__":
         edge_extract_act[0, :, edge_extract_act.shape[2] // 2, edge_extract_act.shape[3] // 2]
 
     max_active_neuron = np.argmax(center_neuron_extract_out)
-    string = "Edge Extract Activationsof Center Neuron.\nMax Active Neuron {}. Value={:0.2f}.".format(
+    string = "Edge Extract Activations of Center Neuron.\nMax Active Neuron {}. Value={:0.2f}.".format(
         max_active_neuron, center_neuron_extract_out[max_active_neuron])
 
     print(string)
