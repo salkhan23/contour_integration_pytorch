@@ -359,40 +359,39 @@ def get_contour_gain_vs_spacing(
     frag = gabor_fits.get_gabor_fragment(g_params, spatial_size=frag_tile_s)
     bg = g_params[0]['bg']
 
+    # First Get response to Single Fragment and normal co-linear distance
+    for img_idx in range(n_images):
+        test_img, test_img_label = fields1993_stimuli.generate_contour_image(
+            frag=frag,
+            frag_params=g_params,
+            c_len=1,
+            beta=0,
+            alpha=0,
+            f_tile_size=np.array([14, 14]),
+            img_size=img_size,
+            random_alpha_rot=True,
+            rand_inter_frag_direction_change=True,
+            use_d_jitter=False,
+            bg_frag_relocate=False,
+            bg=bg
+        )
+
+        process_image(model, device_to_use, ch_mus, ch_sigmas, test_img, test_img_label)
+        center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
+
+        tgt_n_single_frag_acts[img_idx] = center_n_acts[tgt_n]
+        max_act_n_single_frag_acts[img_idx] = center_n_acts[max_act_n_idx]
+
+    print("Tgt Neuron Single Fragment (RCD=1.0) Resp: mean {:0.2f}, std {:0.2f}".format(
+        np.mean(tgt_n_single_frag_acts), np.std(tgt_n_single_frag_acts)))
+    print("Max Active Neuron Single Fragment (RCD=1.0) Resp: mean {:0.2f}, std {:0.2f}".format(
+        np.mean(max_act_n_single_frag_acts), np.std(max_act_n_single_frag_acts)))
+    # import pdb
+    # pdb.set_trace()
+
     for ft_idx, full_tile_s in enumerate(full_tile_s_arr):
         print("Processing Full Tile size = {}".format(full_tile_s))
         iou = 0
-
-        # First Get response to Noise pattern
-        for img_idx in range(n_images):
-            test_img, test_img_label = fields1993_stimuli.generate_contour_image(
-                frag=frag,
-                frag_params=g_params,
-                c_len=1,
-                beta=0,
-                alpha=0,
-                f_tile_size=full_tile_s,
-                random_alpha_rot=True,
-                rand_inter_frag_direction_change=True,
-                use_d_jitter=False,
-                bg_frag_relocate=False,
-                bg=bg
-            )
-
-            process_image(model, device_to_use, ch_mus, ch_sigmas, test_img, test_img_label)
-            center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
-
-            tgt_n_single_frag_acts[img_idx] = center_n_acts[tgt_n]
-            max_act_n_single_frag_acts[img_idx] = center_n_acts[max_act_n_idx]
-
-        # Debug
-        f, ax_arr = plt.subplots(1, 2)
-        ax_arr[0].errorbar(np.mean(tgt_n_single_frag_acts), np.std(tgt_n_single_frag_acts), marker='x', markersize=10)
-        ax_arr[1].errorbar(np.mean(max_act_n_single_frag_acts), np.std(max_act_n_single_frag_acts),
-                           marker='x', markersize=10)
-
-        import pdb
-        pdb.set_trace()
 
         # Next Get responses for c_len length contours
         for img_idx in range(n_images):
@@ -405,6 +404,7 @@ def get_contour_gain_vs_spacing(
                 beta=0,
                 alpha=0,
                 f_tile_size=full_tile_s,
+                img_size=img_size,
                 random_alpha_rot=True,
                 rand_inter_frag_direction_change=True,
                 use_d_jitter=False,
