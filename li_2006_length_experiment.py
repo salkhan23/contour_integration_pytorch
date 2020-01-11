@@ -251,44 +251,46 @@ def find_optimal_stimulus(
         # plt.title("Neuron {}: responses vs Orientation. Gabor Set {}".format(k_idx, base_gp_idx))
 
     # ---------------------------
-    # Save optimal tuning curve
-    for item in tgt_n_opt_params:
-        opt_base_g_params_set = item['extra_info']['optim_stim_base_gabor_set']
-        item['extra_info']['orient_tuning_curve_x'] = orient_arr
-        item['extra_info']['orient_tuning_curve_y'] = tgt_n_acts[opt_base_g_params_set, ]
+    if tgt_n_opt_params is not None:
 
-    # # Debug: plot tuning curves for all gabor sets
-    # # ------------------------------------------------
-    # plt.figure()
-    # for base_gp_idx, base_gabor_params in enumerate(base_gabor_parameters):
-    #
-    #     if base_gp_idx == tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set']:
-    #         line_width = 5
-    #         plt.plot(
-    #             tgt_n_opt_params[0]['extra_info']['optim_stim_act_orient'],
-    #             tgt_n_opt_params[0]['extra_info']['max_active_neuron_value'],
-    #             marker='x', markersize=10,
-    #             label='max active neuron Index {}'.format(
-    #                 tgt_n_opt_params[0]['extra_info']['max_active_neuron_idx'])
-    #         )
-    #     else:
-    #         line_width = 2
-    #
-    #     plt.plot(
-    #         orient_arr, tgt_n_acts[base_gp_idx, ],
-    #         label='param set {}'.format(base_gp_idx), linewidth=line_width
-    #     )
-    #
-    # plt.legend()
-    # plt.grid(True)
-    # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
-    #     k_idx,
-    #     tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
-    #     tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
-    # )
-    #
-    # import pdb
-    # pdb.set_trace()
+        # Save optimal tuning curve
+        for item in tgt_n_opt_params:
+            opt_base_g_params_set = item['extra_info']['optim_stim_base_gabor_set']
+            item['extra_info']['orient_tuning_curve_x'] = orient_arr
+            item['extra_info']['orient_tuning_curve_y'] = tgt_n_acts[opt_base_g_params_set, ]
+
+        # # Debug: plot tuning curves for all gabor sets
+        # # ------------------------------------------------
+        # plt.figure()
+        # for base_gp_idx, base_gabor_params in enumerate(base_gabor_parameters):
+        #
+        #     if base_gp_idx == tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set']:
+        #         line_width = 5
+        #         plt.plot(
+        #             tgt_n_opt_params[0]['extra_info']['optim_stim_act_orient'],
+        #             tgt_n_opt_params[0]['extra_info']['max_active_neuron_value'],
+        #             marker='x', markersize=10,
+        #             label='max active neuron Index {}'.format(
+        #                 tgt_n_opt_params[0]['extra_info']['max_active_neuron_idx'])
+        #         )
+        #     else:
+        #         line_width = 2
+        #
+        #     plt.plot(
+        #         orient_arr, tgt_n_acts[base_gp_idx, ],
+        #         label='param set {}'.format(base_gp_idx), linewidth=line_width
+        #     )
+        #
+        # plt.legend()
+        # plt.grid(True)
+        # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
+        #     k_idx,
+        #     tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
+        #     tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
+        # )
+        #
+        # import pdb
+        # pdb.set_trace()
 
     return tgt_n_opt_params
 
@@ -606,8 +608,9 @@ if __name__ == "__main__":
 
     # Model trained with 5 iterations
     net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-                  'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
+    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
+    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
+    saved_model = './results/new_model/ContourIntegrationCSI_20200109_201302_with_act_reg_l2_001/best_accuracy.pth'
 
     # # Without batch normalization. Don't forget to tweak the model
     # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
@@ -643,7 +646,7 @@ if __name__ == "__main__":
     net.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    results_store_dir = os.path.join(results_dir, os.path.dirname(saved_model).split('/')[-1])
+    results_store_dir = os.path.join(results_dir, 'length_exp', os.path.dirname(saved_model).split('/')[-1])
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -681,6 +684,10 @@ if __name__ == "__main__":
             ch_mus=chan_means,
             ch_sigmas=chan_stds,
         )
+
+        if gabor_params is None:
+            print("Optimal Stimulus Not found")
+            continue
 
         # Save Tuning Curve and Gabor fit params:
         n_results_dir = os.path.join(individual_neuron_results_store_dir, 'neuron_{}'.format(ch_idx))
@@ -758,9 +765,8 @@ if __name__ == "__main__":
     print("For Max active neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
         len(max_active_neuron_outliers), min_crf_resp, max_active_neuron_outliers))
 
-    all_neurons = np.arange(n_channels)
-
-    # Target Neuron
+    # Target Neurons
+    all_neurons = np.arange(len(tgt_neuron_noise_resp_arr))
     filtered_tgt_neurons = [idx for idx in all_neurons if idx not in tgt_neuron_outliers]
     filtered_tgt_neuron_mean_gain_mat = tgt_neuron_mean_gain_mat[filtered_tgt_neurons, ]
     filtered_tgt_neuron_std_gain_mat = tgt_neuron_std_gain_mat[filtered_tgt_neurons, ]
@@ -768,9 +774,10 @@ if __name__ == "__main__":
     tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std = get_averaged_results(
         iou_per_len_mat,
         filtered_tgt_neuron_mean_gain_mat,
-        filtered_tgt_neuron_std_gain_mat
-    )
+        filtered_tgt_neuron_std_gain_mat)
 
+    # max_active Neurons
+    all_neurons = np.arange(len(max_active_neuron_noise_resp_arr))
     filtered_max_active_neurons = [idx for idx in all_neurons if idx not in max_active_neuron_outliers]
     filtered_max_active_neuron_mean_gain_mat = max_active_neuron_mean_gain_mat[filtered_max_active_neurons, ]
     filtered_max_active_neuron_std_gain_mat = max_active_neuron_std_gain_mat[filtered_max_active_neurons, ]
