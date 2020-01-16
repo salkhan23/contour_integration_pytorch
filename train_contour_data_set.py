@@ -174,7 +174,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
             e_loss += batch_loss.item()
 
-            preds = (label_out > detect_thres)
+            preds = (torch.sigmoid(label_out) > detect_thres)
             e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(train_data_loader)
@@ -199,7 +199,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 batch_loss = criterion(label_out, label.float())
 
                 e_loss += batch_loss.item()
-                preds = (label_out > detect_thres)
+                preds = (torch.sigmoid(label_out) > detect_thres)
                 e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(val_data_loader)
@@ -358,7 +358,7 @@ if __name__ == '__main__':
     train_parameters = {
         'train_batch_size': 16,
         'test_batch_size': 1,
-        'learning_rate': 0.00001,
+        'learning_rate': 3e-5,
         'num_epochs': 50,
     }
 
