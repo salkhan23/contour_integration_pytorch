@@ -150,7 +150,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
 
     # criterion = nn.BCEWithLogitsLoss().to(device)
-    loss_fcn = utils.class_balanced_cross_entropy
+    loss_fcn = utils.class_balanced_cross_entropy_attention_loss
 
     # -----------------------------------------------------------------------------------
     #  Training Validation Routines
