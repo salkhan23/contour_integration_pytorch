@@ -19,6 +19,7 @@ from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInh
 from models.new_piech_models import ContourIntegrationCSI
 from models.new_control_models import ControlMatchParametersModel
 import models.control_models as control_models
+import validate_contour_data_set
 
 
 def get_lr(opt):
@@ -331,6 +332,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.plot(train_history[:, 0], label='train')
     plt.plot(val_history[:, 0], label='validation')
     plt.xlabel('Epoch')
+    plt.grid(True)
     plt.legend()
     f.savefig(os.path.join(results_store_dir, 'loss.jpg'), format='jpg')
 
@@ -340,7 +342,30 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.plot(val_history[:, 1], label='validation')
     plt.xlabel('Epoch')
     plt.legend()
+    plt.grid(True)
     f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
+
+    # PLots per Length
+    c_len_iou_arr, c_len_loss_arr = \
+        validate_contour_data_set.get_performance_per_len(model, data_set_dir, device, c_len_arr)
+    f = plt.figure()
+    plt.plot(c_len_arr, c_len_iou_arr)
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid(True)
+    plt.ylim([0, 1])
+    plt.title("IoU vs Length (Validation Dataset)")
+    f.savefig(os.path.join(results_store_dir, 'iou_vs_len.jpg'), format='jpg')
+    plt.close(f)
+
+    f = plt.figure()
+    plt.plot(c_len_arr, c_len_loss_arr)
+    plt.grid()
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Length (Validation Dataset)")
+    f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
+    plt.close(f)
 
 
 if __name__ == '__main__':
