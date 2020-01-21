@@ -52,9 +52,10 @@ def get_performance(model, device_to_use, data_loader):
     return e_iou, e_loss
 
 
-def get_full_data_set_performance(model, data_dir, device_to_use):
+def get_full_data_set_performance(model, data_dir, device_to_use, beta_arr=None):
     """
 
+    :param beta_arr:
     :param model:
     :param data_dir:
     :param device_to_use:
@@ -76,7 +77,7 @@ def get_full_data_set_performance(model, data_dir, device_to_use):
         transform=normalize,
         subset_size=None,
         c_len_arr=None,
-        beta_arr=None,
+        beta_arr=beta_arr,
         alpha_arr=None,
         gabor_set_arr=None
     )
@@ -95,9 +96,10 @@ def get_full_data_set_performance(model, data_dir, device_to_use):
     return iou, loss
 
 
-def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([1, 3, 5, 7, 9])):
+def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([1, 3, 5, 7, 9]), beta_arr=None):
     """
 
+    :param beta_arr:
     :param model:
     :param data_dir:
     :param device_to_use:
@@ -128,7 +130,7 @@ def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([
             transform=normalize,
             subset_size=None,
             c_len_arr=[c_len],
-            beta_arr=None,
+            beta_arr=beta_arr,
             alpha_arr=None,
             gabor_set_arr=None
         )
@@ -170,26 +172,168 @@ if __name__ == "__main__":
     net = net.to(device)
     net.load_state_dict(torch.load(saved_model))
 
-    #  Get Full Data Set Performance
-    print("====> Getting performance over full dataset ...")
-    get_full_data_set_performance(net, data_set_dir, device_to_use=device)
-
-    # Get performance per Contour Length
-    print("====> Getting performance for Different Contour Lengths ...")
+    # ----------------------------------------------------------------------------
+    # Straight Contours
+    # ----------------------------------------------------------------------------
+    print("===> Getting performance for Straight Contours")
+    beta_rotations_arr = [0]
     c_length_arr = np.array([1, 3, 5, 7, 9])
-    c_len_iou_arr, c_len_loss_arr = get_performance_per_len(
-       net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr)
 
-    plt.figure()
-    plt.plot(c_length_arr, c_len_iou_arr)
+    st_contours_full_iou, st_contours_full_loss = get_full_data_set_performance(
+        net, data_set_dir, device_to_use=device, beta_arr=beta_rotations_arr)
+
+    st_contours_c_len_iou_arr, st_contours_c_len_loss_arr = get_performance_per_len(
+        net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
+
+    plt.figure('iou_fig')
+    plt.plot(c_length_arr, st_contours_c_len_iou_arr, label='straight contours')
     plt.xlabel("Contour length")
     plt.ylabel("IoU")
     plt.grid()
     plt.ylim([0, 1])
     plt.title("IoU vs Length")
+    plt.legend()
 
-    plt.figure()
-    plt.plot(c_length_arr, c_len_loss_arr)
+    plt.figure('loss_fig')
+    plt.plot(c_length_arr, st_contours_c_len_loss_arr, label='straight contours')
+    plt.grid()
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Length")
+    plt.legend()
+
+    # ----------------------------------------------------------------------------
+    # Curved Contours
+    # ----------------------------------------------------------------------------
+    print("===> Getting performance for Curved Contours")
+    beta_rotations_arr = [15]
+    c_length_arr = np.array([1, 3, 5, 7, 9])
+
+    curve_contours_full_iou, curve_contours_full_loss = get_full_data_set_performance(
+        net, data_set_dir, device_to_use=device, beta_arr=beta_rotations_arr)
+
+    curve_contours_c_len_iou_arr, curve_contours_c_len_loss_arr = get_performance_per_len(
+        net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
+
+    plt.figure('iou_fig')
+    plt.plot(c_length_arr, curve_contours_c_len_iou_arr, label='curved contours')
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid()
+    plt.ylim([0, 1])
+    plt.title("IoU vs Length")
+    plt.legend()
+
+    plt.figure('loss_fig')
+    plt.plot(c_length_arr, curve_contours_c_len_loss_arr, label='curved contours')
+    plt.grid()
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Length")
+    plt.legend()
+
+    # ----------------------------------------------------------------------------
+    # Full Dataset
+    # ----------------------------------------------------------------------------
+    print("Getting performance for All Contours")
+    beta_rotations_arr = None
+    c_length_arr = np.array([1, 3, 5, 7, 9])
+
+    full_iou, full_loss = get_full_data_set_performance(
+        net, data_set_dir, device_to_use=device, beta_arr=beta_rotations_arr)
+
+    full_c_len_iou_arr, full_c_len_arr_loss_arr = get_performance_per_len(
+        net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
+
+    plt.figure('iou_fig')
+    plt.plot(c_length_arr, full_c_len_iou_arr, label='all')
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid()
+    plt.ylim([0, 1])
+    plt.title("IoU vs Length")
+    plt.legend()
+
+    plt.figure('loss_fig')
+    plt.plot(c_length_arr, full_c_len_arr_loss_arr, label='all')
+    plt.grid()
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Length")
+    plt.legend()
+
+    # -----------------------------------------------------------------------------------
+    import pdb
+    pdb.set_trace()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # beta_rotations_arr = [0]
+    #
+    # #  Get Full Data Set Performance
+    # print("====> Getting performance over full dataset ...")
+    # get_full_data_set_performance(net, data_set_dir, device_to_use=device, beta=beta_rotations_arr)
+    #
+    # # Get performance per Contour Length
+    # print("====> Getting performance for Different Contour Lengths ...")
+    # c_length_arr = np.array([1, 3, 5, 7, 9])
+    # c_len_iou_arr, c_len_loss_arr = get_performance_per_len(
+    #    net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
+    #
+    # # ----------------------------------------------------------------------------
+    # # Curved Contours
+    # # ----------------------------------------------------------------------------
+    # beta_rotations_arr = [0]
+    #
+    # #  Get Full Data Set Performance
+    # print("====> Getting performance over full dataset ...")
+    # get_full_data_set_performance(net, data_set_dir, device_to_use=device, beta=beta_rotations_arr)
+    #
+    # # Get performance per Contour Length
+    # print("====> Getting performance for Different Contour Lengths ...")
+    # c_length_arr = np.array([1, 3, 5, 7, 9])
+    # c_len_iou_arr, c_len_loss_arr = get_performance_per_len(
+    #     net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
+
+
+
+
+
+
+
+
+
+
+
+
+    fig1 = plt.figure()
+    plt.plot(c_length_arr, c_len_iou_arr, label='straight contours')
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid()
+    plt.ylim([0, 1])
+    plt.title("IoU vs Length ")
+
+    fig2 = plt.figure()
+    plt.plot(c_length_arr, c_len_loss_arr, label='straight contours')
     plt.grid()
     plt.xlabel("Contour length")
     plt.ylabel("Loss")
