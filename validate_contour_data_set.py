@@ -1,0 +1,204 @@
+# ---------------------------------------------------------------------------------------
+# Given a Trained Model get its performance (Loss, Iou) over Validation Dataset
+# Also get validation performance as a function of contour length
+# ---------------------------------------------------------------------------------------
+import pickle
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+import torch
+import torch.nn as nn
+from torchvision import transforms
+from torch.utils.data import DataLoader
+
+import dataset
+import utils
+
+from models.new_piech_models import ContourIntegrationCSI
+
+
+def get_performance(model, device_to_use, data_loader):
+    """
+
+    :param model:
+    :param device_to_use:
+    :param data_loader:
+    :return:
+    """
+
+    criterion = nn.BCEWithLogitsLoss().to(device)
+    detect_thres = 0.5
+
+    model.eval()
+    e_loss = 0
+    e_iou = 0
+
+    with torch.no_grad():
+        for iteration, (img, label) in enumerate(data_loader, 1):
+            img = img.to(device_to_use)
+            label = label.to(device_to_use)
+
+            label_out = model(img)
+            batch_loss = criterion(label_out, label.float())
+
+            e_loss += batch_loss.item()
+            preds = torch.sigmoid(label_out) > detect_thres
+            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+
+    e_loss = e_loss / len(data_loader)
+    e_iou = e_iou / len(data_loader)
+
+    return e_iou, e_loss
+
+
+def get_full_data_set_performance(model, data_dir, device_to_use):
+    """
+
+    :param model:
+    :param data_dir:
+    :param device_to_use:
+    :return:
+    """
+    metadata_file = os.path.join(data_dir, 'dataset_metadata.pickle')
+    with open(metadata_file, 'rb') as h:
+        metadata = pickle.load(h)
+
+    # Pre-processing
+    normalize = transforms.Normalize(
+        mean=metadata['channel_mean'],
+        std=metadata['channel_std']
+    )
+
+    data_set = dataset.Fields1993(
+        data_dir=os.path.join(data_dir, 'val'),
+        bg_tile_size=metadata["full_tile_size"],
+        transform=normalize,
+        subset_size=None,
+        c_len_arr=None,
+        beta_arr=None,
+        alpha_arr=None,
+        gabor_set_arr=None
+    )
+
+    data_loader = DataLoader(
+        dataset=data_set,
+        num_workers=4,
+        batch_size=1,
+        shuffle=True,
+        pin_memory=True
+    )
+
+    iou, loss = get_performance(model, device_to_use, data_loader)
+    print("Performance over entire data set: Loss {:0.4f}, IoU = {:0.4f}".format(loss, iou))
+
+    return iou, loss
+
+
+def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([1, 3, 5, 7, 9])):
+    """
+
+    :param model:
+    :param data_dir:
+    :param device_to_use:
+    :param c_len_arr:
+    :return:
+    """
+
+    metadata_file = os.path.join(data_dir, 'dataset_metadata.pickle')
+    with open(metadata_file, 'rb') as h:
+        metadata = pickle.load(h)
+
+    # Pre-processing
+    normalize = transforms.Normalize(
+        mean=metadata['channel_mean'],
+        std=metadata['channel_std']
+    )
+
+    c_len_ious = []
+    c_len_loss = []
+
+    for c_len_idx, c_len in enumerate(c_len_arr):
+
+        print("processing contours of length = {}".format(c_len))
+
+        data_set = dataset.Fields1993(
+            data_dir=os.path.join(data_dir, 'val'),
+            bg_tile_size=metadata["full_tile_size"],
+            transform=normalize,
+            subset_size=None,
+            c_len_arr=[c_len],
+            beta_arr=None,
+            alpha_arr=None,
+            gabor_set_arr=None
+        )
+
+        data_loader = DataLoader(
+            dataset=data_set,
+            num_workers=4,
+            batch_size=1,
+            shuffle=True,
+            pin_memory=True
+        )
+
+        iou, loss = get_performance(model, device_to_use, data_loader)
+        print("Performance for c_len {}: Loss {:0.4f}, IoU = {:0.4f}".format(c_len, loss, iou))
+
+        c_len_ious.append(iou)
+        c_len_loss.append(loss)
+
+    return c_len_ious, c_len_loss
+
+
+if __name__ == "__main__":
+    random_seed = 5
+
+    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
+    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
+    saved_model = \
+        'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15/best_accuracy.pth'
+
+    data_set_dir = "./data/channel_wise_optimal_full14_frag7"
+
+    # ---------------------------------------------------
+    plt.ion()
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net = net.to(device)
+    net.load_state_dict(torch.load(saved_model))
+
+    #  Get Full Data Set Performance
+    print("====> Getting performance over full dataset ...")
+    get_full_data_set_performance(net, data_set_dir, device_to_use=device)
+
+    # Get performance per Contour Length
+    print("====> Getting performance for Different Contour Lengths ...")
+    c_length_arr = np.array([1, 3, 5, 7, 9])
+    c_len_iou_arr, c_len_loss_arr = get_performance_per_len(
+       net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr)
+
+    plt.figure()
+    plt.plot(c_length_arr, c_len_iou_arr)
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid()
+    plt.ylim([0, 1])
+    plt.title("IoU vs Length")
+
+    plt.figure()
+    plt.plot(c_length_arr, c_len_loss_arr)
+    plt.grid()
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.title("Loss vs Length")
+
+    import pdb
+    pdb.set_trace()
+
+
+
+
+
