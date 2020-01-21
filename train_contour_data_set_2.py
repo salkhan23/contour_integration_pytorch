@@ -337,6 +337,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.plot(val_history[:, 0], label='validation')
     plt.xlabel('Epoch')
     plt.legend()
+    plt.grid(True)
     f.savefig(os.path.join(results_store_dir, 'loss.jpg'), format='jpg')
 
     f = plt.figure()
@@ -345,6 +346,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.plot(val_history[:, 1], label='validation')
     plt.xlabel('Epoch')
     plt.legend()
+    plt.grid(True)
     f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
 
     # PLots per Length
