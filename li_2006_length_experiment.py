@@ -11,6 +11,8 @@ from datetime import datetime
 import copy
 
 import torch
+import torchvision.transforms.functional as transform_functional
+from torchvision import transforms
 
 from models.new_piech_models import ContourIntegrationCSI
 from models.new_control_models import ControlMatchParametersModel
@@ -120,18 +122,6 @@ def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=
     :param ch_sigmas:
     :return:
     """
-    # Image pre-processing
-    # --------------------
-    # [0, 1] Pixel Range
-    test_img = (in_img - in_img.min()) / (in_img.max() - in_img.min())
-    # Normalize 0 mean, 1 standard deviation
-    model_in_img = (test_img - ch_mus) / ch_sigmas
-
-    model_in_img = torch.from_numpy(np.transpose(model_in_img, axes=(2, 0, 1)))
-    model_in_img = model_in_img.to(devise_to_use)
-    model_in_img = model_in_img.float()
-    model_in_img = model_in_img.unsqueeze(dim=0)
-
     # Zero all collected variables
     global edge_extract_act
     global cont_int_in_act
@@ -141,17 +131,19 @@ def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=
     cont_int_in_act = 0
     cont_int_out_act = 0
 
-    # pass the image through the model
+    normalize = transforms.Normalize(mean=ch_mus, std=ch_sigmas)
+    model_in_img = normalize(in_img)
+    model_in_img = model_in_img.to(devise_to_use).unsqueeze(0)
+
+    # Pass the image through the model
+    model.eval()
     label_out = model(model_in_img)
 
     iou = None
     if in_img_label is not None:
-        in_img_label = torch.from_numpy(in_img_label)
-        in_img_label = in_img_label.to(devise_to_use)
-        in_img_label = in_img_label.unsqueeze(dim=0)
-        in_img_label = in_img_label.unsqueeze(dim=0)
+        in_img_label = in_img_label.to(devise_to_use).unsqueeze(0)
 
-        preds = (label_out > detect_thres)
+        preds = (torch.sigmoid(label_out) > detect_thres)
 
         iou = utils.intersection_over_union(preds.float(), in_img_label.float())
         iou = iou.cpu().detach().numpy()
@@ -199,6 +191,8 @@ def find_optimal_stimulus(
                 img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
                 :,
             ] = frag
+
+            test_img = transform_functional.to_tensor(test_img)
 
             # # Debug - Show Test Image
             # plt.figure()
@@ -390,6 +384,9 @@ def get_contour_gain_vs_length(
                 bg_frag_relocate=False,
                 bg=bg
             )
+
+            test_img = transform_functional.to_tensor(test_img)
+            test_img_label = torch.from_numpy(np.array(test_img_label)).unsqueeze(0)
 
             # # Debug - Plot Test Image
             # # ------------------------
@@ -596,8 +593,8 @@ if __name__ == "__main__":
     # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
 
     # # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
-    chan_means = np.array([0.46247174, 0.46424958, 0.46231144])
-    chan_stds = np.array([0.46629872, 0.46702369, 0.46620434])
+    chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
+    chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
 
     # Model
     # -------
@@ -610,7 +607,8 @@ if __name__ == "__main__":
     net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
     #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
-    saved_model = './results/new_model/ContourIntegrationCSI_20200109_201302_with_act_reg_l2_001/best_accuracy.pth'
+    saved_model = 'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15/' \
+                  'best_accuracy.pth'
 
     # # Without batch normalization. Don't forget to tweak the model
     # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
@@ -670,7 +668,6 @@ if __name__ == "__main__":
     iou_per_len_mat = []  # [n_channels, n_lengths]
 
     for ch_idx in range(n_channels):
-
         print("{0} processing channel {1} {0}".format("*"*20, ch_idx))
 
         # (1) Find optimal stimulus
