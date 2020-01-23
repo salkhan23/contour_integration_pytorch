@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------
-# Piech - 2013 - Current Based Model with Subtractive Inhibition
+# Similar to original script but with a custom loss function.
 # ------------------------------------------------------------------------------------
 from datetime import datetime
 import pickle

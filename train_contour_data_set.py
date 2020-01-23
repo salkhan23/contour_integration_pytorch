@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------
-# Piech - 2013 - Current Based Model with Subtractive Inhibition
+# Train the Model with on the Contour Data set
 # ------------------------------------------------------------------------------------
 from datetime import datetime
 import pickle
