@@ -515,6 +515,10 @@ def plot_iou_vs_contour_length(c_len_arr, ious_arr, store_dir, f_name, f_title=N
     plt.grid()
     if f_title is not None:
         plt.title("{}".format(f_title))
+
+    plt.axvline(np.mean(ious_arr), label='average_iou_{:0.2f}'.format(np.mean(ious_arr)), linestyle=':', color='red')
+    plt.legend()
+
     f.savefig(os.path.join(store_dir, 'iou_vs_len_{}.jpg'.format(f_name)), format='jpg')
     plt.close()
 
@@ -580,7 +584,6 @@ if __name__ == "__main__":
     # Initialization
     # -----------------------------------------------------------------------------------
     random_seed = 10
-    results_dir = './results/test'
 
     # Find optimal Stimulus @ which point ['edge_extract_layer_out', 'contour_integration_layer_in',
     # 'contour_integration_layer_out']
@@ -644,7 +647,9 @@ if __name__ == "__main__":
     net.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    results_store_dir = os.path.join(results_dir, 'length_exp', os.path.dirname(saved_model).split('/')[-1])
+    base_results_dir = os.path.dirname(saved_model)
+
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
