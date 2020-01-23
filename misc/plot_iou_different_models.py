@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 
 mpl.rcParams.update({
     'font.size': 18,
-    'lines.linewidth': 3}
-)
+    'lines.linewidth': 3,
+    'lines.markersize': 10,
+})
 
 # Base line
 # Loss = "Standard Binary Corss Entropy"
@@ -246,14 +247,16 @@ if __name__ == "__main__":
         base_line_n_iters_5_lateral_rf_size_15x15[:, 2],
         label='train_baseline',
         linestyle='--',
-        color='blue'
+        color='blue',
+        marker='+'
     )
     plt.plot(
         base_line_n_iters_5_lateral_rf_size_15x15[:, 0],
         base_line_n_iters_5_lateral_rf_size_15x15[:, 4],
         label='val_baseline',
         linestyle='-',
-        color='blue'
+        color='blue',
+        marker='+'
     )
 
     plt.plot(
@@ -261,14 +264,16 @@ if __name__ == "__main__":
         class_balanced_cross_entropy[:, 2],
         label='train_class_balanced_cross_entropy_loss',
         linestyle='--',
-        color='red'
+        color='red',
+        marker='x'
     )
     plt.plot(
         class_balanced_cross_entropy[:, 0],
         class_balanced_cross_entropy[:, 4],
         label='val_class_balanced_cross_entropy_loss',
         linestyle='-',
-        color='red'
+        color='red',
+        marker='x'
     )
 
     plt.plot(
@@ -276,14 +281,17 @@ if __name__ == "__main__":
         class_balanced_attention_loss[:, 2],
         label='train_class_balanced_attention_cross_entropy_loss',
         linestyle='--',
-        color='green'
+        color='green',
+        marker='d',
+
     )
     plt.plot(
         class_balanced_attention_loss[:, 0],
         class_balanced_attention_loss[:, 4],
         label='val_class_balanced_attention_cross_entropy_loss',
         linestyle='-',
-        color='green'
+        color='green',
+        marker='d',
     )
 
     plt.plot(
@@ -291,14 +299,16 @@ if __name__ == "__main__":
         double_dataset[:, 2],
         label='train_double_dataset',
         linestyle='--',
-        color='magenta'
+        color='magenta',
+        marker = 'o'
     )
     plt.plot(
         double_dataset[:, 0],
         double_dataset[:, 4],
         label='val_double_dataset',
         linestyle='-',
-        color='magenta'
+        color='magenta',
+        marker='o'
     )
 
     plt.xlabel("Epoch")
