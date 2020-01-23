@@ -14,7 +14,7 @@ import torch
 
 from models.new_piech_models import ContourIntegrationCSI
 from models.new_control_models import ControlMatchParametersModel
-import li_2006_length_experiment
+import experiment_gain_vs_len
 import gabor_fits
 import fields1993_stimuli
 import utils
