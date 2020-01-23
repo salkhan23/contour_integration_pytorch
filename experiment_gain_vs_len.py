@@ -516,7 +516,7 @@ def plot_iou_vs_contour_length(c_len_arr, ious_arr, store_dir, f_name, f_title=N
     if f_title is not None:
         plt.title("{}".format(f_title))
 
-    plt.axvline(np.mean(ious_arr), label='average_iou_{:0.2f}'.format(np.mean(ious_arr)), linestyle=':', color='red')
+    plt.axhline(np.mean(ious_arr), label='average_iou_{:0.2f}'.format(np.mean(ious_arr)), linestyle=':', color='red')
     plt.legend()
 
     f.savefig(os.path.join(store_dir, 'iou_vs_len_{}.jpg'.format(f_name)), format='jpg')
