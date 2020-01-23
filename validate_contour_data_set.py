@@ -27,7 +27,7 @@ def get_performance(model, device_to_use, data_loader):
     :return:
     """
 
-    criterion = nn.BCEWithLogitsLoss().to(device)
+    criterion = nn.BCEWithLogitsLoss().to(device_to_use)
     detect_thres = 0.5
 
     model.eval()
