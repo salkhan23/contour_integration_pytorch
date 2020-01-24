@@ -2,6 +2,27 @@ import numpy as np
 import torch
 
 
+def get_2d_gaussian_kernel(shape, sigma=1.0):
+    """
+    Returns a 2d (unnormalized) Gaussian kernel of the specified shape.
+
+    :param shape: x,y dimensions of the gaussian
+    :param sigma: standard deviation of generated Gaussian
+    :return:
+    """
+    ax = np.arange(-shape[0] // 2 + 1, shape[0] // 2 + 1)
+    ay = np.arange(-shape[1] // 2 + 1, shape[1] // 2 + 1)
+    # ax = np.linspace(-1, 1, shape[0])
+    # ay = np.linspace(-1, 1, shape[1])
+
+    xx, yy = np.meshgrid(ax, ay)
+    kernel = np.exp(-(xx ** 2 + yy ** 2) / (2 * sigma ** 2))
+
+    kernel = kernel.reshape(shape)
+
+    return kernel
+
+
 def normalize_image(img):
     """
     Rescale image to [0,1] range for display using matplotlib
