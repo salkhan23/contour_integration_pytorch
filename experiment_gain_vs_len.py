@@ -610,7 +610,7 @@ if __name__ == "__main__":
     net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
     #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
-    saved_model = 'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15/' \
+    saved_model = 'results/new_model/ContourIntegrationCSI_20200124_091642_gaus_reg_w_0001_sigma_6/' \
                   'best_accuracy.pth'
 
     # # Without batch normalization. Don't forget to tweak the model
@@ -756,16 +756,16 @@ if __name__ == "__main__":
     # (optimal frag in cRF, random frags else where). These might have had
     # reasonable response to the optimal stimulus, but their activity reduced when
     # background stimuli were added
-    min_crf_resp = 0.8
+    min_clen_1_resp = 0.8
 
-    tgt_neuron_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_crf_resp)]
+    tgt_neuron_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     print("For Target neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
-        len(tgt_neuron_outliers), min_crf_resp, tgt_neuron_outliers))
+        len(tgt_neuron_outliers), min_clen_1_resp, tgt_neuron_outliers))
 
     max_active_neuron_outliers = \
-        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if np.any(item < min_crf_resp)]
+        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     print("For Max active neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
-        len(max_active_neuron_outliers), min_crf_resp, max_active_neuron_outliers))
+        len(max_active_neuron_outliers), min_clen_1_resp, max_active_neuron_outliers))
 
     # Target Neurons
     all_neurons = np.arange(len(tgt_neuron_noise_resp_arr))
@@ -815,6 +815,43 @@ if __name__ == "__main__":
     fig_title = "Iou Vs Length - Population "
     fig_name = fig_title
     plot_iou_vs_contour_length(contour_len_arr, tgt_n_pop_iou, results_store_dir, fig_title, fig_name)
+
+    summary_file = os.path.join(results_store_dir, 'results.txt')
+    file_handle = open(summary_file, 'w+')
+
+    file_handle.write('{0} Target Neuron {0}\n'.format("*"*30))
+    file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Mean Gains\n")
+    for ch_idx in range(tgt_neuron_mean_gain_mat.shape[0]):
+        file_handle.write("["+",".join('{:0.4f}'.format(item) for item in tgt_neuron_mean_gain_mat[ch_idx, ]) + "],\n")
+    file_handle.write("Std Gains\n")
+    for ch_idx in range(tgt_neuron_std_gain_mat.shape[0]):
+        file_handle.write("["+",".join('{:0.4f}'.format(item) for item in tgt_neuron_std_gain_mat[ch_idx, ]) + "],\n")
+
+    file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
+    file_handle.write("Remove all neurons with c_len activations < {}\n".format(min_clen_1_resp))
+    file_handle.write("Removed neurons {}\n".format(filtered_tgt_neurons))
+
+    file_handle.write('{0} Mac Active Neuron {0}\n'.format("*" * 30))
+    file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Mean Gains\n")
+    for ch_idx in range(max_active_neuron_mean_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in max_active_neuron_mean_gain_mat[ch_idx, ]) +
+            "],\n")
+    file_handle.write("Std Gains\n")
+    for ch_idx in range(max_active_neuron_std_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in max_active_neuron_std_gain_mat[ch_idx, ]) +
+            "],\n")
+
+    file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
+    file_handle.write("Remove all neurons with c_len activations < {}\n".format(min_clen_1_resp))
+    file_handle.write("Removed neurons {}\n".format(filtered_max_active_neurons))
+
+    file_handle.close()
 
     # -----------------------------------------------------------------------------------
     # End
