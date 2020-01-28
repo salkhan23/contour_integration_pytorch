@@ -1,6 +1,6 @@
 # -------------------------------------------------------------------------------------
-# Call contour data set training script (v3) with different lateral kernel gaussian
-# regularization sigmas (widths)
+# Calls contour data set training script (v3) with different gaussian regularization
+# loss weights.
 # -------------------------------------------------------------------------------------
 import numpy as np
 import torch
