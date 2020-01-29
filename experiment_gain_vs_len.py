@@ -756,7 +756,7 @@ if __name__ == "__main__":
     # (optimal frag in cRF, random frags else where). These might have had
     # reasonable response to the optimal stimulus, but their activity reduced when
     # background stimuli were added
-    min_clen_1_resp = 0.8
+    min_clen_1_resp = 0.5
 
     tgt_neuron_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     print("For Target neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
@@ -816,11 +816,18 @@ if __name__ == "__main__":
     fig_name = fig_title
     plot_iou_vs_contour_length(contour_len_arr, tgt_n_pop_iou, results_store_dir, fig_title, fig_name)
 
+    # -----------------------------------------------------------------------------------
+    # write the results of the c_len experiment
+    # -----------------------------------------------------------------------------------
     summary_file = os.path.join(results_store_dir, 'results.txt')
     file_handle = open(summary_file, 'w+')
 
     file_handle.write('{0} Target Neuron {0}\n'.format("*"*30))
     file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Noise (single fragment) Response\n")
+    for ch_idx in range(len(tgt_neuron_noise_resp_arr)):
+        file_handle.write("[ {:0.4f} ],\n".format(tgt_neuron_noise_resp_arr[ch_idx]))
+
     file_handle.write("Mean Gains\n")
     for ch_idx in range(tgt_neuron_mean_gain_mat.shape[0]):
         file_handle.write("["+",".join('{:0.4f}'.format(item) for item in tgt_neuron_mean_gain_mat[ch_idx, ]) + "],\n")
@@ -830,10 +837,13 @@ if __name__ == "__main__":
 
     file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
     file_handle.write("Remove all neurons with c_len activations < {}\n".format(min_clen_1_resp))
-    file_handle.write("Removed neurons {}\n".format(filtered_tgt_neurons))
+    file_handle.write("Removed neurons {}\n".format(tgt_neuron_outliers))
 
     file_handle.write('{0} Mac Active Neuron {0}\n'.format("*" * 30))
     file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Noise (single fragment) Response\n")
+    for ch_idx in range(len(max_active_neuron_noise_resp_arr)):
+        file_handle.write("[ {:0.4f} ],\n".format(max_active_neuron_noise_resp_arr[ch_idx]))
     file_handle.write("Mean Gains\n")
     for ch_idx in range(max_active_neuron_mean_gain_mat.shape[0]):
         file_handle.write(
@@ -849,7 +859,7 @@ if __name__ == "__main__":
 
     file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
     file_handle.write("Remove all neurons with c_len activations < {}\n".format(min_clen_1_resp))
-    file_handle.write("Removed neurons {}\n".format(filtered_max_active_neurons))
+    file_handle.write("Removed neurons {}\n".format(max_active_neuron_outliers))
 
     file_handle.close()
 
