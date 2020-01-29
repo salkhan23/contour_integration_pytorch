@@ -650,6 +650,7 @@ if __name__ == "__main__":
     base_results_dir = os.path.dirname(saved_model)
 
     results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
+    print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -688,7 +689,8 @@ if __name__ == "__main__":
         )
 
         if gabor_params is None:
-            print("Optimal Stimulus Not found")
+            print("Optimal Stimulus for kernel @ {} Not found".format(ch_idx))
+            # TODO: Should None/Nan be appended to the list to make it more clear this neuron was not processed.
             continue
 
         # Save Tuning Curve and Gabor fit params:
