@@ -1,8 +1,7 @@
 # ---------------------------------------------------------------------------------------
-# Li 2006 - Contour Gain vs Fragment Spacing Experiment
+# Li 2006 - Contour Gain vs Spacing Experiment
 #
-# Different from previous versions, this script finds the optimal stimulus for each
-# channel and creates live stimulus for the test. (Does not use a stored DB)
+# Currently IoU is not calculated. Only gain is considered
 #
 # ---------------------------------------------------------------------------------------
 import numpy as np
@@ -11,10 +10,11 @@ from datetime import datetime
 import copy
 
 import torch
+import torchvision.transforms.functional as transform_functional
+from torchvision import transforms
 
 from models.new_piech_models import ContourIntegrationCSI
 from models.new_control_models import ControlMatchParametersModel
-import experiment_gain_vs_len
 import gabor_fits
 import fields1993_stimuli
 import utils
@@ -84,6 +84,7 @@ for set_idx, gabor_set in enumerate(base_gabor_params_list):
         chan_params['bg'] = base_gabor_bg_list[set_idx]
 
     base_gabor_parameters.append(params)
+
 # ---------------------------------------------------------------------------------------
 
 
@@ -119,18 +120,6 @@ def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=
     :param ch_sigmas:
     :return:
     """
-    # Image pre-processing
-    # --------------------
-    # [0, 1] Pixel Range
-    test_img = (in_img - in_img.min()) / (in_img.max() - in_img.min())
-    # Normalize 0 mean, 1 standard deviation
-    model_in_img = (test_img - ch_mus) / ch_sigmas
-
-    model_in_img = torch.from_numpy(np.transpose(model_in_img, axes=(2, 0, 1)))
-    model_in_img = model_in_img.to(devise_to_use)
-    model_in_img = model_in_img.float()
-    model_in_img = model_in_img.unsqueeze(dim=0)
-
     # Zero all collected variables
     global edge_extract_act
     global cont_int_in_act
@@ -140,27 +129,26 @@ def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=
     cont_int_in_act = 0
     cont_int_out_act = 0
 
-    # pass the image through the model
+    normalize = transforms.Normalize(mean=ch_mus, std=ch_sigmas)
+    model_in_img = normalize(in_img)
+    model_in_img = model_in_img.to(devise_to_use).unsqueeze(0)
+
+    # Pass the image through the model
+    model.eval()
     label_out = model(model_in_img)
 
-    iou = 0
-    # TODO: For now do not get IOU scores
-    # if in_img_label is not None:
-    #     in_img_label = torch.from_numpy(in_img_label)
-    #     in_img_label = in_img_label.to(devise_to_use)
-    #     in_img_label = in_img_label.unsqueeze(dim=0)
-    #     in_img_label = in_img_label.unsqueeze(dim=0)
-    #
-    #     preds = (label_out > detect_thres)
-    #
-    #     iou = utils.intersection_over_union(preds.float(), in_img_label.float())
-    #     iou = iou.cpu().detach().numpy()
+    iou = None
+    if in_img_label is not None:
+        in_img_label = in_img_label.to(devise_to_use).unsqueeze(0)
+
+        preds = (torch.sigmoid(label_out) > detect_thres)
+
+        iou = utils.intersection_over_union(preds.float(), in_img_label.float())
+        iou = iou.cpu().detach().numpy()
 
     return iou
 
 
-# TODO: Function is identical to a function with the same name in li-2006_length_experiment.py
-# TODO: Functional relies on global variables. Find a way to deal with the globals
 def find_optimal_stimulus(
         model, device_to_use, k_idx, ch_mus, ch_sigmas, extract_point, frag_size=np.array([7, 7]),
         img_size=np.array([256, 256, 3])):
@@ -201,6 +189,8 @@ def find_optimal_stimulus(
                 img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
                 :,
             ] = frag
+
+            test_img = transform_functional.to_tensor(test_img)
 
             # # Debug - Show Test Image
             # plt.figure()
@@ -253,44 +243,46 @@ def find_optimal_stimulus(
         # plt.title("Neuron {}: responses vs Orientation. Gabor Set {}".format(k_idx, base_gp_idx))
 
     # ---------------------------
-    # Save optimal tuning curve
-    for item in tgt_n_opt_params:
-        opt_base_g_params_set = item['extra_info']['optim_stim_base_gabor_set']
-        item['extra_info']['orient_tuning_curve_x'] = orient_arr
-        item['extra_info']['orient_tuning_curve_y'] = tgt_n_acts[opt_base_g_params_set, ]
+    if tgt_n_opt_params is not None:
 
-    # # Debug: plot tuning curves for all gabor sets
-    # # ------------------------------------------------
-    # plt.figure()
-    # for base_gp_idx, base_gabor_params in enumerate(base_gabor_parameters):
-    #
-    #     if base_gp_idx == tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set']:
-    #         line_width = 5
-    #         plt.plot(
-    #             tgt_n_opt_params[0]['extra_info']['optim_stim_act_orient'],
-    #             tgt_n_opt_params[0]['extra_info']['max_active_neuron_value'],
-    #             marker='x', markersize=10,
-    #             label='max active neuron Index {}'.format(
-    #                 tgt_n_opt_params[0]['extra_info']['max_active_neuron_idx'])
-    #         )
-    #     else:
-    #         line_width = 2
-    #
-    #     plt.plot(
-    #         orient_arr, tgt_n_acts[base_gp_idx, ],
-    #         label='param set {}'.format(base_gp_idx), linewidth=line_width
-    #     )
-    #
-    # plt.legend()
-    # plt.grid(True)
-    # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
-    #     k_idx,
-    #     tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
-    #     tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
-    # )
-    #
-    # import pdb
-    # pdb.set_trace()
+        # Save optimal tuning curve
+        for item in tgt_n_opt_params:
+            opt_base_g_params_set = item['extra_info']['optim_stim_base_gabor_set']
+            item['extra_info']['orient_tuning_curve_x'] = orient_arr
+            item['extra_info']['orient_tuning_curve_y'] = tgt_n_acts[opt_base_g_params_set, ]
+
+        # # Debug: plot tuning curves for all gabor sets
+        # # ------------------------------------------------
+        # plt.figure()
+        # for base_gp_idx, base_gabor_params in enumerate(base_gabor_parameters):
+        #
+        #     if base_gp_idx == tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set']:
+        #         line_width = 5
+        #         plt.plot(
+        #             tgt_n_opt_params[0]['extra_info']['optim_stim_act_orient'],
+        #             tgt_n_opt_params[0]['extra_info']['max_active_neuron_value'],
+        #             marker='x', markersize=10,
+        #             label='max active neuron Index {}'.format(
+        #                 tgt_n_opt_params[0]['extra_info']['max_active_neuron_idx'])
+        #         )
+        #     else:
+        #         line_width = 2
+        #
+        #     plt.plot(
+        #         orient_arr, tgt_n_acts[base_gp_idx, ],
+        #         label='param set {}'.format(base_gp_idx), linewidth=line_width
+        #     )
+        #
+        # plt.legend()
+        # plt.grid(True)
+        # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
+        #     k_idx,
+        #     tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
+        #     tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
+        # )
+        #
+        # import pdb
+        # pdb.set_trace()
 
     return tgt_n_opt_params
 
@@ -337,14 +329,14 @@ def get_contour_gain_vs_spacing(
         model, device_to_use, g_params, k_idx, ch_mus, ch_sigmas, rslt_dir, full_tile_s_arr, frag_tile_s,
         c_len=7, n_images=50, img_size=np.array([256, 256, 3]), epsilon=1e-5):
     """
-    # TODO: Confirm length 7 contours a re used in the experiment
+    TODO: Add description
+
     """
     global edge_extract_act
     global cont_int_in_act
     global cont_int_out_act
 
     # tracking variables  -------------------------------------------------
-    iou_arr = []
 
     tgt_n = k_idx
     max_act_n_idx = g_params[0]['extra_info']['max_active_neuron_idx']
@@ -359,7 +351,7 @@ def get_contour_gain_vs_spacing(
     frag = gabor_fits.get_gabor_fragment(g_params, spatial_size=frag_tile_s)
     bg = g_params[0]['bg']
 
-    # First Get response to Single Fragment and normal co-linear distance
+    # First Get response to Single Fragment and co-linear distance = 1 (noise pattern)
     for img_idx in range(n_images):
         test_img, test_img_label = fields1993_stimuli.generate_contour_image(
             frag=frag,
@@ -376,7 +368,8 @@ def get_contour_gain_vs_spacing(
             bg=bg
         )
 
-        process_image(model, device_to_use, ch_mus, ch_sigmas, test_img, test_img_label)
+        test_img = transform_functional.to_tensor(test_img)
+        process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
         center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
 
         tgt_n_single_frag_acts[img_idx] = center_n_acts[tgt_n]
@@ -393,7 +386,7 @@ def get_contour_gain_vs_spacing(
         print("Processing Full Tile size = {}".format(full_tile_s))
         iou = 0
 
-        # Next Get responses for c_len length contours
+        # Next Get responses for full_tile_s fragment spacing
         for img_idx in range(n_images):
 
             # (1) Create Test Image
@@ -444,7 +437,8 @@ def get_contour_gain_vs_spacing(
             # import pdb
             # pdb.set_trace()
 
-            iou += process_image(model, device_to_use, ch_mus, ch_sigmas, test_img, test_img_label)
+            test_img = transform_functional.to_tensor(test_img)
+            _ = process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
 
             center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
 
@@ -472,18 +466,19 @@ def get_contour_gain_vs_spacing(
     # -----------------------------------------------------------------------------------
     # Plots
     # -----------------------------------------------------------------------------------
-    # Gain vs Fragment spacing
+
     # Fragment spacing measured in Relative co-linear distance metric
     # Defined as the ratio distance between fragments / length of fragment
     rcd_arr = (full_tile_s_arr[:, 0] - frag_tile_s[0]) / frag_tile_s[0]
 
-    # f = plt.figure()
+    # Gain vs Spacing
     f, ax_arr = plt.subplots(1, 2)
     ax_arr[0].errorbar(rcd_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, label='Target Neuron {}'.format(tgt_n))
-    ax_arr[1].errorbar(
-        rcd_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr, label='Max Active Neuron {}'.format(max_act_n_idx))
-    ax_arr[0].set_xlabel("Fragment spacing (relative co-linear distance)")
-    ax_arr[1].set_xlabel("Fragment spacing (relative co-linear distance)")
+    ax_arr[1].errorbar(rcd_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr,
+                       label='Max Active Neuron {}'.format(max_act_n_idx))
+
+    ax_arr[0].set_xlabel("Contour Spacing (Relative Colinear Distance)")
+    ax_arr[1].set_xlabel("Contour Spacing (Relative Colinear Distance)")
     ax_arr[0].set_ylabel("Gain")
     ax_arr[1].set_ylabel("Gain")
     ax_arr[0].set_ylim(bottom=0)
@@ -492,12 +487,11 @@ def get_contour_gain_vs_spacing(
     ax_arr[1].grid()
     ax_arr[0].legend()
     ax_arr[1].legend()
-
-    f.suptitle("Contour Gain Vs Fragment Spacing - Neuron {}".format(k_idx))
+    f.suptitle("Contour Gain Vs Spacing - Neuron {}".format(k_idx))
     f.savefig(os.path.join(rslt_dir, 'gain_vs_spacing.jpg'), format='jpg')
-    # plt.close(f)
+    plt.close(f)
 
-    # Output activations vs Length
+    # Output Activations vs Spacing
     f = plt.figure()
     plt.errorbar(rcd_arr, np.mean(tgt_n_out_acts, axis=0), np.std(tgt_n_out_acts, axis=0),
                  label='target_neuron_{}'.format(tgt_n))
@@ -505,9 +499,9 @@ def get_contour_gain_vs_spacing(
                  label='max_active_neuron_{}'.format(max_act_n_idx))
 
     plt.plot(rcd_arr[0], tgt_n_avg_noise_resp,
-                   marker='x', markersize=10, color='red', label='tgt_n_single_frag_resp')
+             marker='x', markersize=10, color='red', label='tgt_n_single_frag_resp')
     plt.plot(rcd_arr[0], max_active_n_avg_noise_resp,
-                   marker='x', markersize=10, color='green', label='max_active_n_single_frag_resp')
+             marker='x', markersize=10, color='green', label='max_active_n_single_frag_resp')
 
     plt.legend()
     plt.grid()
@@ -515,12 +509,12 @@ def get_contour_gain_vs_spacing(
     plt.ylabel("Activations")
     plt.title("Output Activations")
     f.savefig(os.path.join(rslt_dir, 'output_activations_vs_spacing.jpg'), format='jpg')
-    # plt.close(f)
+    plt.close(f)
 
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
 
-    return iou_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr, \
+    return None, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr, \
         tgt_n_avg_noise_resp, max_active_n_avg_noise_resp
 
 
@@ -539,7 +533,7 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
 
     :return:
     """
-    iou = np.mean(iou_mat, axis=0)
+    # iou = np.mean(iou_mat, axis=0)
     mean_gain = np.mean(gain_mu_mat, axis=0)
 
     # For Two RVs, X and Y
@@ -553,12 +547,12 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
     avg_var = sum_var / n
     std_gain = np.sqrt(avg_var)
 
-    return iou, mean_gain, std_gain
+    return None, mean_gain, std_gain
 
 
 def plot_gain_vs_fragment_spacing(rcd_arr, mu_gain_arr, sigma_gain_arr, store_dir, f_name, f_title=None):
     """
-     Plot and Save Gain vs Contour Length
+     Plot and Save Gain vs Contour Spacing
 
     :param f_title:
     :param f_name:
@@ -585,7 +579,6 @@ if __name__ == "__main__":
     # Initialization
     # -----------------------------------------------------------------------------------
     random_seed = 10
-    results_dir = './results/test'
 
     # Find optimal Stimulus @ which point ['edge_extract_layer_out', 'contour_integration_layer_in',
     # 'contour_integration_layer_out']
@@ -610,8 +603,11 @@ if __name__ == "__main__":
 
     # Model trained with 5 iterations
     net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-                  'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
+    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
+    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
+
+    saved_model = './results/new_model/ContourIntegrationCSI_20200124_091642_gaus_reg_w_0001_sigma_6/' \
+        'best_accuracy.pth'
 
     # # Without batch normalization. Don't forget to tweak the model
     # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
@@ -647,7 +643,10 @@ if __name__ == "__main__":
     net.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    results_store_dir = os.path.join(results_dir, 'spacing_exp', os.path.dirname(saved_model).split('/')[-1])
+    base_results_dir = os.path.dirname(saved_model)
+
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing')
+    print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -658,22 +657,20 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
-    # full_tile_size_arr = np.array([[14, 14], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]])
     full_tile_size_arr = np.array([[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]])
     fragment_size = np.array([7, 7])
 
-    tgt_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
-    tgt_neuron_std_gain_mat = []  # [n_channels, n_lengths]
+    tgt_neuron_mean_gain_mat = []  # [n_channels, n_spacing]
+    tgt_neuron_std_gain_mat = []  # [n_channels, n_spacing]
     tgt_neuron_noise_resp_arr = []  # [n_channels]
 
-    max_active_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
-    max_active_neuron_std_gain_mat = []  # [n_channels, n_lengths]
-    max_active_neuron_noise_resp_arr = []  # [n_channels, n_lengths]
+    max_active_neuron_mean_gain_mat = []  # [n_channels, n_spacing]
+    max_active_neuron_std_gain_mat = []  # [n_channels, n_spacing]
+    max_active_neuron_noise_resp_arr = []  # [n_channels, n_spacing]
 
-    iou_per_len_mat = []  # [n_channels, n_lengths]
+    iou_per_len_mat = []  # [n_channels, n_spacing]
 
     for ch_idx in range(n_channels):
-
         print("{0} processing channel {1} {0}".format("*"*20, ch_idx))
 
         # (1) Find optimal stimulus
@@ -688,6 +685,11 @@ if __name__ == "__main__":
             ch_sigmas=chan_stds,
             frag_size=fragment_size
         )
+
+        if gabor_params is None:
+            print("Optimal Stimulus for kernel @ {} Not found".format(ch_idx))
+            # TODO: Should None/Nan be appended to the list to make it more clear this neuron was not processed.
+            continue
 
         # Save Tuning Curve and Gabor fit params:
         n_results_dir = os.path.join(individual_neuron_results_store_dir, 'neuron_{}'.format(ch_idx))
@@ -752,27 +754,28 @@ if __name__ == "__main__":
 
     iou_per_len_mat = np.array(iou_per_len_mat)
 
+    # --------------------------------------------
     # Filter out the neurons that do not react well to the single fragment in background
     # (optimal frag in cRF, random frags else where). These might have had
     # reasonable response to the optimal stimulus, but their activity reduced when
     # background stimuli were added
-    min_crf_resp = 0.8
+    min_clen_1_resp = 0.5
 
-    tgt_neuron_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_crf_resp)]
+    tgt_neuron_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     print("For Target neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
-        len(tgt_neuron_outliers), min_crf_resp, tgt_neuron_outliers))
+        len(tgt_neuron_outliers), min_clen_1_resp, tgt_neuron_outliers))
 
     max_active_neuron_outliers = \
-        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if np.any(item < min_crf_resp)]
+        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     print("For Max active neurons {} Outliers (single frag resp < {}) detected. @ {}".format(
-        len(max_active_neuron_outliers), min_crf_resp, max_active_neuron_outliers))
+        len(max_active_neuron_outliers), min_clen_1_resp, max_active_neuron_outliers))
 
-    all_neurons = np.arange(n_channels)
+    all_neurons = np.arange(len(tgt_neuron_noise_resp_arr))
 
     # Target Neuron
     filtered_tgt_neurons = [idx for idx in all_neurons if idx not in tgt_neuron_outliers]
-    filtered_tgt_neuron_mean_gain_mat = tgt_neuron_mean_gain_mat[filtered_tgt_neurons,]
-    filtered_tgt_neuron_std_gain_mat = tgt_neuron_std_gain_mat[filtered_tgt_neurons,]
+    filtered_tgt_neuron_mean_gain_mat = tgt_neuron_mean_gain_mat[filtered_tgt_neurons, ]
+    filtered_tgt_neuron_std_gain_mat = tgt_neuron_std_gain_mat[filtered_tgt_neurons, ]
 
     tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std = get_averaged_results(
         iou_per_len_mat,
@@ -780,7 +783,7 @@ if __name__ == "__main__":
         filtered_tgt_neuron_std_gain_mat
     )
 
-    # Max active Neuron
+    # Max Active Neuron
     filtered_max_active_neurons = [idx for idx in all_neurons if idx not in max_active_neuron_outliers]
     filtered_max_active_neuron_mean_gain_mat = max_active_neuron_mean_gain_mat[filtered_max_active_neurons, ]
     filtered_max_active_neuron_std_gain_mat = max_active_neuron_std_gain_mat[filtered_max_active_neurons, ]
@@ -819,14 +822,68 @@ if __name__ == "__main__":
         fig_title
     )
 
-    # fig_title = "Iou Vs Length - Population "
-    # fig_name = fig_title
-    # plot_iou_vs_contour_length(contour_len_arr, tgt_n_pop_iou, results_store_dir, fig_title, fig_name)
+    # -----------------------
+    # Write results in a file
+    # -----------------------
+    summary_file = os.path.join(results_store_dir, 'results.txt')
+    file_handle = open(summary_file, 'w+')
+
+    file_handle.write('{0} Target Neuron {0}\n'.format("*" * 30))
+    file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Noise (single fragment) Response\n")
+    for ch_idx in range(len(tgt_neuron_noise_resp_arr)):
+        file_handle.write("[ {:0.4f} ],\n".format(tgt_neuron_noise_resp_arr[ch_idx]))
+
+    file_handle.write("Mean Gains\n")
+    file_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in relative_colinear_dist_arr) + "]\n")
+    file_handle.write("{}\n".format("-"*80))
+    for ch_idx in range(tgt_neuron_mean_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in tgt_neuron_mean_gain_mat[ch_idx, ]) +
+            "],\n")
+    file_handle.write("Std Gains\n")
+    file_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in relative_colinear_dist_arr) + "]\n")
+    for ch_idx in range(tgt_neuron_std_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in tgt_neuron_std_gain_mat[ch_idx, ]) +
+            "],\n"
+        )
+
+    file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
+    file_handle.write("Remove all neurons with c_len = 1 activations < {}\n".format(min_clen_1_resp))
+    file_handle.write("Removed neurons {}\n".format(tgt_neuron_outliers))
+
+    file_handle.write('{0} Mac Active Neuron {0}\n'.format("*" * 30))
+    file_handle.write('{0} Raw Results {0}\n'.format("-" * 30))
+    file_handle.write("Noise (single fragment) Response\n")
+    for ch_idx in range(len(max_active_neuron_noise_resp_arr)):
+        file_handle.write("[ {:0.4f} ],\n".format(max_active_neuron_noise_resp_arr[ch_idx]))
+    file_handle.write("Mean Gains\n")
+    file_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in relative_colinear_dist_arr) + "]\n")
+    for ch_idx in range(max_active_neuron_mean_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in max_active_neuron_mean_gain_mat[ch_idx, ]) +
+            "],\n")
+    file_handle.write("Std Gains\n")
+    file_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in relative_colinear_dist_arr) + "]\n")
+    for ch_idx in range(max_active_neuron_std_gain_mat.shape[0]):
+        file_handle.write(
+            "[" +
+            ",".join('{:0.4f}'.format(item) for item in max_active_neuron_std_gain_mat[ch_idx, ]) +
+            "],\n")
+
+    file_handle.write('{0} Filtered Results {0}\n'.format("-" * 30))
+    file_handle.write("Remove all neurons with c_len = 1 activations < {}\n".format(min_clen_1_resp))
+    file_handle.write("Removed neurons {}\n".format(max_active_neuron_outliers))
+
+    file_handle.close()
 
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
     print("Running script took {}".format(datetime.now() - start_time))
     import pdb
-
     pdb.set_trace()
