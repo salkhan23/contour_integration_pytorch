@@ -367,8 +367,8 @@ def main(results, label):
         ax1.grid()
         ax2.set_title(x_label + " ={}".format(key))
         ax2.grid()
-        ax1.legend(True)
-        ax2.legend(True)
+        ax1.legend()
+        ax2.legend()
 
     fig1.suptitle("{} - Iou Vs Regularization Weight - Individual Curves".format(label))
     fig2.suptitle("{} - Loss Vs Regularization Weight - Individual Curves".format(label))
