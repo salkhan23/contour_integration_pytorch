@@ -429,7 +429,7 @@ if __name__ == '__main__':
         'learning_rate': 3e-5,
         'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
-        'gaussian_reg_sigma': 4,
+        'gaussian_reg_sigma': 6,
     }
 
     # net = CurrentDivisiveInhibition().to(device)
