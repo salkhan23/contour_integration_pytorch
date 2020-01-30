@@ -854,7 +854,7 @@ if __name__ == "__main__":
 
     # (1) Filtering 1: Remove all neurons with a noise pattern activation below a threshold
     # -------------------------------------------------------------------------------------
-    min_clen_1_resp = 0.5
+    min_clen_1_resp = 0.1
 
     tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
