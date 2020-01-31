@@ -854,8 +854,8 @@ if __name__ == "__main__":
     tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
     filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
         iou_per_len_mat,
-        max_active_neuron_mean_gain_mat,
-        max_active_neuron_std_gain_mat,
+        tgt_neuron_mean_gain_mat,
+        tgt_neuron_std_gain_mat,
         outliers=tgt_n_outliers)
 
     plot_gain_vs_contour_length(
