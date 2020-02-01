@@ -17,7 +17,7 @@ import torch.optim as optim
 import dataset
 import utils
 from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
-from models.new_piech_models import ContourIntegrationCSI
+from models.new_piech_models import ContourIntegrationCSI, ContourIntegrationCSIResnet50
 from models.new_control_models import ControlMatchParametersModel
 import models.control_models as control_models
 import validate_contour_data_set
@@ -438,11 +438,12 @@ if __name__ == '__main__':
     # net = control_models.CmClassificationHeadOnly().to(device)
 
     # New
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/new_model')
+         base_results_store_dir='./results/new_model_resnet_based')
 
     # -----------------------------------------------------------------------------------
     # End

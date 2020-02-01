@@ -225,6 +225,8 @@ class ContourIntegrationCSI(nn.Module):
         # self.edge_extract.weight.requires_grad = False
         # self.edge_extract.bias.requires_grad = False
 
+        net = torchvision.models.resnet50(pretrained=True)
+
         self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
         alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
         self.edge_extract.weight.data = alexnet_kernel.weight.data
@@ -253,6 +255,53 @@ class ContourIntegrationCSI(nn.Module):
         x = self.edge_extract(in_img)
         x = self.bn1(x)
         x = nn.functional.relu(x)
+
+        x = self.contour_integration_layer(x)
+
+        x = self.classifier(x)
+
+        return x
+
+
+class ContourIntegrationCSIResnet50(nn.Module):
+    """
+       Full Model With Contour Integration
+       """
+
+    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None):
+        super(ContourIntegrationCSIResnet50, self).__init__()
+
+        self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
+        self.edge_extract.weight.requires_grad = False
+
+        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
+        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
+
+        self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        # Current Subtractive Layer
+        self.contour_integration_layer = CurrentSubtractInhibitLayer(
+            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
+            n_iters=n_iters,
+            lateral_e_size=lateral_e_size,
+            lateral_i_size=lateral_i_size,
+            a=a,
+            b=b
+        )
+
+        # Classifier
+        self.classifier = ClassifierHead(self.num_edge_extract_chan)
+
+    def forward(self, in_img):
+
+        # Edge Extraction
+        x = self.edge_extract(in_img)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+        x = self.max_pool1(x)
+        # The above is directly from Resnet50. Attaching the contour integration layer here (as opposed to
+        # after the conv layer) since this has the same dimensions as alexnet edge extract. Allows to use the same
+        # classification head.
 
         x = self.contour_integration_layer(x)
 
