@@ -606,7 +606,7 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
     f_handle.write("[")
     for idx in range(len(noise_resp_arr)):
         f_handle.write("{:0.4f}, ".format(noise_resp_arr[idx]))
-    file_handle.write("]\n")
+    f_handle.write("]\n")
 
     f_handle.write("Gains Means\n")
     for idx in range(mean_gains_mat.shape[0]):
@@ -618,60 +618,29 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
         f_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in std_gains_mat[idx, ]) + "],\n")
 
 
-if __name__ == "__main__":
-    # -----------------------------------------------------------------------------------
-    # Initialization
-    # -----------------------------------------------------------------------------------
-    random_seed = 10
+def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
+         full_tile_size_arr=np.array([[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]]),
+         fragment_size=np.array([7, 7])):
+    """
 
-    # Find optimal Stimulus @ which point ['edge_extract_layer_out', 'contour_integration_layer_in',
-    # 'contour_integration_layer_out']
-    optimal_stim_extract_point = 'contour_integration_layer_out'
-
-    n_channels = 64
-
+    :param model:
+    :param base_results_dir:
+    :param optimal_stim_extract_point:  Find optimal Stimulus @ which point. Can be:
+        'edge_extract_layer_out', 'contour_integration_layer_in', 'contour_integration_layer_out'
+    :param full_tile_size_arr:
+    :param fragment_size
+    :return:
+    """
     # # Imagenet Normalization
     # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
     # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
 
-    # # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
-    chan_means = np.array([0.46247174, 0.46424958, 0.46231144])
-    chan_stds = np.array([0.46629872, 0.46702369, 0.46620434])
-
-    # Model
-    # -------
-
-    # # Base Model
-    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=8)
-    # saved_model = './results/new_model/ContourIntegrationCSI_20191214_183159_base/best_accuracy.pth'
-
-    # Model trained with 5 iterations
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
-
-    saved_model = './results/new_model/ContourIntegrationCSI_20200124_091642_gaus_reg_w_0001_sigma_6/' \
-        'best_accuracy.pth'
-
-    # # Without batch normalization. Don't forget to tweak the model
-    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = './results/analyze_lr_rate_alexnet_bias/lr_3e-05/ContourIntegrationCSI_20191224_050603/' \
-    #               'best_accuracy.pth'
-
-    # # Control Model
-    # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
-    # saved_model = './results/new_model/ControlMatchParametersModel_20191216_201344/best_accuracy.pth'
-
-    # -------------------------------
-    plt.ion()
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-    start_time = datetime.now()
+    # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
+    chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
+    chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    net = net.to(device)
-    net.load_state_dict(torch.load(saved_model))
+    model = model.to(device)
 
     valid_edge_extract_points = [
         'edge_extract_layer_out',
@@ -683,13 +652,11 @@ if __name__ == "__main__":
             optimal_stim_extract_point, valid_edge_extract_points))
 
     # Register Callbacks
-    net.edge_extract.register_forward_hook(edge_extract_cb)
-    net.contour_integration_layer.register_forward_hook(contour_integration_cb)
+    model.edge_extract.register_forward_hook(edge_extract_cb)
+    model.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    base_results_dir = os.path.dirname(saved_model)
-
-    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing')
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
@@ -698,12 +665,11 @@ if __name__ == "__main__":
     if not os.path.exists(individual_neuron_results_store_dir):
         os.makedirs(individual_neuron_results_store_dir)
 
+    n_channels = model.edge_extract.weight.shape[0]
+
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
-    full_tile_size_arr = np.array([[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]])
-    fragment_size = np.array([7, 7])
-
     relative_colinear_dist_arr = (full_tile_size_arr[:, 0] - fragment_size[0]) / fragment_size[0]
 
     tgt_neuron_mean_gain_mat = []  # [n_channels, n_spacing]
@@ -718,13 +684,13 @@ if __name__ == "__main__":
     skipped_neurons = []  # neurons for which the optimal stimulus could not be found
 
     for ch_idx in range(n_channels):
-        print("{0} processing channel {1} {0}".format("*"*20, ch_idx))
+        print("{0} processing channel {1} {0}".format("*" * 20, ch_idx))
 
         # (1) Find optimal stimulus
         # -----------------------------------
         print(">>>> Finding optimal stimulus")
         gabor_params = find_optimal_stimulus(
-            model=net,
+            model=model,
             device_to_use=device,
             k_idx=ch_idx,
             extract_point=optimal_stim_extract_point,
@@ -767,7 +733,7 @@ if __name__ == "__main__":
         print(">>>> Getting contour gain vs fragment spacing performance ")
         ious, tgt_mean_gains, tgt_std_gain, max_active_mean_gains, max_active_std_gains, \
             tgt_n_noise_resp, max_active_n_noise_resp = get_contour_gain_vs_spacing(
-                model=net,
+                model=model,
                 device_to_use=device,
                 g_params=gabor_params,
                 k_idx=ch_idx,
@@ -924,8 +890,27 @@ if __name__ == "__main__":
 
     file_handle.close()
 
-    # -----------------------------------------------------------------------------------
-    # End
+
+if __name__ == "__main__":
+    random_seed = 10
+
+    # Model
+    # -------
+    # Model trained with 5 iterations
+    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    saved_model = './results/new_model/ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
+                  'best_accuracy.pth'
+
+    plt.ion()
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    start_time = datetime.now()
+
+    net.load_state_dict(torch.load(saved_model))
+    results_dir = os.path.dirname(saved_model)
+
+    main(net, results_dir)
+
     # -----------------------------------------------------------------------------------
     print("Running script took {}".format(datetime.now() - start_time))
     import pdb

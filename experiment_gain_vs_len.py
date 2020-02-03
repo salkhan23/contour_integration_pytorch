@@ -584,7 +584,7 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
     f_handle.write("[")
     for idx in range(len(noise_resp_arr)):
         f_handle.write("{:0.4f}, ".format(noise_resp_arr[idx]))
-    file_handle.write("]\n")
+    f_handle.write("]\n")
 
     f_handle.write("Gains Means\n")
     for idx in range(mean_gains_mat.shape[0]):
@@ -621,59 +621,29 @@ def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle)
     f_handle.write("Population std gain : [" + ",".join('{:0.4f}'.format(x) for x in std_gain_arr) + "]\n")
 
 
-if __name__ == "__main__":
-    # -----------------------------------------------------------------------------------
-    # Initialization
-    # -----------------------------------------------------------------------------------
-    random_seed = 10
+def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
+         c_len_arr=np.array([1, 3, 5, 7, 9])):
+    """
 
-    # Find optimal Stimulus @ which point ['edge_extract_layer_out', 'contour_integration_layer_in',
-    # 'contour_integration_layer_out']
-    optimal_stim_extract_point = 'contour_integration_layer_out'
+    :param c_len_arr: 
+    :param model:
+    :param base_results_dir:
+    :param optimal_stim_extract_point:  Find optimal Stimulus @ which point. Can be:
+        'edge_extract_layer_out', 'contour_integration_layer_in', 'contour_integration_layer_out'
 
-    n_channels = 64
+    :return:
+    """
 
     # # Imagenet Normalization
     # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
     # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
 
-    # # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
+    # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
     chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
     chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
 
-    # Model
-    # -------
-
-    # # Base Model
-    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=8)
-    # saved_model = './results/new_model/ContourIntegrationCSI_20191214_183159_base/best_accuracy.pth'
-
-    # Model trained with 5 iterations
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
-    saved_model = 'results/new_model/ContourIntegrationCSI_20200124_091642_gaus_reg_w_0001_sigma_6/' \
-                  'best_accuracy.pth'
-
-    # # Without batch normalization. Don't forget to tweak the model
-    # net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = './results/analyze_lr_rate_alexnet_bias/lr_3e-05/ContourIntegrationCSI_20191224_050603/' \
-    #               'best_accuracy.pth'
-
-    # # Control Model
-    # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
-    # saved_model = './results/new_model/ControlMatchParametersModel_20191216_201344/best_accuracy.pth'
-
-    # -------------------------------
-    plt.ion()
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-    start_time = datetime.now()
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    net = net.to(device)
-    net.load_state_dict(torch.load(saved_model))
+    model = model.to(device)
 
     valid_edge_extract_points = [
         'edge_extract_layer_out',
@@ -685,12 +655,10 @@ if __name__ == "__main__":
             optimal_stim_extract_point, valid_edge_extract_points))
 
     # Register Callbacks
-    net.edge_extract.register_forward_hook(edge_extract_cb)
-    net.contour_integration_layer.register_forward_hook(contour_integration_cb)
+    model.edge_extract.register_forward_hook(edge_extract_cb)
+    model.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    base_results_dir = os.path.dirname(saved_model)
-
     results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
@@ -700,13 +668,10 @@ if __name__ == "__main__":
     if not os.path.exists(individual_neuron_results_store_dir):
         os.makedirs(individual_neuron_results_store_dir)
 
-    # -----------------------------------------------------------------------------------
-    # Main Loop
-    # -----------------------------------------------------------------------------------
-    contour_len_arr = [1, 3, 5, 7, 9]
+    n_channels = model.edge_extract.weight.shape[0]
 
     tgt_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
-    tgt_neuron_std_gain_mat = []   # [n_channels, n_lengths]
+    tgt_neuron_std_gain_mat = []  # [n_channels, n_lengths]
     tgt_neuron_noise_resp_arr = []  # [n_channels]
 
     max_active_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
@@ -717,13 +682,13 @@ if __name__ == "__main__":
     skipped_neurons = []  # neurons for which the optimal stimulus could not be found
 
     for ch_idx in range(n_channels):
-        print("{0} processing channel {1} {0}".format("*"*20, ch_idx))
+        print("{0} processing channel {1} {0}".format("*" * 20, ch_idx))
 
         # (1) Find optimal stimulus
         # -----------------------------------
         print(">>>> Finding optimal stimulus")
         gabor_params = find_optimal_stimulus(
-            model=net,
+            model=model,
             device_to_use=device,
             k_idx=ch_idx,
             extract_point=optimal_stim_extract_point,
@@ -748,7 +713,7 @@ if __name__ == "__main__":
         summary_file = os.path.join(n_results_dir, 'gabor_params.txt')
         file_handle = open(summary_file, 'w+')
         for e_idx, entry in enumerate(gabor_params):
-            file_handle.write("{0} Channel {1} {0}\n".format('*'*20, e_idx))
+            file_handle.write("{0} Channel {1} {0}\n".format('*' * 20, e_idx))
 
             for key in sorted(entry):
                 if key == 'extra_info':
@@ -765,14 +730,14 @@ if __name__ == "__main__":
         print(">>>> Getting contour gain vs length performance ")
         ious, tgt_mean_gains, tgt_std_gain, max_active_mean_gains, max_active_std_gains, \
             tgt_n_noise_resp, max_active_n_noise_resp = get_contour_gain_vs_length(
-                model=net,
+                model=model,
                 device_to_use=device,
                 g_params=gabor_params,
                 k_idx=ch_idx,
                 ch_mus=chan_means,
                 ch_sigmas=chan_stds,
                 rslt_dir=n_results_dir,
-                c_len_arr=contour_len_arr,
+                c_len_arr=c_len_arr,
                 n_images=50
             )
 
@@ -802,7 +767,7 @@ if __name__ == "__main__":
     file_handle = open(summary_file, 'w+')
 
     file_handle.write("Neurons for which the optimal stimulus cannot be found: {}\n".format(skipped_neurons))
-    file_handle.write("Contour Lengths: {}\n".format(contour_len_arr))
+    file_handle.write("Contour Lengths: {}\n".format(c_len_arr))
 
     tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std = get_averaged_results(
         iou_per_len_mat,
@@ -811,7 +776,7 @@ if __name__ == "__main__":
     )
 
     plot_gain_vs_contour_length(
-        contour_len_arr,
+        c_len_arr,
         tgt_n_pop_mean_gain,
         tgt_pop_gain_std,
         results_store_dir,
@@ -830,7 +795,7 @@ if __name__ == "__main__":
     )
 
     plot_gain_vs_contour_length(
-        contour_len_arr,
+        c_len_arr,
         max_active_n_pop_mean_gain,
         max_active_pop_gain_std,
         results_store_dir,
@@ -841,7 +806,7 @@ if __name__ == "__main__":
     file_handle.write("Max Active Neurons\n")
     write_population_avg_results(max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std, file_handle)
 
-    plot_iou_vs_contour_length(contour_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
+    plot_iou_vs_contour_length(c_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
 
     # Filtered Results :
     # [Li -2006]: Neurons that were not responsive to single bars or did not show a clear
@@ -859,7 +824,7 @@ if __name__ == "__main__":
         outliers=tgt_n_outliers)
 
     plot_gain_vs_contour_length(
-        contour_len_arr,
+        c_len_arr,
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
@@ -868,7 +833,8 @@ if __name__ == "__main__":
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(tgt_n_outliers))
     )
 
-    file_handle.write("{1} Filtered with noise (single fragment) Response >= {0} {1}\n".format(min_clen_1_resp, '-'*20))
+    file_handle.write(
+        "{1} Filtered with noise (single fragment) Response >= {0} {1}\n".format(min_clen_1_resp, '-' * 20))
     file_handle.write("Target Neurons\n")
     file_handle.write("Removed {} neurons @ {}\n".format(len(tgt_n_outliers), tgt_n_outliers))
     if len(tgt_n_outliers) < len(tgt_neuron_noise_resp_arr):
@@ -883,7 +849,7 @@ if __name__ == "__main__":
         outliers=max_active_n_outliers)
 
     plot_gain_vs_contour_length(
-        contour_len_arr,
+        c_len_arr,
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
@@ -918,8 +884,27 @@ if __name__ == "__main__":
 
     file_handle.close()
 
-    # -----------------------------------------------------------------------------------
-    # End
+
+if __name__ == "__main__":
+    random_seed = 10
+
+    # Model
+    # -------
+    # Model trained with 5 iterations
+    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    saved_model = './results/new_model/ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
+                  'best_accuracy.pth'
+
+    plt.ion()
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    start_time = datetime.now()
+
+    net.load_state_dict(torch.load(saved_model))
+    results_dir = os.path.dirname(saved_model)
+
+    main(net, results_dir)
+
     # -----------------------------------------------------------------------------------
     print("Running script took {}".format(datetime.now() - start_time))
     import pdb
