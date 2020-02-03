@@ -30,10 +30,9 @@ if __name__ == "__main__":
 
     net.load_state_dict(torch.load(saved_model))
     results_dir = os.path.dirname(saved_model)
-    results_dir = './results/debug'
 
     experiment_gain_vs_len.main(net, results_dir)
-    experiment_gain_vs_spacing(net, results_dir)
+    experiment_gain_vs_spacing.main(net, results_dir)
 
     # -----------------------------------------------------------------------------------
     print("Running script took {}".format(datetime.now() - start_time))
