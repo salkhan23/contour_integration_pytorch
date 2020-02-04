@@ -656,7 +656,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     model.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # Results Directory
-    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing')
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
