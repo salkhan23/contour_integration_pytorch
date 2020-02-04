@@ -15,11 +15,12 @@ import torch.optim as optim
 
 import dataset
 import utils
-from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
-from models.new_piech_models import ContourIntegrationCSI
+import models.new_piech_models as new_piech_models
 from models.new_control_models import ControlMatchParametersModel
-import models.control_models as control_models
 import validate_contour_data_set
+
+import experiment_gain_vs_len
+import experiment_gain_vs_spacing
 
 
 def get_lr(opt):
@@ -374,6 +375,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
     plt.close(f)
 
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+
 
 if __name__ == '__main__':
 
@@ -400,7 +408,7 @@ if __name__ == '__main__':
     # net = control_models.CmClassificationHeadOnly().to(device)
 
     # New
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,

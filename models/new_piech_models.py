@@ -212,11 +212,145 @@ class CurrentSubtractInhibitLayer(nn.Module):
         return f_x
 
 
+class CurrentSubtractInhibitSigmoidGatedLayer(nn.Module):
+    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
+        """
+        Contour Integration Layer - Current based with Subtractive Inhibition
+        Same as CurrentSubtractInhibitLayer
+
+        With sigmoid gated lateral connections similar to Language Modeling
+        with Gated Convolutional Networks
+
+        :param edge_out_ch:
+        :param n_iters:
+        :param lateral_e_size:
+        :param lateral_i_size:
+        """
+        super(CurrentSubtractInhibitSigmoidGatedLayer, self).__init__()
+
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
+        self.edge_out_ch = edge_out_ch
+        self.n_iters = n_iters  # Number of recurrent steps
+
+        # Parameters
+
+        if a is not None:
+            assert type(a) == float, 'a must be an float'
+            assert 0 <= a <= 1.0, 'a must be between [0, 1]'
+
+            self.a = nn.Parameter(torch.ones(edge_out_ch) * a)
+            self.a.requires_grad = False
+            self.fixed_a = a
+        else:
+            self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+
+        if b is not None:
+            assert type(b) == float, 'b must be an float'
+            assert 0 <= b <= 1.0, 'b must be between [0, 1]'
+
+            self.b = nn.Parameter(torch.ones(edge_out_ch) * b)
+            self.b.requires_grad = False
+            self.fixed_b = b
+        else:
+            self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+
+        self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
+
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+
+        self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
+        self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
+
+        # Components
+        self.lateral_e = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+        self.lateral_e_gate = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+        self.lateral_i = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+        self.lateral_i_gate = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+    def forward(self, ff):
+        """
+
+        :param ff:  input from previous layer
+        :return:
+        """
+
+        x = torch.zeros_like(ff)  # state of excitatory neurons
+        f_x = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
+        y = torch.zeros_like(ff)  # state of inhibitory neurons
+        f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
+
+        for i in range(self.n_iters):
+            # print("processing iteration {}".format(i))
+
+            # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
+            gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
+            gated_b = torch.sigmoid(self.b.view(1, self.edge_out_ch, 1, 1))
+
+            x = (1 - gated_a) * x + \
+                gated_a * (
+                    (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
+                    (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
+                    ff +
+                    self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
+                    (self.lateral_e(f_x) * torch.sigmoid(self.lateral_e_gate(f_x)))
+                )
+
+            y = (1 - gated_b) * y + \
+                gated_b * (
+                    (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
+                    self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
+                    (self.lateral_i(f_x) * torch.sigmoid(self.lateral_i_gate(f_x)))
+                )
+
+            f_x = nn.functional.relu(x)
+            f_y = nn.functional.relu(y)
+
+        return f_x
+
+
 class ContourIntegrationCSI(nn.Module):
     """
     Full Model With Contour Integration
     """
-    def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
+    def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
+                 contour_integration_layer=CurrentSubtractInhibitLayer):
 
         super(ContourIntegrationCSI, self).__init__()
 
@@ -236,8 +370,7 @@ class ContourIntegrationCSI(nn.Module):
 
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
-        # Current Subtractive Layer
-        self.contour_integration_layer = CurrentSubtractInhibitLayer(
+        self.contour_integration_layer = contour_integration_layer(
             edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
             n_iters=n_iters,
             lateral_e_size=lateral_e_size,
@@ -268,7 +401,8 @@ class ContourIntegrationCSIResnet50(nn.Module):
        Full Model With Contour Integration
        """
 
-    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None):
+    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,
+                 contour_integration_layer=CurrentSubtractInhibitLayer):
         super(ContourIntegrationCSIResnet50, self).__init__()
 
         self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
@@ -280,7 +414,7 @@ class ContourIntegrationCSIResnet50(nn.Module):
         self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         # Current Subtractive Layer
-        self.contour_integration_layer = CurrentSubtractInhibitLayer(
+        self.contour_integration_layer = contour_integration_layer(
             edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
             n_iters=n_iters,
             lateral_e_size=lateral_e_size,

@@ -16,11 +16,12 @@ import torch.optim as optim
 
 import dataset
 import utils
-from models.piech_models import CurrentSubtractiveInhibition, CurrentDivisiveInhibition
-from models.new_piech_models import ContourIntegrationCSI, ContourIntegrationCSIResnet50
+import models.new_piech_models as new_piech_models
 from models.new_control_models import ControlMatchParametersModel
-import models.control_models as control_models
 import validate_contour_data_set
+
+import experiment_gain_vs_len
+import experiment_gain_vs_spacing
 
 
 def get_lr(opt):
@@ -156,14 +157,16 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     criterion = nn.BCEWithLogitsLoss().to(device)
 
-    # gaussian_kernel_sigma = 4
+    gaussian_mask_e = 1 - utils.get_2d_gaussian_kernel(
+        model.contour_integration_layer.lateral_e.weight.shape[2:], sigma=gaussian_kernel_sigma)
+    gaussian_mask_i = 1 - utils.get_2d_gaussian_kernel(
+        model.contour_integration_layer.lateral_i.weight.shape[2:], sigma=gaussian_kernel_sigma)
 
-    gaussian_mask = 1 - utils.get_2d_gaussian_kernel((15, 15), sigma=gaussian_kernel_sigma)
-    gaussian_mask = torch.from_numpy(gaussian_mask).float()
-    gaussian_mask = gaussian_mask.to(device)
+    gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(device)
+    gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(device)
 
-    def inverse_gaussian_regularization(weight):
-        loss1 = (gaussian_mask * weight).abs().sum()
+    def inverse_gaussian_regularization(weight_e, weight_i):
+        loss1 = (gaussian_mask_e * weight_e).abs().sum() + (gaussian_mask_i * weight_i).abs().sum()
         # print("Loss1: {:0.4f}".format(loss1))
 
         return loss1
@@ -189,8 +192,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             batch_loss = criterion(label_out, label.float())
 
             kernel_loss = \
-                inverse_gaussian_regularization(model.contour_integration_layer.lateral_e.weight) + \
-                inverse_gaussian_regularization(model.contour_integration_layer.lateral_i.weight)
+                inverse_gaussian_regularization(
+                    model.contour_integration_layer.lateral_e.weight,
+                    model.contour_integration_layer.lateral_i.weight
+                )
 
             total_loss = batch_loss + lambda1 * kernel_loss
 
@@ -230,8 +235,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 batch_loss = criterion(label_out, label.float())
 
                 kernel_loss = \
-                    inverse_gaussian_regularization(model.contour_integration_layer.lateral_e.weight) + \
-                    inverse_gaussian_regularization(model.contour_integration_layer.lateral_i.weight)
+                    inverse_gaussian_regularization(
+                        model.contour_integration_layer.lateral_e.weight,
+                        model.contour_integration_layer.lateral_i.weight
+                    )
 
                 total_loss = batch_loss + lambda1 * kernel_loss
 
@@ -410,6 +417,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
     plt.close(f)
 
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+
 
 if __name__ == '__main__':
 
@@ -438,7 +452,10 @@ if __name__ == '__main__':
     # net = control_models.CmClassificationHeadOnly().to(device)
 
     # New
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationCSI(
+        lateral_e_size=7, lateral_i_size=7, n_iters=5,
+        contour_integration_layer=new_piech_models.CurrentSubtractInhibitSigmoidGatedLayer)
+
     # net = ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
