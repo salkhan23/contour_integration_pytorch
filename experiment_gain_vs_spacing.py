@@ -859,7 +859,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
-        f_name='filtered_max_active_n_pop_gain_vs_len',
+        f_name='filtered_max_active_n_pop_gain_vs_spacing',
         f_title='Max Active Neurons population contour gain vs length\n(filtered noise response > {})'
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(max_active_n_outliers))
     )
