@@ -442,7 +442,7 @@ if __name__ == '__main__':
         'test_batch_size': 1,
         'learning_rate': 3e-5,
         'num_epochs': 50,
-        'gaussian_reg_weight': 0.0001,
+        'gaussian_reg_weight': 0.00001,
         'gaussian_reg_sigma': 10,
     }
 
@@ -452,15 +452,15 @@ if __name__ == '__main__':
     # net = control_models.CmClassificationHeadOnly().to(device)
 
     # New
-    net = new_piech_models.ContourIntegrationCSI(
-        lateral_e_size=7, lateral_i_size=7, n_iters=5,
-        contour_integration_layer=new_piech_models.CurrentSubtractInhibitSigmoidGatedLayer)
+    # net = new_piech_models.ContourIntegrationCSI(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5,
+    #     contour_integration_layer=new_piech_models.CurrentSubtractInhibitLayer)
 
-    # net = ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/new_model')
+         base_results_store_dir='./results/new_model_resnet_based')
 
     # -----------------------------------------------------------------------------------
     # End
