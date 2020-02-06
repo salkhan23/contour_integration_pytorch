@@ -142,7 +142,9 @@ def main_worker(model, gpu, ngpus_per_node, args):
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
-    # Train Summary File
+    # -----------------------------------------------------------------------------------
+    # Write Summary File
+    # -----------------------------------------------------------------------------------
     summary_file = os.path.join(results_store_dir, 'summary.txt')
     f = open(summary_file, 'w+')
 
@@ -151,6 +153,39 @@ def main_worker(model, gpu, ngpus_per_node, args):
     for a_idx, arg in enumerate(vars(args)):
         f.write("\t[{}] {}: {}\n".format(a_idx, arg, getattr(args, arg)))
     f.write("{}\n".format('-' * 80))
+
+    # Write the model architecture
+    f.write("Model Name       : {}\n".format(model.__class__.__name__))
+    f.write("\n")
+    print(model, file=f)
+    f.write("{}\n".format('-' * 80))
+
+    # Hyper Parameters of Contour Integration Layer
+    temp = vars(model)  # Returns a dictionary.
+    layers = temp['_modules']  # Returns all top level modules (layers)
+
+    # First Layer
+    first_layer_key = list(layers)[0]
+    first_layer = layers[first_layer_key]
+
+    embedded_con_int_model = None
+    # note only checks for contour in the str(type) of the FIRST layer
+    if 'contour' in str(type(first_layer)).lower():
+        embedded_con_int_model = first_layer
+
+    if embedded_con_int_model is not None:
+        # print fixed hyper parameters
+        f.write("Contour Integration Layer Hyper parameters\n")
+        cont_int_layer_vars = \
+            [item for item in vars(embedded_con_int_model.contour_integration_layer) if not item.startswith('_')]
+        for var in sorted(cont_int_layer_vars):
+            f.write("\t{}: {}\n".format(var, getattr(embedded_con_int_model.contour_integration_layer, var)))
+
+        # print parameter names and whether they are trainable
+        f.write("Contour Integration Layer Parameters\n")
+        layer_params = vars(embedded_con_int_model.contour_integration_layer)['_parameters']
+        for k, v in sorted(layer_params.items()):
+            f.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
 
     if args.distributed:
         if args.dist_url == "env://" and args.rank == -1:
@@ -161,6 +196,10 @@ def main_worker(model, gpu, ngpus_per_node, args):
             args.rank = args.rank * ngpus_per_node + gpu
         dist.init_process_group(backend=args.dist_backend, init_method=args.dist_url,
                                 world_size=args.world_size, rank=args.rank)
+
+    f.write("{}\n".format('-' * 80))
+    # -----------------------------------------------------------------------------------
+
     # create model
     # if args.pretrained:
     #     print("=> using pre-trained model '{}'".format(args.arch))
@@ -264,6 +303,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
         validate(val_loader, model, criterion, args)
         return
 
+    f.write("Training\n")
     f.write("Epoch, train_loss, train_accTop1, train_accTop5, val_loss val_accTop1, val_accTop5\n")
 
     # Evaluate performance on Validation set before Training - This for for models that start
@@ -578,35 +618,54 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    # Contour Integration model
-    import models.piech_models
-    cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    import models.new_piech_models as new_piech_models
 
-    # # # Control Model
-    # # import models.control_models
-    # # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
-    #
-    net = embed_resnet50(cont_int_model)
-    # net = embed_alexnet(cont_int_model, pretrained=False)
+    saved_model = 'results/new_model_resnet_based/' \
+                  'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001/best_accuracy.pth'
 
-    # Train_imagenet stores the not the whole state of everything. Not just the weights.
-    # this is similar to how resume option is used in the train imagenet script
-    print("Loading model weights")
+    net = new_piech_models.get_embedded_resnet50_model(saved_contour_integration_model=saved_model)
+    # print(net)
 
-    saved_model = \
-        './results/imagenet_classification/' \
-        'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
+    # check_requires_grad(net)
+    # import pdb
+    # pdb.set_trace()
 
-    checkpoint = torch.load(saved_model)
-    net.load_state_dict(checkpoint['state_dict'])
-
-    # Allow all layers to be trained:
-    for c_idx, child in enumerate(net.children()):
-        for p_idx, param in enumerate(child.parameters()):
-            param.requires_grad = True
-
-    # net = torchvision_models.resnet50(pretrained=True)
-
-    print(">>> Starting main script {}".format('.'*80))
-    check_requires_grad(net)
+    print(">>> Starting main script {}".format('.' * 80))
     main(net)
+
+
+
+
+    #
+    # # Contour Integration model
+    # import models.piech_models
+    # cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
+    #
+    # # # # Control Model
+    # # # import models.control_models
+    # # # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
+    # #
+    # net = embed_resnet50(cont_int_model)
+    # # net = embed_alexnet(cont_int_model, pretrained=False)
+    #
+    # # Train_imagenet stores the not the whole state of everything. Not just the weights.
+    # # this is similar to how resume option is used in the train imagenet script
+    # print("Loading model weights")
+    #
+    # saved_model = \
+    #     './results/imagenet_classification/' \
+    #     'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
+    #
+    # checkpoint = torch.load(saved_model)
+    # net.load_state_dict(checkpoint['state_dict'])
+    #
+    # # Allow all layers to be trained:
+    # for c_idx, child in enumerate(net.children()):
+    #     for p_idx, param in enumerate(child.parameters()):
+    #         param.requires_grad = True
+    #
+    # # net = torchvision_models.resnet50(pretrained=True)
+    #
+    # print(">>> Starting main script {}".format('.'*80))
+    # check_requires_grad(net)
+    # main(net)

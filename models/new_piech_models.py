@@ -19,7 +19,7 @@ import torch.nn.init as init
 
 class DummyHead(nn.Module):
     """ Just passes the data through as is """
-    def __init__(self):
+    def __init__(self, *argv):
         super(DummyHead, self).__init__()
 
     def forward(self, x):
@@ -402,7 +402,7 @@ class ContourIntegrationCSIResnet50(nn.Module):
        """
 
     def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,
-                 contour_integration_layer=CurrentSubtractInhibitLayer):
+                 contour_integration_layer=CurrentSubtractInhibitLayer, classifier=ClassifierHead):
         super(ContourIntegrationCSIResnet50, self).__init__()
 
         self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
@@ -424,7 +424,7 @@ class ContourIntegrationCSIResnet50(nn.Module):
         )
 
         # Classifier
-        self.classifier = ClassifierHead(self.num_edge_extract_chan)
+        self.classifier = classifier(self.num_edge_extract_chan)
 
     def forward(self, in_img):
 
@@ -442,3 +442,24 @@ class ContourIntegrationCSIResnet50(nn.Module):
         x = self.classifier(x)
 
         return x
+
+
+def get_embedded_resnet50_model(saved_contour_integration_model=None):
+
+    model = torchvision.models.resnet50(pretrained=True)
+
+    cont_int_model = ContourIntegrationCSIResnet50(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, classifier=DummyHead)
+    if saved_contour_integration_model is not None:
+        cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
+        # strict = False do not care about loading classifier weights
+
+    # The Resnet50 Contour integration Model attaches after the first max pooling layer
+    # of resent. Replace one layer of Resnet50 and force all others to be dummy Heads (pass through as is)
+
+    model.conv1 = cont_int_model
+    model.bn1 = DummyHead()
+    model.relu = DummyHead()
+    model.maxpool = DummyHead()
+
+    return model
