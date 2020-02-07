@@ -238,12 +238,43 @@ def main_worker(model, gpu, ngpus_per_node, args):
         # else:
         model = torch.nn.DataParallel(model).cuda()
 
+    # -----------------------------------------------------------------------------------
     # define loss function (criterion) and optimizer
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+    # -----------------------------------------------------------------------------------
+    f.write("Loss Functions and Optimizers\n")
 
-    optimizer = torch.optim.SGD(model.parameters(), args.lr,
-                                momentum=args.momentum,
-                                weight_decay=args.weight_decay)
+    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
+    f.write("Loss Fcn         : {}\n".format(criterion.__class__.__name__))
+
+    optimizer = torch.optim.SGD(
+        model.parameters(), args.lr,
+        momentum=args.momentum,
+        weight_decay=args.weight_decay)
+    f.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
+
+    # Lateral Kernels Regularization
+    import utils
+    gaussian_kernel_sigma = 10
+    reg_loss_weight = 0.0001
+
+    gaussian_mask_e = 1 - utils.get_2d_gaussian_kernel(
+        model.conv1.contour_integration_layer.lateral_e.weight.shape[2:], sigma=gaussian_kernel_sigma)
+    gaussian_mask_i = 1 - utils.get_2d_gaussian_kernel(
+        model.conv1.contour_integration_layer.lateral_i.weight.shape[2:], sigma=gaussian_kernel_sigma)
+
+    gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(args.gpu)
+    gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(args.gpu)
+
+    def inverse_gaussian_regularization(weight_e, weight_i):
+        loss1 = (gaussian_mask_e * weight_e).abs().sum() + (gaussian_mask_i * weight_i).abs().sum()
+        # print("Loss1: {:0.4f}".format(loss1))
+
+    # lateral_kernels_reg = None
+    lateral_kernels_reg = inverse_gaussian_regularization
+    f.write("lateral_kernels_reg        :{}\n".format(lateral_kernels_reg.__name__))
+    f.write("Gaussian width (sigma)     :\n".format(gaussian_kernel_sigma))
+    f.write("lateral_kernels_weight     :{}\n".format(reg_loss_weight))
+    f.write("{}\n".format('-' * 80))
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -263,6 +294,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
             print("=> no checkpoint found at '{}'".format(args.resume))
 
     cudnn.benchmark = True
+    # -----------------------------------------------------------------------------------
 
     # Data loading code
     print(">>> Setting up Data loaders {}".format('.' * 80))
@@ -314,6 +346,9 @@ def main_worker(model, gpu, ngpus_per_node, args):
         val_loss, val_acc1, val_acc5
     ))
 
+    # -----------------------------------------------------------------------------------
+    # Main Loop
+    # -----------------------------------------------------------------------------------
     print(">>> Start Training {} ".format('.'*80))
     for epoch in range(args.start_epoch, args.epochs):
         if args.distributed:
@@ -355,7 +390,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
     f.close()
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args):
+def train(train_loader, model, criterion, optimizer, epoch, args, reg_criterion=None, reg_loss_weight=0):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -380,6 +415,14 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # compute output
         output = model(images)
         loss = criterion(output, target)
+        if reg_criterion is not None:
+            reg_loss = reg_loss_weight * reg_criterion(
+                model.conv1.contour_integration_layer.lateral_e.weight,
+                model.conv1.contour_integration_layer.lateral_i.weight
+            )
+
+            # print("Criterion Loss {:0.4f}, lateral kernels reg. loss {:0.4f}".format(loss, reg_loss))
+            loss += reg_loss
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -399,12 +442,18 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         if i % args.print_freq == 0:
             progress.print(i)
 
-    print("Epoch Complete Duration {}".format(time.time() - epoch_start_time))
+    current_time_s = time.time()
+    elapsed_seconds_total = current_time_s - time.time()
+    elapsed_hours = elapsed_seconds_total / 3600
+    elapsed_min = (elapsed_seconds_total - elapsed_hours * 3600) / 60
+
+    print("Epoch Complete Duration: {}s ({} hours {} minutes)".format(
+        elapsed_seconds_total, elapsed_hours, elapsed_min))
 
     return losses.avg, top1.avg, top5.avg
 
 
-def validate(val_loader, model, criterion, args):
+def validate(val_loader, model, criterion, args, reg_criterion=None, reg_loss_weight=0):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -425,6 +474,14 @@ def validate(val_loader, model, criterion, args):
             # compute output
             output = model(images)
             loss = criterion(output, target)
+            if reg_criterion is not None:
+                reg_loss = reg_loss_weight * reg_criterion(
+                    model.conv1.contour_integration_layer.lateral_e.weight,
+                    model.conv1.contour_integration_layer.lateral_i.weight
+                )
+
+                # print("Criterion Loss {:0.4f}, lateral kernels reg. loss {:0.4f}".format(loss, reg_loss))
+                loss += reg_loss
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -440,7 +497,7 @@ def validate(val_loader, model, criterion, args):
                 progress.print(i)
 
         # TODO: this should also be done with the ProgressMeter
-        print(' * Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
+        print('Epoch End Validation: Acc@1 {top1.avg:.3f} Acc@5 {top5.avg:.3f}'
               .format(top1=top1, top5=top5))
 
     return losses.avg, top1.avg, top5.avg
