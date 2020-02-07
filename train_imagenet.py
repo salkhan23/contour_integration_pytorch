@@ -272,7 +272,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
     # lateral_kernels_reg = None
     lateral_kernels_reg = inverse_gaussian_regularization
     f.write("lateral_kernels_reg        :{}\n".format(lateral_kernels_reg.__name__))
-    f.write("Gaussian width (sigma)     :\n".format(gaussian_kernel_sigma))
+    f.write("Gaussian width (sigma)     :{}\n".format(gaussian_kernel_sigma))
     f.write("lateral_kernels_weight     :{}\n".format(reg_loss_weight))
     f.write("{}\n".format('-' * 80))
 
