@@ -443,7 +443,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args, reg_criterion=
             progress.print(i)
 
     current_time_s = time.time()
-    elapsed_seconds_total = current_time_s - time.time()
+    elapsed_seconds_total = current_time_s - epoch_start_time
     elapsed_hours = elapsed_seconds_total / 3600
     elapsed_min = (elapsed_seconds_total - elapsed_hours * 3600) / 60
 
