@@ -620,9 +620,10 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
          full_tile_size_arr=np.array([[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]]),
-         fragment_size=np.array([7, 7])):
+         fragment_size=np.array([7, 7]), embedded_layer_identifier=None):
     """
 
+    :param embedded_layer_identifier:
     :param model:
     :param base_results_dir:
     :param optimal_stim_extract_point:  Find optimal Stimulus @ which point. Can be:
@@ -632,12 +633,12 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     :return:
     """
     # # Imagenet Normalization
-    # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
-    # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
+    chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
+    chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
 
     # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
-    chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
-    chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
+    # chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
+    # chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -652,8 +653,14 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
             optimal_stim_extract_point, valid_edge_extract_points))
 
     # Register Callbacks
-    model.edge_extract.register_forward_hook(edge_extract_cb)
-    model.contour_integration_layer.register_forward_hook(contour_integration_cb)
+    if embedded_layer_identifier is None:
+        model.edge_extract.register_forward_hook(edge_extract_cb)
+        model.contour_integration_layer.register_forward_hook(contour_integration_cb)
+        n_channels = model.edge_extract.weight.shape[0]
+    else:
+        embedded_layer_identifier.edge_extract.register_forward_hook(edge_extract_cb)
+        embedded_layer_identifier.contour_integration_layer.register_forward_hook(contour_integration_cb)
+        n_channels = embedded_layer_identifier.edge_extract.weight.shape[0]
 
     # Results Directory
     results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing')
@@ -664,8 +671,6 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     individual_neuron_results_store_dir = os.path.join(results_store_dir, 'individual_neurons')
     if not os.path.exists(individual_neuron_results_store_dir):
         os.makedirs(individual_neuron_results_store_dir)
-
-    n_channels = model.edge_extract.weight.shape[0]
 
     # -----------------------------------------------------------------------------------
     # Main Loop
