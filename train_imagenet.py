@@ -677,10 +677,12 @@ if __name__ == '__main__':
 
     import models.new_piech_models as new_piech_models
 
-    saved_model = 'results/new_model_resnet_based/' \
-                  'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001/best_accuracy.pth'
+    # saved_model = 'results/new_model_resnet_based/' \
+    #               'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001/' \
+    #               'best_accuracy.pth'
 
-    net = new_piech_models.get_embedded_resnet50_model(saved_contour_integration_model=saved_model)
+    saved_model = None
+    net = new_piech_models.get_embedded_resnet50_model(saved_contour_integration_model=saved_model, pretrained=False)
     # print(net)
 
     # check_requires_grad(net)

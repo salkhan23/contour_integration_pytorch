@@ -445,9 +445,9 @@ class ContourIntegrationCSIResnet50(nn.Module):
         return x
 
 
-def get_embedded_resnet50_model(saved_contour_integration_model=None):
+def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained=True):
 
-    model = torchvision.models.resnet50(pretrained=True)
+    model = torchvision.models.resnet50(pretrained=pretrained)
 
     cont_int_model = ContourIntegrationCSIResnet50(
         lateral_e_size=15, lateral_i_size=15, n_iters=5, classifier=DummyHead)
@@ -457,7 +457,6 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None):
 
     # The Resnet50 Contour integration Model attaches after the first max pooling layer
     # of resent. Replace one layer of Resnet50 and force all others to be dummy Heads (pass through as is)
-
     model.conv1 = cont_int_model
     model.bn1 = DummyHead()
     model.relu = DummyHead()
