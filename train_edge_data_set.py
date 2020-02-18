@@ -345,12 +345,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.grid(True)
     f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
 
-    # # -----------------------------------------------------------------------------------
-    # # Run Li 2006 experiments
-    # # -----------------------------------------------------------------------------------
-    # print("====> Running Experiments")
-    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
-    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
 
 if __name__ == '__main__':
@@ -367,7 +367,7 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 3e-5,
-        'num_epochs': 1,
+        'num_epochs': 50,
         'gaussian_reg_weight': 0.00001,
         'gaussian_reg_sigma': 10,
     }
