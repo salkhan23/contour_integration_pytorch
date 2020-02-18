@@ -360,8 +360,6 @@ class ContourIntegrationCSI(nn.Module):
         # self.edge_extract.weight.requires_grad = False
         # self.edge_extract.bias.requires_grad = False
 
-        net = torchvision.models.resnet50(pretrained=True)
-
         self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
         alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
         self.edge_extract.weight.data = alexnet_kernel.weight.data
