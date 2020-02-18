@@ -464,3 +464,50 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None):
     model.maxpool = DummyHead()
 
     return model
+
+
+class EdgeDetectionCSIResnet50(nn.Module):
+    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,):
+        super(EdgeDetectionCSIResnet50, self).__init__()
+
+        self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
+        self.edge_extract.weight.requires_grad = False
+
+        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
+        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
+
+        # Current Subtractive Layer
+        self.contour_integration_layer = CurrentSubtractInhibitLayer(
+            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
+            n_iters=n_iters,
+            lateral_e_size=lateral_e_size,
+            lateral_i_size=lateral_i_size,
+            a=a,
+            b=b
+        )
+
+        # Map to expected label
+        self.classifier = nn.Conv2d(
+            in_channels=self.num_edge_extract_chan,
+            out_channels=1,
+            kernel_size=1,
+            stride=1,
+            bias=True)
+
+    def forward(self, in_img):
+
+        img_size = in_img.shape[2:]
+
+        # Edge Extraction
+        x = self.edge_extract(in_img)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.contour_integration_layer(x)
+
+        # Up sample to the input image size
+        x = nn.functional.interpolate(x, size=img_size)
+
+        x = self.classifier(x)
+
+        return x
