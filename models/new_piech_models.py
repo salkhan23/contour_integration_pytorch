@@ -26,6 +26,66 @@ class DummyHead(nn.Module):
         return x
 
 
+class EdgeExtractClassifier(nn.Module):
+    """ Similar to Edge  extract head of Doobnet"""
+    def __init__(self, n_in_channels):
+        super(EdgeExtractClassifier, self).__init__()
+        self.n_in_channels = n_in_channels
+
+        self.branch1a_conv = nn.Conv2d(
+            in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1a_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch1b_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1b_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch1c_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1c_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch2a_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch2a_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch2b_conv = nn.Conv2d(
+            in_channels=8, out_channels=4, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch2b_bn = nn.BatchNorm2d(num_features=4)
+
+        self.branch2c_conv = nn.Conv2d(
+            in_channels=4, out_channels=1, kernel_size=(1, 1), stride=(1, 1), groups=1, bias=True)
+
+    def forward(self, x):
+        x1 = self.branch1a_conv(x)
+        x1 = self.branch1a_bn(x1)
+        x1 = nn.functional.relu(x1)
+
+        x2 = self.branch1b_conv(x1)
+        x2 = self.branch1b_bn(x2)
+        x2 = nn.functional.relu(x2)
+
+        x3 = self.branch1c_conv(x2)
+        x3 = self.branch1c_bn(x3)
+        x3 = nn.functional.relu(x3)
+
+        x4 = self.branch2a_conv(x3)
+        x4 = self.branch2a_bn(x4)
+        x4 = nn.functional.relu(x4)
+
+        x5 = self.branch2b_conv(x4)
+        x5 = self.branch2b_bn(x5)
+        x5 = nn.functional.relu(x5)
+
+        x6 = self.branch2c_conv(x5)
+
+        return x6
+
+
 class ClassifierHead(nn.Module):
     def __init__(self, num_channels):
         super(ClassifierHead, self).__init__()
@@ -484,13 +544,14 @@ class EdgeDetectionCSIResnet50(nn.Module):
             b=b
         )
 
-        # Map to expected label
-        self.classifier = nn.Conv2d(
-            in_channels=self.num_edge_extract_chan,
-            out_channels=1,
-            kernel_size=1,
-            stride=1,
-            bias=True)
+        # # Map to expected label
+        # self.classifier = nn.Conv2d(
+        #     in_channels=self.num_edge_extract_chan,
+        #     out_channels=1,
+        #     kernel_size=1,
+        #     stride=1,
+        #     bias=True)
+        self.classifier = EdgeExtractClassifier(n_in_channels=self.num_edge_extract_chan)
 
     def forward(self, in_img):
 
@@ -504,7 +565,7 @@ class EdgeDetectionCSIResnet50(nn.Module):
         x = self.contour_integration_layer(x)
 
         # Up sample to the input image size
-        x = nn.functional.interpolate(x, size=img_size)
+        x = nn.functional.interpolate(x, size=img_size, mode='bilinear')
 
         x = self.classifier(x)
 
