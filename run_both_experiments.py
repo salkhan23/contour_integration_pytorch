@@ -29,6 +29,7 @@ if __name__ == "__main__":
     #               '/best_accuracy.pth'
     # replacement_layer = None
     # net.load_state_dict(torch.load(saved_model))
+    # get_iou_results = True
 
     # net = new_piech_models.get_embedded_resnet50_model()
     # saved_model = './results/imagenet_classification/ResNet_20200208_153412' \
@@ -36,6 +37,7 @@ if __name__ == "__main__":
     # checkpoint = torch.load(saved_model)
     # replacement_layer = net.conv1
     # net.load_state_dict(checkpoint['state_dict'])
+    # get_iou_results = False
 
     net = new_piech_models.ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     saved_model = \
@@ -44,6 +46,7 @@ if __name__ == "__main__":
         '/best_accuracy.pth'
     replacement_layer = None
     net.load_state_dict(torch.load(saved_model))
+    get_iou_results=True
 
     # ------------------------------------
     plt.ion()
@@ -53,7 +56,8 @@ if __name__ == "__main__":
 
     results_dir = os.path.dirname(saved_model)
 
-    experiment_gain_vs_len.main(net, results_dir, iou_results=False, embedded_layer_identifier=replacement_layer)
+    experiment_gain_vs_len.main(
+        net, results_dir, iou_results=get_iou_results, embedded_layer_identifier=replacement_layer)
     experiment_gain_vs_spacing.main(net, results_dir, embedded_layer_identifier=replacement_layer)
 
     # -----------------------------------------------------------------------------------

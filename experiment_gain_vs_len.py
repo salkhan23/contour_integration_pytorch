@@ -630,7 +630,7 @@ def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle)
 
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
-         c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=False, embedded_layer_identifier=None):
+         c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=True, embedded_layer_identifier=None):
     """
 
     :param embedded_layer_identifier:
