@@ -620,7 +620,7 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
          full_tile_size_arr=np.array([[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]]),
-         fragment_size=np.array([7, 7]), embedded_layer_identifier=None):
+         frag_size=np.array([7, 7]), embedded_layer_identifier=None):
     """
 
     :param embedded_layer_identifier:
@@ -629,12 +629,14 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     :param optimal_stim_extract_point:  Find optimal Stimulus @ which point. Can be:
         'edge_extract_layer_out', 'contour_integration_layer_in', 'contour_integration_layer_out'
     :param full_tile_size_arr:
-    :param fragment_size
+    :param frag_size
     :return:
     """
     # # Imagenet Normalization
-    chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
-    chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
+    # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
+    # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
+    chan_means = [0.485, 0.456, 0.406]
+    chan_stds = [0.229, 0.224, 0.225]
 
     # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
     # chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
@@ -663,7 +665,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         n_channels = embedded_layer_identifier.edge_extract.weight.shape[0]
 
     # Results Directory
-    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing')
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_spacing_frag_size_{}'.format(
+        frag_size))
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
@@ -675,7 +678,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
-    relative_colinear_dist_arr = (full_tile_size_arr[:, 0] - fragment_size[0]) / fragment_size[0]
+    relative_colinear_dist_arr = (full_tile_size_arr[:, 0] - frag_size[0]) / frag_size[0]
 
     tgt_neuron_mean_gain_mat = []  # [n_channels, n_spacing]
     tgt_neuron_std_gain_mat = []  # [n_channels, n_spacing]
@@ -701,7 +704,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
             extract_point=optimal_stim_extract_point,
             ch_mus=chan_means,
             ch_sigmas=chan_stds,
-            frag_size=fragment_size
+            frag_size=frag_size
         )
 
         if gabor_params is None:
@@ -746,7 +749,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
                 ch_sigmas=chan_stds,
                 rslt_dir=n_results_dir,
                 full_tile_s_arr=full_tile_size_arr,
-                frag_tile_s=fragment_size,
+                frag_tile_s=frag_size,
                 c_len=7,
                 n_images=50
             )

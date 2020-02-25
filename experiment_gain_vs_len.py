@@ -196,8 +196,10 @@ def find_optimal_stimulus(
 
             # # Debug - Show Test Image
             # plt.figure()
-            # plt.imshow(test_img)
+            # plt.imshow(np.transpose(test_img,axes=(1, 2, 0)))
             # plt.title("Input Image - Find optimal stimulus")
+            # import pdb
+            # pdb.set_trace()
 
             # Get target activations
             process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
@@ -392,35 +394,37 @@ def get_contour_gain_vs_length(
 
             # # Debug - Plot Test Image
             # # ------------------------
-            # print(test_img_label)
-            # print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(test_img_label)))
+            # if c_len == 9:
+            #     print(test_img_label)
+            #     print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(test_img_label)))
             #
-            # plt.figure()
-            # plt.imshow(test_img)
-            # plt.title("Input Image")
+            #     plt.figure()
+            #     plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
+            #     plt.title("Input Image")
             #
-            # # Highlight Label
-            # label_image = fields1993_stimuli.plot_label_on_image(
-            #     test_img, test_img_label, full_tile_size, edge_color=(250, 0, 0), edge_width=2, display_figure=False)
+            #     # Highlight Label
+            #     label_image = fields1993_stimuli.plot_label_on_image(
+            #         test_img, test_img_label, full_tile_size, edge_color=(250, 0, 0), edge_width=2,
+            #         display_figure=False)
             #
-            # # Highlight Bg Tiles
-            # full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
-            #     frag_len=full_tile_size[0],
-            #     img_len=img_size[1],
-            #     row_offset=0,
-            #     space_bw_tiles=0,
-            #     tgt_n_visual_rf_start=img_size[0] // 2 - (full_tile_size[0] // 2)
-            # )
+            #     # Highlight Bg Tiles
+            #     full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
+            #         frag_len=full_tile_size[0],
+            #         img_len=img_size[1],
+            #         row_offset=0,
+            #         space_bw_tiles=0,
+            #         tgt_n_visual_rf_start=img_size[0] // 2 - (full_tile_size[0] // 2)
+            #     )
             #
-            # label_image = fields1993_stimuli.highlight_tiles(
-            #     label_image, full_tile_size, full_tile_starts, edge_color=(255, 255, 0))
+            #     label_image = fields1993_stimuli.highlight_tiles(
+            #         label_image, full_tile_size, full_tile_starts, edge_color=(255, 255, 0))
             #
-            # plt.figure()
-            # plt.imshow(label_image)
-            # plt.title("Labeled Image")
+            #     plt.figure()
+            #     plt.imshow(label_image)
+            #     plt.title("Labeled Image")
             #
-            # import pdb
-            # pdb.set_trace()
+            #     import pdb
+            #     pdb.set_trace()
 
             # (2) Get output Activations
             if iou_results:
@@ -630,9 +634,11 @@ def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle)
 
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
-         c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=True, embedded_layer_identifier=None):
+         c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=True, embedded_layer_identifier=None,
+         frag_size=np.array([7, 7])):
     """
 
+    :param frag_size:
     :param embedded_layer_identifier:
     :param iou_results:
     :param c_len_arr:
@@ -645,8 +651,11 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     """
 
     # # Imagenet Normalization
-    chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
-    chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
+    # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
+    # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
+    # Imagenet Mean and STD
+    chan_means = [0.485, 0.456, 0.406]
+    chan_stds = [0.229, 0.224, 0.225]
 
     # # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
     # chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
@@ -675,7 +684,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         n_channels = embedded_layer_identifier.edge_extract.weight.shape[0]
 
     # Results Directory
-    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length')
+    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length_frag_{}'.format(frag_size))
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
@@ -708,6 +717,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
             extract_point=optimal_stim_extract_point,
             ch_mus=chan_means,
             ch_sigmas=chan_stds,
+            frag_size=frag_size,
         )
 
         if gabor_params is None:
@@ -754,6 +764,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
                 c_len_arr=c_len_arr,
                 n_images=50,
                 iou_results=iou_results,
+                frag_size=frag_size
             )
 
         tgt_neuron_mean_gain_mat.append(tgt_mean_gains)
