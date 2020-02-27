@@ -26,6 +26,66 @@ class DummyHead(nn.Module):
         return x
 
 
+class EdgeExtractClassifier(nn.Module):
+    """ Similar to Edge  extract head of Doobnet"""
+    def __init__(self, n_in_channels):
+        super(EdgeExtractClassifier, self).__init__()
+        self.n_in_channels = n_in_channels
+
+        self.branch1a_conv = nn.Conv2d(
+            in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1a_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch1b_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1b_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch1c_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch1c_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch2a_conv = nn.Conv2d(
+            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch2a_bn = nn.BatchNorm2d(num_features=8)
+
+        self.branch2b_conv = nn.Conv2d(
+            in_channels=8, out_channels=4, kernel_size=(3, 3), stride=(1, 1),
+            padding=(1, 1), groups=1, bias=False)
+        self.branch2b_bn = nn.BatchNorm2d(num_features=4)
+
+        self.branch2c_conv = nn.Conv2d(
+            in_channels=4, out_channels=1, kernel_size=(1, 1), stride=(1, 1), groups=1, bias=True)
+
+    def forward(self, x):
+        x1 = self.branch1a_conv(x)
+        x1 = self.branch1a_bn(x1)
+        x1 = nn.functional.relu(x1)
+
+        x2 = self.branch1b_conv(x1)
+        x2 = self.branch1b_bn(x2)
+        x2 = nn.functional.relu(x2)
+
+        x3 = self.branch1c_conv(x2)
+        x3 = self.branch1c_bn(x3)
+        x3 = nn.functional.relu(x3)
+
+        x4 = self.branch2a_conv(x3)
+        x4 = self.branch2a_bn(x4)
+        x4 = nn.functional.relu(x4)
+
+        x5 = self.branch2b_conv(x4)
+        x5 = self.branch2b_bn(x5)
+        x5 = nn.functional.relu(x5)
+
+        x6 = self.branch2c_conv(x5)
+
+        return x6
+
+
 class ClassifierHead(nn.Module):
     def __init__(self, num_channels):
         super(ClassifierHead, self).__init__()
@@ -193,8 +253,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             x = (1 - gated_a) * x + \
                 gated_a * (
-                    # (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
-                    -(self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
+                    # (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x)
+                    - (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
                     ff +
                     self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_e(f_x))
@@ -360,8 +420,6 @@ class ContourIntegrationCSI(nn.Module):
         # self.edge_extract.weight.requires_grad = False
         # self.edge_extract.bias.requires_grad = False
 
-        net = torchvision.models.resnet50(pretrained=True)
-
         self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
         alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
         self.edge_extract.weight.data = alexnet_kernel.weight.data
@@ -463,3 +521,51 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
     model.maxpool = DummyHead()
 
     return model
+
+
+class EdgeDetectionCSIResnet50(nn.Module):
+    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,):
+        super(EdgeDetectionCSIResnet50, self).__init__()
+
+        self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
+        self.edge_extract.weight.requires_grad = False
+
+        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
+        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
+
+        # Current Subtractive Layer
+        self.contour_integration_layer = CurrentSubtractInhibitLayer(
+            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
+            n_iters=n_iters,
+            lateral_e_size=lateral_e_size,
+            lateral_i_size=lateral_i_size,
+            a=a,
+            b=b
+        )
+
+        # # Map to expected label
+        # self.classifier = nn.Conv2d(
+        #     in_channels=self.num_edge_extract_chan,
+        #     out_channels=1,
+        #     kernel_size=1,
+        #     stride=1,
+        #     bias=True)
+        self.classifier = EdgeExtractClassifier(n_in_channels=self.num_edge_extract_chan)
+
+    def forward(self, in_img):
+
+        img_size = in_img.shape[2:]
+
+        # Edge Extraction
+        x = self.edge_extract(in_img)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.contour_integration_layer(x)
+
+        # Up sample to the input image size
+        x = nn.functional.interpolate(x, size=img_size, mode='bilinear')
+
+        x = self.classifier(x)
+
+        return x
