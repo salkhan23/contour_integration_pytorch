@@ -556,13 +556,6 @@ class EdgeDetectionCSIResnet50(nn.Module):
             b=b
         )
 
-        # # Map to expected label
-        # self.classifier = nn.Conv2d(
-        #     in_channels=self.num_edge_extract_chan,
-        #     out_channels=1,
-        #     kernel_size=1,
-        #     stride=1,
-        #     bias=True)
         self.classifier = EdgeExtractClassifier(n_in_channels=self.num_edge_extract_chan)
 
     def forward(self, in_img):
