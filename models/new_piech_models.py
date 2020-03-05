@@ -533,12 +533,16 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
 
 
 class EdgeDetectionCSIResnet50(nn.Module):
-    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,):
+    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None, pretrained_edge_extract=True):
         super(EdgeDetectionCSIResnet50, self).__init__()
 
-        self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
-        self.edge_extract.weight.requires_grad = False
-
+        self.pre_trained_edge_extract = pretrained_edge_extract
+        self.edge_extract = torchvision.models.resnet50(pretrained=self.pre_trained_edge_extract).conv1
+        if self.pre_trained_edge_extract:
+            self.edge_extract.weight.requires_grad = False
+        else:
+            init.xavier_normal_(self.edge_extract.weight)
+    
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
