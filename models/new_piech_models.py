@@ -542,7 +542,7 @@ class EdgeDetectionCSIResnet50(nn.Module):
             self.edge_extract.weight.requires_grad = False
         else:
             init.xavier_normal_(self.edge_extract.weight)
-    
+
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
