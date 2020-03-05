@@ -27,63 +27,72 @@ class DummyHead(nn.Module):
 
 
 class EdgeExtractClassifier(nn.Module):
-    """ Similar to Edge  extract head of Doobnet"""
+    """
+    Multiple conv layers that map to a single output.
+
+    Input dimensions do not change. Up-sampling to original image size should be done before.
+
+    Originally this was defined similar to the edge extract head of Doobnet. However,
+    my own testing with this model has found that performance drops but very little, if only
+    2 layers (less than 1% IoU) if only two layers are used.
+
+    """
     def __init__(self, n_in_channels):
         super(EdgeExtractClassifier, self).__init__()
         self.n_in_channels = n_in_channels
 
-        self.branch1a_conv = nn.Conv2d(
+        self.conv_first = nn.Conv2d(
             in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
             padding=(1, 1), groups=1, bias=False)
-        self.branch1a_bn = nn.BatchNorm2d(num_features=8)
+        self.bn1 = nn.BatchNorm2d(num_features=8)
 
-        self.branch1b_conv = nn.Conv2d(
-            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
-            padding=(1, 1), groups=1, bias=False)
-        self.branch1b_bn = nn.BatchNorm2d(num_features=8)
+        # self.conv2 = nn.Conv2d(
+        #     in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+        #     padding=(1, 1), groups=1, bias=False)
+        # self.bn2 = nn.BatchNorm2d(num_features=8)
+        #
+        # self.conv3 = nn.Conv2d(
+        #     in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+        #     padding=(1, 1), groups=1, bias=False)
+        # self.bn3 = nn.BatchNorm2d(num_features=8)
+        #
+        # self.conv4 = nn.Conv2d(
+        #     in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+        #     padding=(1, 1), groups=1, bias=False)
+        # self.bn4 = nn.BatchNorm2d(num_features=8)
+        #
+        # self.conv5 = nn.Conv2d(
+        #     in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
+        #     padding=(1, 1), groups=1, bias=False)
+        # self.bn5 = nn.BatchNorm2d(num_features=8)
 
-        self.branch1c_conv = nn.Conv2d(
-            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
-            padding=(1, 1), groups=1, bias=False)
-        self.branch1c_bn = nn.BatchNorm2d(num_features=8)
-
-        self.branch2a_conv = nn.Conv2d(
-            in_channels=8, out_channels=8, kernel_size=(3, 3), stride=(1, 1),
-            padding=(1, 1), groups=1, bias=False)
-        self.branch2a_bn = nn.BatchNorm2d(num_features=8)
-
-        self.branch2b_conv = nn.Conv2d(
-            in_channels=8, out_channels=4, kernel_size=(3, 3), stride=(1, 1),
-            padding=(1, 1), groups=1, bias=False)
-        self.branch2b_bn = nn.BatchNorm2d(num_features=4)
-
-        self.branch2c_conv = nn.Conv2d(
-            in_channels=4, out_channels=1, kernel_size=(1, 1), stride=(1, 1), groups=1, bias=True)
+        self.conv_final = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=(1, 1), stride=(1, 1), groups=1, bias=True)
 
     def forward(self, x):
-        x1 = self.branch1a_conv(x)
-        x1 = self.branch1a_bn(x1)
-        x1 = nn.functional.relu(x1)
+        x = self.conv_first(x)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
 
-        x2 = self.branch1b_conv(x1)
-        x2 = self.branch1b_bn(x2)
-        x2 = nn.functional.relu(x2)
+        # x = self.conv2(x)
+        # x = self.bn2(x)
+        # x = nn.functional.relu(x)
+        #
+        # x = self.conv3(x)
+        # x = self.bn3(x)
+        # x = nn.functional.relu(x)
+        #
+        # x = self.conv4(x)
+        # x = self.bn4(x)
+        # x = nn.functional.relu(x)
+        #
+        # x = self.conv5(x)
+        # x = self.bn5(x)
+        # x = nn.functional.relu(x)
 
-        x3 = self.branch1c_conv(x2)
-        x3 = self.branch1c_bn(x3)
-        x3 = nn.functional.relu(x3)
+        x = self.conv_final(x)
 
-        x4 = self.branch2a_conv(x3)
-        x4 = self.branch2a_bn(x4)
-        x4 = nn.functional.relu(x4)
-
-        x5 = self.branch2b_conv(x4)
-        x5 = self.branch2b_bn(x5)
-        x5 = nn.functional.relu(x5)
-
-        x6 = self.branch2c_conv(x5)
-
-        return x6
+        return x
 
 
 class ClassifierHead(nn.Module):
