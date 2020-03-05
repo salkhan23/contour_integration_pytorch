@@ -10,7 +10,7 @@ from skimage import transform as sk_transforms
 from skimage import feature as sk_features
 
 
-IMAGENET_DIR = '/home/s362khan/workspace/keras/contour_integration/data/imagenet-data'
+IMAGENET_DIR = '/home/salman/workspace/keras/my_projects/contour_integration/data/imagenet-data'
 
 
 def generate_data_set(process_set, n_img_per_cat, store_dir, img_size=(224, 224), canny_edge_extract_sigma=2.5):
@@ -68,7 +68,9 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_set_dir = './data/edge_detection_data_set'
+    edge_extract_sigma = 2.5
+
+    data_set_dir = './data/edge_detection_data_set_canny_sigma_{}'.format(edge_extract_sigma)
     n_train_images_per_category = 50
     n_val_images_per_category = 2
 
@@ -85,10 +87,20 @@ if __name__ == '__main__':
     # Initialization
     # -----------------------------------------------------------------------------------
     print(" Generating Train Images ....")
-    generate_data_set(process_set='train', n_img_per_cat=n_train_images_per_category, store_dir=data_set_dir)
+    generate_data_set(
+        process_set='train',
+        n_img_per_cat=n_train_images_per_category,
+        store_dir=data_set_dir,
+        canny_edge_extract_sigma=edge_extract_sigma
+    )
 
     print('Generating Validation Images')
-    generate_data_set(process_set='val', n_img_per_cat=n_val_images_per_category, store_dir=data_set_dir)
+    generate_data_set(
+        process_set='val',
+        n_img_per_cat=n_val_images_per_category,
+        store_dir=data_set_dir,
+        canny_edge_extract_sigma=edge_extract_sigma
+    )
 
     # -----------------------------------------------------------------------------------
     # End
