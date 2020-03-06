@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Dataset
 
 
 class EdgeDataSet(Dataset):
-    def __init__(self, data_dir, transform=None):
+    def __init__(self, data_dir, transform=None, subset_size=None):
 
         if not os.path.exists(data_dir):
             raise Exception("Cannot find data dir {}".format(data_dir))
@@ -32,6 +32,14 @@ class EdgeDataSet(Dataset):
 
         self.images = [os.path.join(image_dir, img) for img in os.listdir(image_dir)]
         self.labels = [os.path.join(label_dir, img) for img in os.listdir(label_dir)]
+
+        if subset_size is not None:
+            assert subset_size < len(self.images), 'subset size {} is greater than dataset size {}'.format(
+                subset_size, len(self.images))
+
+            use_idxs = np.random.choice(np.arange(len(self.images)), size=subset_size, replace=False)
+            self.images = [self.images[idx] for idx in use_idxs]
+            self.labels = [self.labels[idx] for idx in use_idxs]
 
         if len(self.images) != len(self.labels):
             raise Exception("Number of images {} and Labels  {} don't match".format(len(self.images), len(self.labels)))

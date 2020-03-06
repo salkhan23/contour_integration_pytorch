@@ -40,6 +40,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         assert key in data_set_params, 'data_set_params does not have required key {}'.format(key)
     data_set_dir = data_set_params['data_set_dir']
 
+    # Optional
+    train_subset_size = data_set_params.get('train_subset_size', None)
+    test_subset_size = data_set_params.get('test_subset_size', None)
+
     # Validate training parameters
     # ----------------------------
     required_training_params = ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
@@ -83,7 +87,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Pre-processing
     normalize = transforms.Normalize(mean=ch_mean, std=ch_std)
 
-    train_set = dataset_edge.EdgeDataSet(data_dir=os.path.join(data_set_dir, 'train'), transform=normalize)
+    train_set = dataset_edge.EdgeDataSet(
+        data_dir=os.path.join(data_set_dir, 'train'), transform=normalize, subset_size=train_subset_size)
+    train_batch_size = min(train_batch_size, len(train_set))
 
     train_data_loader = DataLoader(
         dataset=train_set,
@@ -93,7 +99,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         pin_memory=True
     )
 
-    val_set = dataset_edge.EdgeDataSet(data_dir=os.path.join(data_set_dir, 'val'), transform=normalize)
+    val_set = dataset_edge.EdgeDataSet(
+        data_dir=os.path.join(data_set_dir, 'val'), transform=normalize, subset_size=test_subset_size)
+    test_batch_size = min(test_batch_size, len(val_set))
 
     val_data_loader = DataLoader(
         dataset=val_set,
@@ -360,7 +368,9 @@ if __name__ == '__main__':
     np.random.seed(random_seed)
 
     data_set_parameters = {
-        'data_set_dir':  './data/edge_detection_data_set'
+        'data_set_dir':  './data/edge_detection_data_set',
+        'train_subset_size': 30000,
+        'test_subset_size': None
     }
 
     train_parameters = {
