@@ -306,6 +306,131 @@ class CurrentSubtractInhibitLayer(nn.Module):
         return f_x
 
 
+class CurrentDivisiveInhibitLayer(nn.Module):
+    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7):
+        """
+        Current based model with Divisive Inhibition. See Piech-2013
+
+        See CurrentSubtractInhibitLayer for more details.
+
+        The main difference is how the inhibitory neuron interacts with the excitatory neurons.
+        Here the impact is divisive rather than subtractive
+
+        x_t = (1 - a) x_{t-1} +
+              a (J_{xx}f_x(x_{t-1}) + e_bias + f_x(F_x(x_{t-1})* W_e + I_{ext}) /
+              (1 + - J_{xy}f_y(y_{t-1}) )
+
+        y_t = (1 - b)y_{t-1} +
+              b (J_{yx}f(x_{t-1})+ i_bias + f_y(F_y(y_{t-1}) )
+
+
+        :param edge_out_ch:
+        :param n_iters:
+        """
+
+        super(CurrentDivisiveInhibitLayer, self).__init__()
+
+        self.lateral_e_size = lateral_e_size
+        self.lateral_i_size = lateral_i_size
+        self.edge_out_ch = edge_out_ch
+        self.n_iters = n_iters  # Number of recurrent steps
+
+        # Parameters
+        self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+        self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+
+        # # Remove self excitation, a form is already included in the lateral connections
+        # self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
+        # init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
+
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+
+        self.e_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01)
+        self.i_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01)
+
+        # Components
+        self.lateral_e = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_e_size,
+            stride=1,
+            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+        self.lateral_i = nn.Conv2d(
+            in_channels=edge_out_ch,
+            out_channels=self.edge_out_ch,
+            kernel_size=self.lateral_i_size,
+            stride=1,
+            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
+            bias=False
+        )
+
+    def forward(self, ff):
+        """
+
+        :param ff:  input from previous layer
+        :return:
+        """
+
+        x = torch.zeros_like(ff)  # state of excitatory neurons
+        f_x = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
+        y = torch.zeros_like(ff)  # state of inhibitory neurons
+        f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
+
+        # # Debug
+        idx = ff.argmax()  # This is the index in the flattened array
+
+        for i in range(self.n_iters):
+            # print("processing iteration {}".format(i))
+
+            # # Debug
+            # print("Start ff {:0.4f}, x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}, "
+            #       "lat_e {:0.4f}, lat_i {:0.4f}".format(
+            #         ff.flatten()[idx], x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx],
+            #         nn.functional.relu(self.lateral_e(f_x)).flatten()[idx],
+            #         nn.functional.relu(self.lateral_i(f_x)).flatten()[idx]))
+
+            # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
+            gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
+            gated_b = torch.sigmoid(self.b.view(1, self.edge_out_ch, 1, 1))
+
+            sigmoid_j_xy = torch.sigmoid(self.j_xy.view(1, self.edge_out_ch, 1, 1))
+            sigmoid_j_yx = torch.sigmoid(self.j_yx.view(1, self.edge_out_ch, 1, 1))
+
+            x = (1 - gated_a) * x + \
+                gated_a * (
+                    ff
+                    + (self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff))
+                    + nn.functional.relu(self.lateral_e(f_x))
+                    # + (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x)
+                ) / (1 + (sigmoid_j_xy * f_y))
+
+            y = (1 - gated_b) * y \
+                + gated_b * (
+                    (sigmoid_j_yx * f_x)
+                    + self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff)
+                    + nn.functional.relu(self.lateral_i(f_x))
+                )
+
+            f_x = nn.functional.relu(x)
+            f_y = nn.functional.relu(y)
+
+            # Debug
+            print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
+                i, x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx]))
+
+        import pdb
+        pdb.set_trace()
+
+        return f_x
+
+
 # ---------------------------------------------------------------------------------------
 # Full Models
 # ---------------------------------------------------------------------------------------

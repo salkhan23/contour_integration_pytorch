@@ -66,7 +66,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     results_store_dir = os.path.join(
         base_results_store_dir,
-        model.__class__.__name__ + datetime.now().strftime("_%Y%m%d_%H%M%S"))
+        model.__class__.__name__ + "_" + model.contour_integration_layer.__class__.__name__ +
+        datetime.now().strftime("_%Y%m%d_%H%M%S"))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -265,11 +266,20 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print(model, file=file_handle)
 
     temp = vars(model)  # Returns a dictionary.
+    file_handle.write("Model Parameters:\n")
+    p = [item for item in temp if not item.startswith('_')]
+    for var in sorted(p):
+        file_handle.write("{}: {}\n".format(var, getattr(model, var)))
+
     layers = temp['_modules']  # Returns all top level modules (layers)
     if 'contour_integration_layer' in layers:
 
+        file_handle.write("Contour Integration Layer: {}\n".format(
+            model.contour_integration_layer.__class__.__name__))
+
         # print fixed hyper parameters
-        file_handle.write("Contour Integration Layer Hyper parameters\n")
+        file_handle.write("Hyper parameters\n")
+
         cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
         for var in sorted(cont_int_layer_vars):
             file_handle.write("\t{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
@@ -382,7 +392,7 @@ if __name__ == '__main__':
         'gaussian_reg_sigma': 10,
     }
 
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
     net = new_piech_models.EdgeDetectionCSIResnet50(cont_int_layer)
