@@ -263,8 +263,18 @@ class CurrentSubtractInhibitLayer(nn.Module):
         y = torch.zeros_like(ff)  # state of inhibitory neurons
         f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
 
+        # # Debug
+        # idx = ff.argmax()  # This is the index in the flattened array
+
         for i in range(self.n_iters):
             # print("processing iteration {}".format(i))
+
+            # # Debug
+            # print("Start ff {:0.4f}, x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}, "
+            #       "lat_e {:0.4f}, lat_i {:0.4f}".format(
+            #     ff.flatten()[idx], x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx],
+            #     nn.functional.relu(self.lateral_e(f_x)).flatten()[idx],
+            #     nn.functional.relu(self.lateral_i(f_x)).flatten()[idx]))
 
             # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
             gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
@@ -285,6 +295,10 @@ class CurrentSubtractInhibitLayer(nn.Module):
                     self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_i(f_x))
                 )
+
+            # # Debug
+            # print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
+            #     i, x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx]))
 
             f_x = nn.functional.relu(x)
             f_y = nn.functional.relu(y)
