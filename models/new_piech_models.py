@@ -17,6 +17,9 @@ import torchvision
 import torch.nn.init as init
 
 
+# ---------------------------------------------------------------------------------------
+#  Classifier Layers - Map to outputs
+# ---------------------------------------------------------------------------------------
 class DummyHead(nn.Module):
     """ Just passes the data through as is """
     def __init__(self, *argv):
@@ -28,14 +31,12 @@ class DummyHead(nn.Module):
 
 class EdgeExtractClassifier(nn.Module):
     """
-    Multiple conv layers that map to a single output.
-
-    Input dimensions do not change. Up-sampling to original image size should be done before.
+    Multiple conv layers that map to a single output channel without changing spatial
+    dimensions. Up-sampling to original image size should be done before.
 
     Originally this was defined similar to the edge extract head of Doobnet. However,
-    my own testing with this model has found that performance drops but very little, if only
-    2 layers (less than 1% IoU) if only two layers are used.
-
+    my own testing has found that performance drops but very little, if only
+    2 layers (less than 1% IoU) if only two layers are used after contour integration
     """
     def __init__(self, n_in_channels):
         super(EdgeExtractClassifier, self).__init__()
@@ -96,6 +97,11 @@ class EdgeExtractClassifier(nn.Module):
 
 
 class ClassifierHead(nn.Module):
+    """
+    This is designed to be used by a full model. It is designed to map to the
+    output dimensions of the labels for the contour dataset. Currently the
+    dimension matching is hard coded.
+    """
     def __init__(self, num_channels):
         super(ClassifierHead, self).__init__()
 
@@ -129,6 +135,10 @@ class ClassifierHead(nn.Module):
 
         return x
 
+
+# ---------------------------------------------------------------------------------------
+#  Contour Integration Layers
+# ---------------------------------------------------------------------------------------
 
 class CurrentSubtractInhibitLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
@@ -282,142 +292,14 @@ class CurrentSubtractInhibitLayer(nn.Module):
         return f_x
 
 
-class CurrentSubtractInhibitSigmoidGatedLayer(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
-        """
-        Contour Integration Layer - Current based with Subtractive Inhibition
-        Same as CurrentSubtractInhibitLayer
-
-        With sigmoid gated lateral connections similar to Language Modeling
-        with Gated Convolutional Networks
-
-        :param edge_out_ch:
-        :param n_iters:
-        :param lateral_e_size:
-        :param lateral_i_size:
-        """
-        super(CurrentSubtractInhibitSigmoidGatedLayer, self).__init__()
-
-        self.lateral_e_size = lateral_e_size
-        self.lateral_i_size = lateral_i_size
-        self.edge_out_ch = edge_out_ch
-        self.n_iters = n_iters  # Number of recurrent steps
-
-        # Parameters
-
-        if a is not None:
-            assert type(a) == float, 'a must be an float'
-            assert 0 <= a <= 1.0, 'a must be between [0, 1]'
-
-            self.a = nn.Parameter(torch.ones(edge_out_ch) * a)
-            self.a.requires_grad = False
-            self.fixed_a = a
-        else:
-            self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
-
-        if b is not None:
-            assert type(b) == float, 'b must be an float'
-            assert 0 <= b <= 1.0, 'b must be between [0, 1]'
-
-            self.b = nn.Parameter(torch.ones(edge_out_ch) * b)
-            self.b.requires_grad = False
-            self.fixed_b = b
-        else:
-            self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
-
-        self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
-        init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
-
-        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
-        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
-
-        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
-        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
-
-        self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
-        self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
-
-        # Components
-        self.lateral_e = nn.Conv2d(
-            in_channels=edge_out_ch,
-            out_channels=self.edge_out_ch,
-            kernel_size=self.lateral_e_size,
-            stride=1,
-            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
-            bias=False
-        )
-
-        self.lateral_e_gate = nn.Conv2d(
-            in_channels=edge_out_ch,
-            out_channels=self.edge_out_ch,
-            kernel_size=self.lateral_e_size,
-            stride=1,
-            padding=(self.lateral_e_size - 1) // 2,  # Keep the input dimensions
-            bias=False
-        )
-
-        self.lateral_i = nn.Conv2d(
-            in_channels=edge_out_ch,
-            out_channels=self.edge_out_ch,
-            kernel_size=self.lateral_i_size,
-            stride=1,
-            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
-            bias=False
-        )
-
-        self.lateral_i_gate = nn.Conv2d(
-            in_channels=edge_out_ch,
-            out_channels=self.edge_out_ch,
-            kernel_size=self.lateral_i_size,
-            stride=1,
-            padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
-            bias=False
-        )
-
-    def forward(self, ff):
-        """
-
-        :param ff:  input from previous layer
-        :return:
-        """
-
-        x = torch.zeros_like(ff)  # state of excitatory neurons
-        f_x = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
-        y = torch.zeros_like(ff)  # state of inhibitory neurons
-        f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
-
-        for i in range(self.n_iters):
-            # print("processing iteration {}".format(i))
-
-            # crazy broadcasting. dim=1 tell torch that this dim needs to be broadcast
-            gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
-            gated_b = torch.sigmoid(self.b.view(1, self.edge_out_ch, 1, 1))
-
-            x = (1 - gated_a) * x + \
-                gated_a * (
-                    (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x) -
-                    (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
-                    ff +
-                    self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    (self.lateral_e(f_x) * torch.sigmoid(self.lateral_e_gate(f_x)))
-                )
-
-            y = (1 - gated_b) * y + \
-                gated_b * (
-                    (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
-                    self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    (self.lateral_i(f_x) * torch.sigmoid(self.lateral_i_gate(f_x)))
-                )
-
-            f_x = nn.functional.relu(x)
-            f_y = nn.functional.relu(y)
-
-        return f_x
-
+# ---------------------------------------------------------------------------------------
+# Full Models
+# ---------------------------------------------------------------------------------------
 
 class ContourIntegrationCSI(nn.Module):
     """
-    Full Model With Contour Integration
+    Minimal Model with contour integration layer for the contour dataset
+    First (Edge extracting) layer of Alexnet
     """
     def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
                  contour_integration_layer=CurrentSubtractInhibitLayer):
@@ -466,8 +348,9 @@ class ContourIntegrationCSI(nn.Module):
 
 class ContourIntegrationCSIResnet50(nn.Module):
     """
-       Full Model With Contour Integration
-       """
+    Minimal Model with contour integration layer for the contour dataset
+    This one includes the first layers of a Resnet50
+    """
 
     def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,
                  contour_integration_layer=CurrentSubtractInhibitLayer, classifier=ClassifierHead):
@@ -513,6 +396,13 @@ class ContourIntegrationCSIResnet50(nn.Module):
 
 
 def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained=True):
+    """
+    Returns a Full Resnet50 Model with a contour integration layer embedded in it
+
+    :param saved_contour_integration_model:
+    :param pretrained:
+    :return:
+    """
 
     model = torchvision.models.resnet50(pretrained=pretrained)
 
@@ -533,6 +423,9 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
 
 
 class EdgeDetectionCSIResnet50(nn.Module):
+    """
+       Model for the edge detection Dataset
+    """
     def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None, pretrained_edge_extract=True):
         super(EdgeDetectionCSIResnet50, self).__init__()
 
