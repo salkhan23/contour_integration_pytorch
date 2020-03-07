@@ -383,8 +383,8 @@ class CurrentDivisiveInhibitLayer(nn.Module):
         y = torch.zeros_like(ff)  # state of inhibitory neurons
         f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
 
-        # # Debug
-        idx = ff.argmax()  # This is the index in the flattened array
+        # # # Debug
+        # idx = ff.argmax()  # This is the index in the flattened array
 
         for i in range(self.n_iters):
             # print("processing iteration {}".format(i))
@@ -421,12 +421,9 @@ class CurrentDivisiveInhibitLayer(nn.Module):
             f_x = nn.functional.relu(x)
             f_y = nn.functional.relu(y)
 
-            # Debug
-            print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
-                i, x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx]))
-
-        import pdb
-        pdb.set_trace()
+            # # Debug
+            # print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
+            #     i, x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx]))
 
         return f_x
 
