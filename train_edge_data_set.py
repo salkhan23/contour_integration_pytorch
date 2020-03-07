@@ -392,7 +392,7 @@ if __name__ == '__main__':
         'gaussian_reg_sigma': 10,
     }
 
-    cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
     net = new_piech_models.EdgeDetectionCSIResnet50(cont_int_layer)

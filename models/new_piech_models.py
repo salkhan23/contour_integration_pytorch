@@ -280,10 +280,13 @@ class CurrentSubtractInhibitLayer(nn.Module):
             gated_a = torch.sigmoid(self.a.view(1, self.edge_out_ch, 1, 1))
             gated_b = torch.sigmoid(self.b.view(1, self.edge_out_ch, 1, 1))
 
+            sigmoid_j_xy = torch.sigmoid(self.j_xy.view(1, self.edge_out_ch, 1, 1))
+            sigmoid_j_yx = torch.sigmoid(self.j_yx.view(1, self.edge_out_ch, 1, 1))
+
             x = (1 - gated_a) * x + \
                 gated_a * (
                     # (self.j_xx.view(1, self.edge_out_ch, 1, 1) * f_x)
-                    - (self.j_xy.view(1, self.edge_out_ch, 1, 1) * f_y) +
+                    - (sigmoid_j_xy * f_y) +
                     ff +
                     self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_e(f_x))
@@ -291,17 +294,17 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             y = (1 - gated_b) * y + \
                 gated_b * (
-                    (self.j_yx.view(1, self.edge_out_ch, 1, 1) * f_x) +
+                    (sigmoid_j_yx * f_x) +
                     self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
                     nn.functional.relu(self.lateral_i(f_x))
                 )
 
+            f_x = nn.functional.relu(x)
+            f_y = nn.functional.relu(y)
+
             # # Debug
             # print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
             #     i, x.flatten()[idx], f_x.flatten()[idx], y.flatten()[idx], f_y.flatten()[idx]))
-
-            f_x = nn.functional.relu(x)
-            f_y = nn.functional.relu(y)
 
         return f_x
 
