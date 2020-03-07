@@ -64,9 +64,16 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("Name: {}".format(model.__class__.__name__))
     print(model)
 
+    # Get name of contour integration layer
+    temp = vars(model)  # Returns a dictionary.
+    layers = temp['_modules']  # Returns all top level modules (layers)
+    cont_int_layer_type = ''
+    if 'contour_integration_layer' in layers:
+        cont_int_layer_type = model.contour_integration_layer.__class__.__name__
+
     results_store_dir = os.path.join(
         base_results_store_dir,
-        model.__class__.__name__ + "_" + model.contour_integration_layer.__class__.__name__ +
+        model.__class__.__name__ + '_' + cont_int_layer_type +
         datetime.now().strftime("_%Y%m%d_%H%M%S"))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)

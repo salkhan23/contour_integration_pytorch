@@ -72,9 +72,17 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("Name: {}".format(model.__class__.__name__))
     print(model)
 
+    # Get name of contour integration layer
+    temp = vars(model)  # Returns a dictionary.
+    layers = temp['_modules']  # Returns all top level modules (layers)
+    cont_int_layer_type = ''
+    if 'contour_integration_layer' in layers:
+        cont_int_layer_type = model.contour_integration_layer.__class__.__name__
+
     results_store_dir = os.path.join(
         base_results_store_dir,
-        model.__class__.__name__ + datetime.now().strftime("_%Y%m%d_%H%M%S"))
+        model.__class__.__name__ + '_' + cont_int_layer_type +
+        datetime.now().strftime("_%Y%m%d_%H%M%S"))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
@@ -274,6 +282,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("Model Parameters {}\n".format('-' * 63))
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+    p1 = [item for item in temp if not item.startswith('_')]
+    for var in sorted(p1):
+        file_handle.write("{}: {}\n".format(var, getattr(model, var)))
     file_handle.write("\n")
     print(model, file=file_handle)
 
@@ -282,7 +293,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     if 'contour_integration_layer' in layers:
 
         # print fixed hyper parameters
-        file_handle.write("Contour Integration Layer Hyper parameters\n")
+        file_handle.write("Contour Integration Layer:\n")
+        file_handle.write("Type : {}\n".format(model.contour_integration_layer.__class__.__name__))
         cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
         for var in sorted(cont_int_layer_vars):
             file_handle.write("\t{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
