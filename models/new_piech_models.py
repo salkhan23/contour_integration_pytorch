@@ -440,10 +440,11 @@ class EdgeDetectionCSIResnet50(nn.Module):
     """
        Model for the edge detection Dataset
     """
-    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None, pretrained_edge_extract=True):
+    def __init__(self, contour_integration_layer, pretrained_edge_extract=True):
         super(EdgeDetectionCSIResnet50, self).__init__()
 
         self.pre_trained_edge_extract = pretrained_edge_extract
+
         self.edge_extract = torchvision.models.resnet50(pretrained=self.pre_trained_edge_extract).conv1
         if self.pre_trained_edge_extract:
             self.edge_extract.weight.requires_grad = False
@@ -453,15 +454,7 @@ class EdgeDetectionCSIResnet50(nn.Module):
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
-        # Current Subtractive Layer
-        self.contour_integration_layer = CurrentSubtractInhibitLayer(
-            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
-            n_iters=n_iters,
-            lateral_e_size=lateral_e_size,
-            lateral_i_size=lateral_i_size,
-            a=a,
-            b=b
-        )
+        self.contour_integration_layer = contour_integration_layer
 
         self.classifier = EdgeExtractClassifier(n_in_channels=self.num_edge_extract_chan)
 

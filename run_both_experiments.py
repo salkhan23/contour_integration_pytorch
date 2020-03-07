@@ -61,7 +61,10 @@ if __name__ == "__main__":
 
     # Edge Dataset Trained Model
     # ----------------------------
-    net = new_piech_models.EdgeDetectionCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    contour_integration_layer = \
+        new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    net = new_piech_models.EdgeDetectionCSIResnet50(contour_integration_layer)
     saved_model = \
         './results/edge_detection/EdgeDetectionCSIResnet50_20200220_160930_lr_e-4_doobnet_edge_extract' \
         '/best_accuracy.pth'

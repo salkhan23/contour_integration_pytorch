@@ -382,7 +382,10 @@ if __name__ == '__main__':
         'gaussian_reg_sigma': 10,
     }
 
-    net = new_piech_models.EdgeDetectionCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    net = new_piech_models.EdgeDetectionCSIResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/edge_detection')
