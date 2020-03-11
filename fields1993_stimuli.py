@@ -179,7 +179,6 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
 
             img[start_x_loc: stop_x_loc, start_y_loc: stop_y_loc, :] = new_img_pixels
 
-
     return img
 
 
