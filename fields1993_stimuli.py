@@ -93,10 +93,13 @@ def randomly_rotate_tile(tile, delta_rotation=45.0):
     return rotate(tile, angle=(np.random.randint(0, np.int(num_possible_rotations)) * delta_rotation))
 
 
-def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, gaussian_smoothing=True, sigma=4.0):
+def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, gaussian_smoothing=True,
+               sigma=4.0, replace=True):
     """
     Place tile 'fragments' at the specified starting positions (x, y) in the image.
 
+    :param replace: If True, will replace image pixels with the tile. If False will multiply
+           image pixels and tile values. Default = True
     :param frag: contour fragment to be inserted
     :param insert_loc_arr: array of (x,y) position where tiles should be inserted
     :param img: image where tiles will be placed
@@ -164,9 +167,18 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
                 tile = tile * g_kernel
 
             # only add the parts of the fragments that lie within the image dimensions
-            img[start_x_loc: stop_x_loc, start_y_loc: stop_y_loc, :] = \
-                tile[tile_x_start: tile_x_start + stop_x_loc - start_x_loc,
-                     tile_y_start: tile_y_start + stop_y_loc - start_y_loc, :]
+            if replace:
+                new_img_pixels = \
+                    tile[tile_x_start: tile_x_start + stop_x_loc - start_x_loc,
+                         tile_y_start: tile_y_start + stop_y_loc - start_y_loc, :]
+            else:
+                new_img_pixels = \
+                    img[start_x_loc: stop_x_loc, start_y_loc: stop_y_loc, :] * \
+                    tile[tile_x_start: tile_x_start + stop_x_loc - start_x_loc,
+                         tile_y_start: tile_y_start + stop_y_loc - start_y_loc, :]
+
+            img[start_x_loc: stop_x_loc, start_y_loc: stop_y_loc, :] = new_img_pixels
+
 
     return img
 
