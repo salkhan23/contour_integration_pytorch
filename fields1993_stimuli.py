@@ -125,10 +125,10 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
         if (-tile_len < x_arr[idx] < img.shape[0]) and (-tile_len < y_arr[idx] < img.shape[1]):
 
             start_x_loc = np.int(max(x_arr[idx], 0))
-            stop_x_loc = np.int(min(x_arr[idx] + tile_len, img.shape[0] - 1))
+            stop_x_loc = np.int(min(x_arr[idx] + tile_len, img.shape[0]))
 
             start_y_loc = np.int(max(y_arr[idx], 0))
-            stop_y_loc = np.int(min(y_arr[idx] + tile_len, img.shape[1] - 1))
+            stop_y_loc = np.int(min(y_arr[idx] + tile_len, img.shape[1]))
 
             # print("Placing Fragment at location  l1=(%d, %d), y = (%d, %d),"
             #       % (start_x_loc, stop_x_loc, start_y_loc, stop_y_loc))
