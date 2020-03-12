@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 import dataset
 import utils
 
-from models.new_piech_models import ContourIntegrationCSI
+import models.new_piech_models as new_piech_models
 
 
 def get_performance(model, device_to_use, data_loader):
@@ -155,11 +155,17 @@ def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([
 if __name__ == "__main__":
     random_seed = 5
 
-    net = ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = './results/num_iteration_explore_fix_and_sigmoid_gate/' \
-    #               'n_iters_5/ContourIntegrationCSI_20191208_194050/best_accuracy.pth'
-    saved_model = \
-        'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15/best_accuracy.pth'
+    # net = new_piech_models.ContourIntegrationAlexnet(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # saved_model = \
+    #     'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15' \
+    #     '/best_accuracy.pth'
+
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
+    saved_model = "./results/new_model_resnet_based/" \
+                  "ContourIntegrationCSIResnet50_20200306_214633_sigmoided_ie_ei_connections" \
+                  "/best_accuracy.pth"
 
     data_set_dir = "./data/channel_wise_optimal_full14_frag7"
 

@@ -491,27 +491,23 @@ class ContourIntegrationResnet50(nn.Module):
     This one includes the first layers of a Resnet50
     """
 
-    def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,
-                 contour_integration_layer=CurrentSubtractInhibitLayer, classifier=ClassifierHead):
+    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True, classifier=ClassifierHead):
         super(ContourIntegrationResnet50, self).__init__()
 
-        self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
-        self.edge_extract.weight.requires_grad = False
+        self.pre_trained_edge_extract = pre_trained_edge_extract
+
+        self.edge_extract = torchvision.models.resnet50(pretrained=self.pre_trained_edge_extract).conv1
+        if self.pre_trained_edge_extract:
+            self.edge_extract.weight.requires_grad = False
+        else:
+            init.xavier_normal_(self.edge_extract.weight)
 
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
         self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
-        # Current Subtractive Layer
-        self.contour_integration_layer = contour_integration_layer(
-            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
-            n_iters=n_iters,
-            lateral_e_size=lateral_e_size,
-            lateral_i_size=lateral_i_size,
-            a=a,
-            b=b
-        )
+        self.contour_integration_layer = contour_integration_layer
 
         # Classifier
         self.classifier = classifier(self.num_edge_extract_chan)
@@ -524,8 +520,8 @@ class ContourIntegrationResnet50(nn.Module):
         x = nn.functional.relu(x)
         x = self.max_pool1(x)
         # The above is directly from Resnet50. Attaching the contour integration layer here (as opposed to
-        # after the conv layer) since this has the same dimensions as alexnet edge extract. Allows to use the same
-        # classification head.
+        # after the conv layer) since this has the same dimensions as alexnet edge extract. Allows to use
+        # the same classification head.
 
         x = self.contour_integration_layer(x)
 
@@ -545,8 +541,16 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
 
     model = torchvision.models.resnet50(pretrained=pretrained)
 
+    cont_int_layer = CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5,)
+
+    # We always want the first layer (edge extraction) to be pre trained
     cont_int_model = ContourIntegrationResnet50(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5, classifier=DummyHead)
+        contour_integration_layer=cont_int_layer,
+        classifier=DummyHead,
+        pre_trained_edge_extract=True
+    )
+
     if saved_contour_integration_model is not None:
         cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
         # strict = False do not care about loading classifier weights
