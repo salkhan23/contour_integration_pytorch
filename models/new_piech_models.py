@@ -440,36 +440,30 @@ class ContourIntegrationAlexnet(nn.Module):
     Minimal Model with contour integration layer for the contour dataset
     First (Edge extracting) layer of Alexnet
     """
-    def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
-                 contour_integration_layer=CurrentSubtractInhibitLayer):
+    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True, classifier=ClassifierHead):
 
         super(ContourIntegrationAlexnet, self).__init__()
 
+        self.pre_trained_edge_extract = pre_trained_edge_extract
+
         # First Convolutional Layer of Alexnet
-        # self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
-        # self.edge_extract.weight.requires_grad = False
-        # self.edge_extract.bias.requires_grad = False
+        # self.edge_extract = torchvision.models.alexnet(pretrained= self.pre_trained_edge_extract).features[0]
 
         self.edge_extract = nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2, bias=False)
-        alexnet_kernel = torchvision.models.alexnet(pretrained=True).features[0]
-        self.edge_extract.weight.data = alexnet_kernel.weight.data
-        self.edge_extract.requires_grad = False
+        alexnet_kernel = torchvision.models.alexnet(pretrained=self.pre_trained_edge_extract).features[0]
+        if self.pre_trained_edge_extract:
+            self.edge_extract.weight.requires_grad = False
+            self.edge_extract.weight.data = alexnet_kernel.weight.data
+        else:
+            init.xavier_normal_(self.edge_extract.weight)
 
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
 
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
-        self.contour_integration_layer = contour_integration_layer(
-            edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
-            n_iters=n_iters,
-            lateral_e_size=lateral_e_size,
-            lateral_i_size=lateral_i_size,
-            a=a,
-            b=b
-        )
+        self.contour_integration_layer = contour_integration_layer
 
-        # Classifier
-        self.classifier = ClassifierHead(self.num_edge_extract_chan)
+        self.classifier = classifier(self.num_edge_extract_chan)
 
     def forward(self, in_img):
 
@@ -509,7 +503,6 @@ class ContourIntegrationResnet50(nn.Module):
 
         self.contour_integration_layer = contour_integration_layer
 
-        # Classifier
         self.classifier = classifier(self.num_edge_extract_chan)
 
     def forward(self, in_img):

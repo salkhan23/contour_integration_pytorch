@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from train_contour_data_set_3 import main
-from models.new_piech_models import ContourIntegrationAlexnet
+import models.new_piech_models as new_piech_models
 
 if __name__ == '__main__':
     random_seed = 10
@@ -36,7 +36,9 @@ if __name__ == '__main__':
 
         base_results_dir = './results/gaussian_reg_sigma_explore/sigma_{}'.format(sigma)
 
-        model = ContourIntegrationAlexnet(n_iters=5, lateral_e_size=15, lateral_i_size=15)
+        cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+            lateral_e_size=15, lateral_i_size=15, n_iters=5)
+        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
 
         main(
             model,

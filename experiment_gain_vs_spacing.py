@@ -13,8 +13,7 @@ import torch
 import torchvision.transforms.functional as transform_functional
 from torchvision import transforms
 
-from models.new_piech_models import ContourIntegrationAlexnet
-from models.new_control_models import ControlMatchParametersModel
+import models.new_piech_models as new_piech_models
 import gabor_fits
 import fields1993_stimuli
 import utils
@@ -905,7 +904,9 @@ if __name__ == "__main__":
     # Model
     # -------
     # Model trained with 5 iterations
-    net = ContourIntegrationAlexnet(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
     saved_model = './results/new_model/ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
                   'best_accuracy.pth'
 

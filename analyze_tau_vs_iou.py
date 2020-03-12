@@ -5,8 +5,7 @@ import numpy as np
 import torch
 
 from train_contour_data_set import main
-from models.new_piech_models import ContourIntegrationAlexnet
-from models.piech_models import CurrentSubtractiveInhibition
+import models.new_piech_models as new_piech_models
 
 
 if __name__ == '__main__':
@@ -35,9 +34,9 @@ if __name__ == '__main__':
 
         base_results_dir = './results/tau_explore/tau_{}'.format(tau)
 
-        model = ContourIntegrationAlexnet(n_iters=5, lateral_e_size=23, lateral_i_size=23, a=tau, b=tau)
-        # model = CurrentSubtractiveInhibition(
-        #     edge_out_ch=64, n_iters=3, lateral_e_size=15, lateral_i_size=15, a=tau, b=tau)
+        cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, a=tau, b=tau)
+        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
 
         main(
             model,

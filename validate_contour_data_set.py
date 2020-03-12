@@ -155,7 +155,9 @@ def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([
 if __name__ == "__main__":
     random_seed = 5
 
-    # net = new_piech_models.ContourIntegrationAlexnet(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
     # saved_model = \
     #     'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15' \
     #     '/best_accuracy.pth'
