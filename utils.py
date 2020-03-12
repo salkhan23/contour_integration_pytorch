@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import fields1993_stimuli
 
 
 def get_2d_gaussian_kernel(shape, sigma=1.0):
@@ -176,3 +177,76 @@ def class_balanced_cross_entropy_attention_loss(outputs, targets, beta=4, gamma=
         pdb.set_trace()
 
     return loss
+
+
+class PunctureImage(object):
+    """
+    This is an input transform
+    Add random occlusion bubbles to image.
+    REF: Gosselin and Schyns - 2001 - Bubbles: a technique to reveal the use of information in
+         recognition tasks
+
+    This is actually the opposite of the reference technique, instead of masking the image and then revealing
+    parts of it through bubbles. Masked out gaussian bubbles are added to the image.
+
+    """
+
+    def __init__(self, n_bubbles, bubble_sigma, tile_size=np.array([11, 11])):
+        self.n_bubbles = n_bubbles
+        self.bubble_sigma = bubble_sigma
+        self.tile_size = tile_size
+
+    def __call__(self, img):
+        """
+        Args:
+            img (Tensor): Tensor image of size (C, H, W) to be normalized.
+
+        Returns:
+            Tensor: Normalized Tensor image.
+        """
+        _, h, w = img.shape
+
+        img = img.permute(1, 2, 0)
+
+        bubble_frag = get_2d_gaussian_kernel(shape=self.tile_size, sigma=self.bubble_sigma)
+        bubble_frag = torch.from_numpy(bubble_frag)
+        bubble_frag = bubble_frag.float().unsqueeze(-1)
+        bubble_frag = 1 - bubble_frag
+
+        start_loc_arr = np.array([
+            np.random.randint(low=0, high=h, size=self.n_bubbles),
+            np.random.randint(low=0, high=w, size=self.n_bubbles),
+        ]).T
+
+        mask = torch.ones_like(img)
+        mask = fields1993_stimuli.tile_image(
+            mask,
+            bubble_frag,
+            start_loc_arr,
+            rotate_frags=False,
+            gaussian_smoothing=False,
+            replace=False
+        )
+
+        masked_img = mask * img
+
+        # # Debug
+        # import matplotlib.pyplot as plt
+        # plt.ion()
+        #
+        # f, ax_arr = plt.subplots(1, 3)
+        # ax_arr[0].imshow(img)
+        # ax_arr[0].set_title("Original Image")
+        # ax_arr[1].imshow(masked_img)
+        # ax_arr[1].set_title("Punctured Image")
+        # ax_arr[2].imshow(mask)
+        # ax_arr[2].set_title("Mask")
+        #
+        # import pdb
+        # pdb.set_trace()
+
+        return masked_img.permute(2, 0, 1)
+
+    def __repr__(self):
+        return self.__class__.__name__ + '(n_bubbles={}, bubbles_sigma={}, tile_size={})'.format(
+            self.n_bubbles, self.bubble_sigma, self.tile_size)
