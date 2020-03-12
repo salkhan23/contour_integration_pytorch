@@ -561,14 +561,14 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
     return model
 
 
-class EdgeDetectionCSIResnet50(nn.Module):
+class EdgeDetectionResnet50(nn.Module):
     """
        Model for the edge detection Dataset
     """
-    def __init__(self, contour_integration_layer, pretrained_edge_extract=True):
-        super(EdgeDetectionCSIResnet50, self).__init__()
+    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True):
+        super(EdgeDetectionResnet50, self).__init__()
 
-        self.pre_trained_edge_extract = pretrained_edge_extract
+        self.pre_trained_edge_extract = pre_trained_edge_extract
 
         self.edge_extract = torchvision.models.resnet50(pretrained=self.pre_trained_edge_extract).conv1
         if self.pre_trained_edge_extract:

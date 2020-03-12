@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.EdgeDetectionCSIResnet50(cont_int_layer)
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     saved_model = \
         'results/edge_detection/EdgeDetectionCSIResnet50_20200223_111512_2layer_edge_extract_lr_1e-3' \
