@@ -435,7 +435,7 @@ class CurrentDivisiveInhibitLayer(nn.Module):
 # Full Models
 # ---------------------------------------------------------------------------------------
 
-class ContourIntegrationCSI(nn.Module):
+class ContourIntegrationAlexnet(nn.Module):
     """
     Minimal Model with contour integration layer for the contour dataset
     First (Edge extracting) layer of Alexnet
@@ -443,7 +443,7 @@ class ContourIntegrationCSI(nn.Module):
     def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
                  contour_integration_layer=CurrentSubtractInhibitLayer):
 
-        super(ContourIntegrationCSI, self).__init__()
+        super(ContourIntegrationAlexnet, self).__init__()
 
         # First Convolutional Layer of Alexnet
         # self.edge_extract = torchvision.models.alexnet(pretrained=True).features[0]
@@ -485,7 +485,7 @@ class ContourIntegrationCSI(nn.Module):
         return x
 
 
-class ContourIntegrationCSIResnet50(nn.Module):
+class ContourIntegrationResnet50(nn.Module):
     """
     Minimal Model with contour integration layer for the contour dataset
     This one includes the first layers of a Resnet50
@@ -493,7 +493,7 @@ class ContourIntegrationCSIResnet50(nn.Module):
 
     def __init__(self, n_iters=5, lateral_e_size=15, lateral_i_size=15, a=None, b=None,
                  contour_integration_layer=CurrentSubtractInhibitLayer, classifier=ClassifierHead):
-        super(ContourIntegrationCSIResnet50, self).__init__()
+        super(ContourIntegrationResnet50, self).__init__()
 
         self.edge_extract = torchvision.models.resnet50(pretrained=True).conv1
         self.edge_extract.weight.requires_grad = False
@@ -545,7 +545,7 @@ def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained
 
     model = torchvision.models.resnet50(pretrained=pretrained)
 
-    cont_int_model = ContourIntegrationCSIResnet50(
+    cont_int_model = ContourIntegrationResnet50(
         lateral_e_size=15, lateral_i_size=15, n_iters=5, classifier=DummyHead)
     if saved_contour_integration_model is not None:
         cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)

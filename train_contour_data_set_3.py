@@ -468,7 +468,7 @@ if __name__ == '__main__':
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5,
     #     contour_integration_layer=new_piech_models.CurrentSubtractInhibitLayer)
 
-    net = new_piech_models.ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,

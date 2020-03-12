@@ -6,7 +6,7 @@ import numpy as np
 import torch
 
 from train_contour_data_set_3 import main
-from models.new_piech_models import ContourIntegrationCSI
+from models.new_piech_models import ContourIntegrationAlexnet
 
 if __name__ == '__main__':
     random_seed = 10
@@ -36,7 +36,7 @@ if __name__ == '__main__':
 
         base_results_dir = './results/gaussian_reg_sigma_explore/sigma_{}'.format(sigma)
 
-        model = ContourIntegrationCSI(n_iters=5, lateral_e_size=15, lateral_i_size=15)
+        model = ContourIntegrationAlexnet(n_iters=5, lateral_e_size=15, lateral_i_size=15)
 
         main(
             model,

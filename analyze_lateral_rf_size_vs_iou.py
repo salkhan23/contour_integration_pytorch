@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from train_contour_data_set import main
-from models.new_piech_models import ContourIntegrationCSI
+from models.new_piech_models import ContourIntegrationAlexnet
 
 
 if __name__ == '__main__':
@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
         base_results_dir = './results/lateral_rf_explore/size_{}'.format(lateral_rf_size)
 
-        model = ContourIntegrationCSI(n_iters=5, lateral_e_size=lateral_rf_size, lateral_i_size=lateral_rf_size)
+        model = ContourIntegrationAlexnet(n_iters=5, lateral_e_size=lateral_rf_size, lateral_i_size=lateral_rf_size)
 
         main(
             model,

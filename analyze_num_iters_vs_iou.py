@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from train_contour_data_set import main
-from models.new_piech_models import ContourIntegrationCSI
+from models.new_piech_models import ContourIntegrationAlexnet
 from models.piech_models import CurrentSubtractiveInhibition
 
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
 
         base_results_dir = './results/num_iteration_explore_2/n_iters_{}'.format(n_iters)
 
-        model = ContourIntegrationCSI(n_iters=n_iters, lateral_e_size=15, lateral_i_size=15)
+        model = ContourIntegrationAlexnet(n_iters=n_iters, lateral_e_size=15, lateral_i_size=15)
         # model = CurrentSubtractiveInhibition(edge_out_ch=64, n_iters=5, lateral_e_size=15, lateral_i_size=15)
 
         main(
