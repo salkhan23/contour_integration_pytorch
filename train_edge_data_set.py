@@ -93,10 +93,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
     # Pre-processing
-    normalize = transforms.Normalize(mean=ch_mean, std=ch_std)
+    pre_process_transforms = transforms.Compose([
+        transforms.Normalize(mean=ch_mean, std=ch_std),
+        utils.PunctureImage(n_bubbles=100, fwhm=11),
+    ])
 
     train_set = dataset_edge.EdgeDataSet(
-        data_dir=os.path.join(data_set_dir, 'train'), transform=normalize, subset_size=train_subset_size)
+        data_dir=os.path.join(data_set_dir, 'train'), transform=pre_process_transforms, subset_size=train_subset_size)
     train_batch_size = min(train_batch_size, len(train_set))
 
     train_data_loader = DataLoader(
@@ -108,7 +111,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     )
 
     val_set = dataset_edge.EdgeDataSet(
-        data_dir=os.path.join(data_set_dir, 'val'), transform=normalize, subset_size=test_subset_size)
+        data_dir=os.path.join(data_set_dir, 'val'), transform=pre_process_transforms, subset_size=test_subset_size)
     test_batch_size = min(test_batch_size, len(val_set))
 
     val_data_loader = DataLoader(
@@ -129,7 +132,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Loss / optimizer
     # -----------------------------------------------------------------------------------
     optimizer = optim.Adam(
-        filter(lambda p: p.requires_grad, model.parameters()),
+        filter(lambda params: params.requires_grad, model.parameters()),
         lr=learning_rate
     )
 
@@ -266,6 +269,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Gaussian Regularization sigma        : {}\n".format(gaussian_kernel_sigma))
     file_handle.write("Gaussian Regularization weight        : {}\n".format(lambda1))
     file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
+    file_handle.write("Image pre-processing :\n")
+    print(pre_process_transforms, file=file_handle)
 
     file_handle.write("Model Parameters {}\n".format('-' * 63))
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
@@ -386,8 +391,8 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir':  './data/edge_detection_data_set',
-        'train_subset_size': 30000,
-        'test_subset_size': None
+        'train_subset_size': 300,
+        'test_subset_size': 30
     }
 
     train_parameters = {
@@ -405,7 +410,7 @@ if __name__ == '__main__':
     net = new_piech_models.EdgeDetectionCSIResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/edge_detection')
+         base_results_store_dir='./results/edge_detection_new')
 
     # -----------------------------------------------------------------------------------
     # End

@@ -191,10 +191,16 @@ class PunctureImage(object):
 
     """
 
-    def __init__(self, n_bubbles, bubble_sigma, tile_size=np.array([11, 11])):
+    def __init__(self, n_bubbles, fwhm=11, tile_size=None):
         self.n_bubbles = n_bubbles
-        self.bubble_sigma = bubble_sigma
-        self.tile_size = tile_size
+
+        self.fwhm = fwhm  # full width half magnitude
+        self.bubble_sigma = fwhm / 2.35482
+
+        if tile_size is None:
+            self.tile_size = np.array([2*self.fwhm, 2*self.fwhm])
+        else:
+            self.tile_size = tile_size
 
     def __call__(self, img):
         """
@@ -248,5 +254,5 @@ class PunctureImage(object):
         return masked_img.permute(2, 0, 1)
 
     def __repr__(self):
-        return self.__class__.__name__ + '(n_bubbles={}, bubbles_sigma={}, tile_size={})'.format(
-            self.n_bubbles, self.bubble_sigma, self.tile_size)
+        return self.__class__.__name__ + '(n_bubbles={}, fwhm = {}, bubbles_sigma={:0.4f}, tile_size={})'.format(
+            self.n_bubbles, self.fwhm, self.bubble_sigma, self.tile_size)
