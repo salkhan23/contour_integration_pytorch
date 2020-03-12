@@ -380,6 +380,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # -----------------------------------------------------------------------------------
     print("====> Running Experiments")
     experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_len.main(
+        model, base_results_dir=results_store_dir, iou_results=False, frag_size=np.array(11, 11))
     experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
 
@@ -391,8 +393,8 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir':  './data/edge_detection_data_set',
-        'train_subset_size': 300,
-        'test_subset_size': 30
+        'train_subset_size': 30000,
+        'test_subset_size': None
     }
 
     train_parameters = {
