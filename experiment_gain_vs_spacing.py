@@ -532,7 +532,7 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
 
     :return:
     """
-    # iou = np.mean(iou_mat, axis=0)
+    # iou = np.mean(iou_mat, axis=0)  # Iou is not needed for fragment spacing experiment
     mean_gain = np.mean(gain_mu_mat, axis=0)
 
     # For Two RVs, X and Y
@@ -795,7 +795,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         tgt_n_pop_mean_gain,
         tgt_pop_gain_std,
         results_store_dir,
-        f_name='unfiltered_tgt_n_pop_gain_vs_spacing',
+        f_name='pop_gain_vs_spacing_tgt_n_unfiltered',
         f_title='Target Neurons population contour gain vs spacing\n(unfiltered)'
     )
 
@@ -814,7 +814,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         max_active_n_pop_mean_gain,
         max_active_pop_gain_std,
         results_store_dir,
-        f_name='unfiltered_max_active_n_pop_gain_vs_spacing',
+        f_name='pop_gain_vs_spacing_max_active_n_unfiltered',
         f_title='Max Active Neurons population Contour gain vs Spacing\n(unfiltered)'
     )
 
@@ -841,7 +841,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
-        f_name='filtered_tgt_n_pop_gain_vs_spacing',
+        f_name='pop_gain_vs_spacing_tgt_n_filtered',
         f_title='Target Neurons population contour gain vs spacing\n(filtered noise response > {})'
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(tgt_n_outliers))
     )
@@ -866,7 +866,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
-        f_name='filtered_max_active_n_pop_gain_vs_spacing',
+        f_name='pop_gain_vs_spacing_max_active_n_filtered',
         f_title='Max Active Neurons population contour gain vs length\n(filtered noise response > {})'
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(max_active_n_outliers))
     )
@@ -896,6 +896,23 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     )
 
     file_handle.close()
+
+    # Individual gains in a single figure
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+    for idx in range(n_channels):
+        if idx in skipped_neurons:
+            continue
+
+        r_idx = idx // tile_single_dim
+        c_idx = idx - r_idx * tile_single_dim
+
+        ax_arr[r_idx, c_idx].plot(relative_colinear_dist_arr, tgt_neuron_mean_gain_mat[idx, ])
+
+    f.suptitle("Individual Neuron Gains vs Fragment Spacing")
+    f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_spacing.jpg'), format='jpg')
+    plt.close()
 
 
 if __name__ == "__main__":

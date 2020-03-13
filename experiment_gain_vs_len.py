@@ -806,7 +806,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         tgt_n_pop_mean_gain,
         tgt_pop_gain_std,
         results_store_dir,
-        f_name='unfiltered_tgt_n_pop_gain_vs_len',
+        f_name='pop_gain_vs_len_tgt_n_unfiltered',
         f_title='Target Neurons population contour gain vs length \n(unfiltered)'
     )
 
@@ -825,7 +825,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         max_active_n_pop_mean_gain,
         max_active_pop_gain_std,
         results_store_dir,
-        f_name='unfiltered_max_active_n_pop_gain_vs_len',
+        f_name='pop_gain_vs_len_max_active_n_unfiltered',
         f_title='Max Active Neurons population Contour gain vs Length \n(unfiltered)'
     )
 
@@ -855,7 +855,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
-        f_name='filtered_tgt_n_pop_gain_vs_len',
+        f_name='pop_gain_vs_len_tgt_n_filtered',
         f_title='Target Neurons population contour gain vs length\n(filtered noise response > {})'
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(tgt_n_outliers))
     )
@@ -880,7 +880,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_mean_gain,
         filt_pop_gain_std,
         results_store_dir,
-        f_name='filtered_max_active_n_pop_gain_vs_len',
+        f_name='pop_gain_vs_len_max_active_n_filtered',
         f_title='Max Active Neurons population contour gain vs length\n(filtered noise response > {})'
                 '\nRemoved {} Neurons'.format(min_clen_1_resp, len(max_active_n_outliers))
     )
@@ -910,6 +910,23 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     )
 
     file_handle.close()
+
+    # Individual gains in a single figure
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+    for idx in range(n_channels):
+        if idx in skipped_neurons:
+            continue
+
+        r_idx = idx // tile_single_dim
+        c_idx = idx - r_idx * tile_single_dim
+
+        ax_arr[r_idx, c_idx].plot(c_len_arr, tgt_neuron_mean_gain_mat[idx, ])
+
+    f.suptitle("Individual Neuron Gains vs c_len")
+    f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_clen.jpg'), format='jpg')
+    plt.close()
 
 
 if __name__ == "__main__":
