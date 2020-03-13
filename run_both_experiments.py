@@ -66,7 +66,8 @@ if __name__ == "__main__":
 
     net = new_piech_models.EdgeDetectionResnet50(contour_integration_layer)
     saved_model = \
-        './results/edge_detection/EdgeDetectionCSIResnet50_20200220_160930_lr_e-4_doobnet_edge_extract' \
+        './results/edge_detection_new' \
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_punctured50_20200312_161536' \
         '/best_accuracy.pth'
     net.load_state_dict(torch.load(saved_model))
     replacement_layer = None
@@ -83,8 +84,8 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
-    # frag_size_list = [(7, 7)]
-    frag_size_list = [(7, 7), (9, 9), (11, 11), (13, 13)]
+    frag_size_list = [(7, 7), (11, 11)]
+    # frag_size_list = [(7, 7), (9, 9), (11, 11), (13, 13)]
 
     for frag_size in frag_size_list:
         print("Processing Fragment Size {} {}".format(frag_size, '-'*50))

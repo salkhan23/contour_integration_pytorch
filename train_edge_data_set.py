@@ -381,7 +381,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("====> Running Experiments")
     experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
     experiment_gain_vs_len.main(
-        model, base_results_dir=results_store_dir, iou_results=False, frag_size=np.array(11, 11))
+        model, base_results_dir=results_store_dir, iou_results=False, frag_size=np.array([11, 11]))
     experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
 
