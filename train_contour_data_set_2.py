@@ -383,14 +383,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     f.savefig(os.path.join(results_store_dir, 'iou_vs_len.jpg'), format='jpg')
     plt.close(f)
 
-    f = plt.figure()
-    plt.plot(c_len_arr, c_len_loss_arr)
-    plt.grid()
-    plt.xlabel("Contour length")
-    plt.ylabel("Loss")
-    plt.title("Loss vs Length (Validation Dataset) - Straight Contours")
-    f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
-    plt.close(f)
+    # f = plt.figure()
+    # plt.plot(c_len_arr, c_len_loss_arr)
+    # plt.grid()
+    # plt.xlabel("Contour length")
+    # plt.ylabel("Loss")
+    # plt.title("Loss vs Length (Validation Dataset) - Straight Contours")
+    # f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
+    # plt.close(f)
 
     # -----------------------------------------------------------------------------------
     # Run Li 2006 experiments
