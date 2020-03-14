@@ -631,15 +631,10 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     :param frag_size
     :return:
     """
-    # # Imagenet Normalization
-    # chan_means = np.array([0.4208942, 0.4208942, 0.4208942])
-    # chan_stds = np.array([0.15286704, 0.15286704, 0.15286704])
-    chan_means = [0.485, 0.456, 0.406]
-    chan_stds = [0.229, 0.224, 0.225]
 
     # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
-    # chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
-    # chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
+    chan_means = np.array([0.46958107, 0.47102246, 0.46911009])
+    chan_stds = np.array([0.46108359, 0.46187091, 0.46111096])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
