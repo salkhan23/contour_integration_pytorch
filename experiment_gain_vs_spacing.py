@@ -901,14 +901,17 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
-    for idx in range(n_channels):
-        if idx in skipped_neurons:
+    i = 0
+    for ch_idx in range(n_channels):
+
+        if ch_idx in skipped_neurons:
             continue
 
-        r_idx = idx // tile_single_dim
-        c_idx = idx - r_idx * tile_single_dim
+        r_idx = ch_idx // tile_single_dim
+        c_idx = ch_idx - r_idx * tile_single_dim
 
-        ax_arr[r_idx, c_idx].plot(relative_colinear_dist_arr, tgt_neuron_mean_gain_mat[idx, ])
+        ax_arr[r_idx, c_idx].plot(relative_colinear_dist_arr, tgt_neuron_mean_gain_mat[i, ])
+        i += 1
 
     f.suptitle("Individual Neuron Gains vs Fragment Spacing")
     f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_spacing.jpg'), format='jpg')
