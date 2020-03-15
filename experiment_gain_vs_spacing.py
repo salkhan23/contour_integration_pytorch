@@ -906,6 +906,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         c_idx = ch_idx - r_idx * tile_single_dim
 
         ax_arr[r_idx, c_idx].plot(relative_colinear_dist_arr, tgt_neuron_mean_gain_mat[i, ])
+        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
         i += 1
 
     f.suptitle("Individual Neuron Gains vs Fragment Spacing")

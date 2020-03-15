@@ -917,9 +917,10 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         c_idx = ch_idx - r_idx * tile_single_dim
 
         ax_arr[r_idx, c_idx].plot(c_len_arr, tgt_neuron_mean_gain_mat[i, ])
+        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
         i += 1
 
-    f.suptitle("Individual Neuron Gains vs c_len")
+    f.suptitle("Individual Neuron Gains vs contour length")
     f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_clen.jpg'), format='jpg')
     plt.close()
 
