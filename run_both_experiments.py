@@ -29,7 +29,7 @@ if __name__ == "__main__":
     net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
     saved_model = \
         './results/new_model_resnet_based/' \
-        'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001' \
+        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200313_184604' \
         '/best_accuracy.pth'
     replacement_layer = None
     net.load_state_dict(torch.load(saved_model))
