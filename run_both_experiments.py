@@ -22,33 +22,21 @@ if __name__ == "__main__":
     # Loading Saved Model
     print("===> Loading Model ...")
 
-    # # Contour Dataset Trained Model trained with 5 iterations
-    # # ---------------------------------------------------------
-    # net = new_piech_models.ContourIntegrationCSI(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = \
-    #     './results/new_model/ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5' \
-    #     '/best_accuracy.pth'
-    # replacement_layer = None
-    # net.load_state_dict(torch.load(saved_model))
-    # get_iou_results = True
+    # Contour Dataset
+    # ----------------
+    contour_integration_layer = \
+        new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
+    saved_model = \
+        './results/new_model_resnet_based/' \
+        'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001' \
+        '/best_accuracy.pth'
+    replacement_layer = None
+    net.load_state_dict(torch.load(saved_model))
+    get_iou_results = True
 
-    # # Contour Dataset Trained (Resnet50 edge extract) Model
-    # # ---------------------------------------------------------
-    # net = new_piech_models.ContourIntegrationCSIResnet50(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = \
-    #     './results/new_model_resnet_based/' \
-    #     'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001' \
-    #     '/best_accuracy.pth'
-    # saved_model = \
-    #     './results/imagenet_classification/' \
-    #     'ResNet_20200212_202439_untrained_gaussian_reg_epochs_12_momentum_0.9_lr_0.1' \
-    #     '/best_accuracy.pth'
-    # replacement_layer = None
-    # net.load_state_dict(torch.load(saved_model))
-    # get_iou_results = True
-
-    # # # Imagenet Trained Model
-    # # # ----------------------
+    # # Imagenet
+    # # ----------------------
     # net = new_piech_models.get_embedded_resnet50_model()
     # saved_model = \
     #     './results/imagenet_classification/' \
@@ -59,19 +47,19 @@ if __name__ == "__main__":
     # net.load_state_dict(checkpoint['state_dict'])
     # get_iou_results = False
 
-    # Edge Dataset Trained Model
-    # ----------------------------
-    contour_integration_layer = \
-        new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-
-    net = new_piech_models.EdgeDetectionResnet50(contour_integration_layer)
-    saved_model = \
-        './results/edge_detection_new' \
-        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_punctured50_20200312_161536' \
-        '/best_accuracy.pth'
-    net.load_state_dict(torch.load(saved_model))
-    replacement_layer = None
-    get_iou_results = False
+    # # Edge Dataset Trained Model
+    # # ----------------------------
+    # contour_integration_layer = \
+    #     new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    #
+    # net = new_piech_models.EdgeDetectionResnet50(contour_integration_layer)
+    # saved_model = \
+    #     './results/edge_detection_new' \
+    #     '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_punctured50_20200312_161536' \
+    #     '/best_accuracy.pth'
+    # net.load_state_dict(torch.load(saved_model))
+    # replacement_layer = None
+    # get_iou_results = False
 
     # ------------------------------------
     plt.ion()
