@@ -454,7 +454,7 @@ if __name__ == '__main__':
         'test_batch_size': 1,
         'learning_rate': 3e-5,
         'num_epochs': 50,
-        'gaussian_reg_weight': 0.00001,
+        'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
 
