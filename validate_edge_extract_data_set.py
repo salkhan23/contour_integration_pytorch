@@ -60,7 +60,8 @@ if __name__ == "__main__":
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     saved_model = \
-        'results/edge_detection/EdgeDetectionCSIResnet50_20200223_111512_2layer_edge_extract_lr_1e-3' \
+        'results/edge_detection' \
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200305_205504_sigmoided_ei_and_ie_connections' \
         '/best_accuracy.pth'
 
     data_set_dir = "./data/edge_detection_data_set"
@@ -83,12 +84,17 @@ if __name__ == "__main__":
     # Imagenet Mean and STD
     ch_mean = [0.485, 0.456, 0.406]
     ch_std = [0.229, 0.224, 0.225]
-    # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
     # Pre-processing
-    normalize = transforms.Normalize(mean=ch_mean, std=ch_std)
+    pre_process_transforms = transforms.Compose([
+        transforms.Normalize(mean=ch_mean, std=ch_std),
+        utils.PunctureImage(n_bubbles=100, fwhm=11),
+    ])
 
-    val_set = dataset_edge.EdgeDataSet(data_dir=os.path.join(data_set_dir, 'val'), transform=normalize)
+    val_set = dataset_edge.EdgeDataSet(
+        data_dir=os.path.join(data_set_dir, 'val'),
+        transform=pre_process_transforms
+    )
 
     val_data_loader = DataLoader(
         dataset=val_set,
@@ -153,9 +159,9 @@ if __name__ == "__main__":
             # Plot Contour Integration Layer Input and output
             # ---------------------------------------------------------------------------
             # sum over all channels
-            edge_out = edge_extract_act.squeeze().sum(axis=0)
-            cont_int_in = cont_int_in_act.squeeze().sum(axis=0)
-            cont_int_out = cont_int_out_act.squeeze().sum(axis=0)
+            edge_out = edge_extract_act.squeeze().max(axis=0)
+            cont_int_in = cont_int_in_act.squeeze().max(axis=0)
+            cont_int_out = cont_int_out_act.squeeze().max(axis=0)
 
             f2, ax_arr = plt.subplots(1, 3)
             p = ax_arr[0].imshow(edge_out)
