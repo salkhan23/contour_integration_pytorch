@@ -42,6 +42,8 @@ class BSDS(data.Dataset):
             self.images.append(os.path.join(data_dir, line.split()[0]))
             self.labels.append(os.path.join(data_dir, line.split()[1]))
 
+        self.resize = transforms.Resize(size=(256, 256))
+
         self.data_set_mean, self.data_set_std = self.get_data_set_mean_and_std()
         print("DataSet Contains {} Images.\nChannel mean {},\nChannel std {}".format(
             len(self.images), self.data_set_mean, self.data_set_std))
@@ -58,6 +60,8 @@ class BSDS(data.Dataset):
             tuple: (image, target) where target is the image segmentation.
         """
         img = Image.open(self.images[index]).convert('RGB')
+
+        img = self.resize(img)
         img = transform_functional.to_tensor(img)
 
         # Dont use the convert to [0, 1] leave the intensities as is.
@@ -67,6 +71,7 @@ class BSDS(data.Dataset):
         # target = torch.unsqueeze(target[0, ], dim=0)
 
         target = Image.open(self.labels[index]).convert("L")
+        target = self.resize(target)
         target = transform_functional.to_tensor(target)
 
         if self.transform is not None:
