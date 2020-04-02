@@ -234,7 +234,10 @@ class PunctureImage(object):
             replace=False
         )
 
-        masked_img = mask * img
+        ch_means = img.mean(axis=(0, 1))  # Channel Last
+        # print("Channel means  {}".format(ch_means))
+
+        masked_img = mask * img + (1 - mask) * ch_means * torch.ones_like(img)
 
         # # Debug
         # import matplotlib.pyplot as plt
