@@ -191,7 +191,7 @@ class PunctureImage(object):
 
     """
 
-    def __init__(self, n_bubbles, fwhm=11, tile_size=None):
+    def __init__(self, n_bubbles=0, fwhm=11, tile_size=None):
         self.n_bubbles = n_bubbles
 
         self.fwhm = fwhm  # full width half magnitude
