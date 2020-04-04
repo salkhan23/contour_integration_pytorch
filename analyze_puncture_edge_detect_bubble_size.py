@@ -2,7 +2,6 @@
 # Call edge detection on natural image detection with gaussian puncturing
 # Bubble Size is varied
 # ---------------------------------------------------------------------------------------
-import numpy as np
 import torch
 
 from train_edge_data_set import main
@@ -15,6 +14,7 @@ if __name__ == '__main__':
     bubble_fwhm_arr = [5, 10, 20, 30, 40, 50]
 
     for bubble_fwhm in bubble_fwhm_arr:
+        print("{0} Processing bubble size {1}, {0}".format('*'*20, bubble_fwhm))
 
         data_set_parameters = {
             'data_set_dir': './data/edge_detection_data_set',
