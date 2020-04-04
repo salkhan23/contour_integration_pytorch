@@ -198,7 +198,7 @@ class PunctureImage(object):
         self.bubble_sigma = fwhm / 2.35482
 
         if tile_size is None:
-            self.tile_size = np.array([2*self.fwhm, 2*self.fwhm])
+            self.tile_size = np.array([np.int(2*self.fwhm), np.int(2*self.fwhm)])
         else:
             self.tile_size = tile_size
 
@@ -220,9 +220,11 @@ class PunctureImage(object):
         bubble_frag = 1 - bubble_frag
 
         start_loc_arr = np.array([
-            np.random.randint(low=0, high=h, size=self.n_bubbles),
-            np.random.randint(low=0, high=w, size=self.n_bubbles),
+            np.random.randint(h - self.tile_size[0], size=self.n_bubbles),
+            np.random.randint(w - self.tile_size[1], size=self.n_bubbles),
         ]).T
+
+        # print("Start Locations {}".format(start_loc_arr))
 
         mask = torch.ones_like(img)
         mask = fields1993_stimuli.tile_image(
