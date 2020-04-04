@@ -46,7 +46,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     # Validate training parameters
     # ----------------------------
-    required_training_params = ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
+    required_training_params = \
+        ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
     for key in required_training_params:
         assert key in train_params, 'training_params does not have required key {}'.format(key)
     train_batch_size = train_params['train_batch_size']
@@ -99,7 +100,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     ])
 
     train_set = dataset_edge.EdgeDataSet(
-        data_dir=os.path.join(data_set_dir, 'train'), transform=pre_process_transforms, subset_size=train_subset_size)
+        data_dir=os.path.join(data_set_dir, 'train'),
+        transform=pre_process_transforms,
+        subset_size=train_subset_size)
     train_batch_size = min(train_batch_size, len(train_set))
 
     train_data_loader = DataLoader(
@@ -111,7 +114,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     )
 
     val_set = dataset_edge.EdgeDataSet(
-        data_dir=os.path.join(data_set_dir, 'val'), transform=pre_process_transforms, subset_size=test_subset_size)
+        data_dir=os.path.join(data_set_dir, 'val'),
+        transform=pre_process_transforms,
+        subset_size=test_subset_size)
     test_batch_size = min(test_batch_size, len(val_set))
 
     val_data_loader = DataLoader(
@@ -192,7 +197,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             e_loss += total_loss.item()
 
             preds = (torch.sigmoid(label_out) > detect_thres)
-            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+            e_iou += utils.intersection_over_union(
+                preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(train_data_loader)
         e_iou = e_iou / len(train_data_loader)
@@ -225,7 +231,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
                 e_loss += total_loss.item()
                 preds = (torch.sigmoid(label_out) > detect_thres)
-                e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+                e_iou += utils.intersection_over_union(
+                    preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(val_data_loader)
         e_iou = e_iou / len(val_data_loader)
@@ -254,8 +261,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("Data Set Parameters {}\n".format('-' * 60))
     file_handle.write("Source           : {}\n".format(data_set_dir))
-    file_handle.write("Train Set Mean {}, std {}\n".format(train_set.data_set_mean, train_set.data_set_std))
-    file_handle.write("Validation Set Mean {}, std {}\n".format(val_set.data_set_mean, train_set.data_set_std))
+    file_handle.write("Train Set Mean {}, std {}\n".format(
+        train_set.data_set_mean, train_set.data_set_std))
+    file_handle.write("Validation Set Mean {}, std {}\n".format(
+        val_set.data_set_mean, train_set.data_set_std))
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
@@ -292,9 +301,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         # print fixed hyper parameters
         file_handle.write("Hyper parameters\n")
 
-        cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+        cont_int_layer_vars = \
+            [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
         for var in sorted(cont_int_layer_vars):
-            file_handle.write("\t{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
+            file_handle.write("\t{}: {}\n".format(
+                var, getattr(model.contour_integration_layer, var)))
 
         # print parameter names and whether they are trainable
         file_handle.write("Contour Integration Layer Parameters\n")
@@ -319,14 +330,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. Time {}".format(
-            epoch, num_epochs,
-            train_history[epoch][0],
-            train_history[epoch][1],
-            val_history[epoch][0],
-            val_history[epoch][1],
-            datetime.now() - epoch_start_time
-        ))
+        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}."
+              " Time {}".format(
+                epoch, num_epochs,
+                train_history[epoch][0],
+                train_history[epoch][1],
+                val_history[epoch][0],
+                val_history[epoch][1],
+                datetime.now() - epoch_start_time))
 
         if val_history[epoch][1] > best_iou:
             best_iou = val_history[epoch][1]
