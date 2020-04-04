@@ -44,6 +44,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     train_subset_size = data_set_params.get('train_subset_size', None)
     test_subset_size = data_set_params.get('test_subset_size', None)
 
+    # Puncture pre-processing
+    puncture_n_bubbles = data_set_params.get('n_bubbles', 0)
+    if puncture_n_bubbles:
+        bubbles_fwhm = data_set_params.get('bubble_fwhm', 11)
+
     # Validate training parameters
     # ----------------------------
     required_training_params = \
@@ -94,10 +99,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
     # Pre-processing
-    pre_process_transforms = transforms.Compose([
-        transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=100, fwhm=11),
-    ])
+    transforms_list = [transforms.Normalize(mean=ch_mean, std=ch_std)]
+
+    if puncture_n_bubbles:
+        transforms_list.append(
+            utils.PunctureImage(n_bubbles=puncture_n_bubbles, fwhm=bubbles_fwhm))
+
+    pre_process_transforms = transforms.Compose(transforms_list)
 
     train_set = dataset_edge.EdgeDataSet(
         data_dir=os.path.join(data_set_dir, 'train'),
