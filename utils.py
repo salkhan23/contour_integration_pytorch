@@ -186,12 +186,23 @@ class PunctureImage(object):
     REF: Gosselin and Schyns - 2001 - Bubbles: a technique to reveal the use of information in
          recognition tasks
 
-    This is actually the opposite of the reference technique, instead of masking the image and then revealing
-    parts of it through bubbles. Masked out gaussian bubbles are added to the image.
+    This is actually the opposite of the reference technique, instead of masking the image and
+    then revealing parts of it through bubbles. Masked out gaussian bubbles are added to the image.
+
+    :param n_bubbles: number of bubbles
+    :param fwhm: bubble full width half magnitude. Note the actual tile size is 2 * fwhm
+    :param peak_bubble_transparency: 0 = Fully opaque at center (default), 1= Fully visible
+        at center (no occlusion at all)
 
     """
 
-    def __init__(self, n_bubbles=0, fwhm=11, tile_size=None):
+    def __init__(self, n_bubbles=0, fwhm=11, tile_size=None, peak_bubble_transparency=0):
+
+        if  0 > peak_bubble_transparency or 1 < peak_bubble_transparency:
+            raise Exception("Bubble transparency {}, should be between [0, 1]".format(
+                peak_bubble_transparency))
+        self.peak_bubble_transparency = peak_bubble_transparency
+
         self.n_bubbles = n_bubbles
 
         self.fwhm = fwhm  # full width half magnitude
@@ -236,6 +247,9 @@ class PunctureImage(object):
             replace=False
         )
 
+        mask = mask + self.peak_bubble_transparency
+        mask[mask > 1] = 1
+
         ch_means = img.mean(dim=[0, 1])  # Channel Last
         # print("Channel means  {}".format(ch_means))
 
@@ -259,5 +273,8 @@ class PunctureImage(object):
         return masked_img.permute(2, 0, 1)
 
     def __repr__(self):
-        return self.__class__.__name__ + '(n_bubbles={}, fwhm = {}, bubbles_sigma={:0.4f}, tile_size={})'.format(
-            self.n_bubbles, self.fwhm, self.bubble_sigma, self.tile_size)
+        return self.__class__.__name__ + \
+               '(n_bubbles={}, fwhm = {}, bubbles_sigma={:0.4f}, tile_size={}), ' \
+               'max bubble transparency={}'.format(
+                   self.n_bubbles, self.fwhm, self.bubble_sigma, self.tile_size,
+                   self.peak_bubble_transparency)

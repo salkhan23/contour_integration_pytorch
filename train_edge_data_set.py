@@ -48,6 +48,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     puncture_n_bubbles = data_set_params.get('n_bubbles', 0)
     if puncture_n_bubbles:
         bubbles_fwhm = data_set_params.get('bubble_fwhm', 11)
+        bubble_center_transparency = data_set_parameters.get('bubble_center_transparency', 0)
 
     # Validate training parameters
     # ----------------------------
@@ -102,8 +103,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     transforms_list = [transforms.Normalize(mean=ch_mean, std=ch_std)]
 
     if puncture_n_bubbles:
-        transforms_list.append(
-            utils.PunctureImage(n_bubbles=puncture_n_bubbles, fwhm=bubbles_fwhm))
+        transforms_list.append(utils.PunctureImage(
+            n_bubbles=puncture_n_bubbles,
+            fwhm=bubbles_fwhm,
+            peak_bubble_transparency=bubble_center_transparency))
 
     pre_process_transforms = transforms.Compose(transforms_list)
 
@@ -416,6 +419,7 @@ if __name__ == '__main__':
         'test_subset_size': None,
         # 'n_bubbles': 50,
         # 'bubble_fwhm': 11,
+        'bubble_center_transparency': 1
     }
 
     train_parameters = {
