@@ -18,8 +18,8 @@ if __name__ == '__main__':
 
         data_set_parameters = {
             'data_set_dir': './data/edge_detection_data_set',
-            'train_subset_size': 100,
-            'test_subset_size': 10,
+            'train_subset_size': 30000,
+            'test_subset_size': None,
             'n_bubbles': 50,
             'bubble_fwhm': bubble_fwhm,
         }
