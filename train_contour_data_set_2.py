@@ -297,7 +297,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
-    for epoch in range(num_epochs):
+    for epoch in range(1, num_epochs + 1):
 
         epoch_start_time = datetime.now()
 
