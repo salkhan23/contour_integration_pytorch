@@ -60,8 +60,8 @@ if __name__ == "__main__":
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     saved_model = \
-        'results/edge_detection' \
-        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200305_205504_sigmoided_ei_and_ie_connections' \
+        'results/edge_detection_new' \
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_puncture100_20200401_201840' \
         '/best_accuracy.pth'
 
     data_set_dir = "./data/edge_detection_data_set"
@@ -73,7 +73,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net = net.to(device)
-    net.load_state_dict(torch.load(saved_model))
+    net.load_state_dict(torch.load(saved_model, map_location=device))
 
     net.edge_extract.register_forward_hook(edge_extract_cb)
     net.contour_integration_layer.register_forward_hook(contour_integration_cb)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     # Pre-processing
     pre_process_transforms = transforms.Compose([
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=100, fwhm=11),
+        utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=1),
     ])
 
     val_set = dataset_edge.EdgeDataSet(
