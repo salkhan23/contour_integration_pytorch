@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import numpy as np
 import os
 
 from skimage import io
@@ -71,11 +70,12 @@ for img_file in sorted(image_files):
     ax_arr[2][2].imshow(target_sobel_map)
     ax_arr[2][2].set_title("Sobel binary mask")
 
-
     import pdb
     pdb.set_trace()
     plt.close(f)
 
-
+# ---------------------------------------------------------------------------------------
+# End
+# ---------------------------------------------------------------------------------------
 import pdb
 pdb.set_trace()
