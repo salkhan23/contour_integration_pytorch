@@ -20,8 +20,8 @@ if __name__ == '__main__':
             'data_set_dir': './data/edge_detection_data_set',
             'train_subset_size': 30000,
             'test_subset_size': None,
-            'n_bubbles': 50,
-            'bubble_fwhm': 11,
+            'n_bubbles': 100,
+            'bubble_fwhm': 20,
             'bubble_transparency': bubble_transparency
         }
 
