@@ -48,7 +48,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     puncture_n_bubbles = data_set_params.get('n_bubbles', 0)
     if puncture_n_bubbles:
         bubbles_fwhm = data_set_params.get('bubble_fwhm', 11)
-        bubble_center_transparency = data_set_parameters.get('bubble_center_transparency', 0)
+        bubble_center_transparency = data_set_params.get('bubble_center_transparency', 0)
 
     # Validate training parameters
     # ----------------------------
