@@ -312,7 +312,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
-    for epoch in range(1, num_epochs + 1):
+    for epoch in range(0, num_epochs):
 
         epoch_start_time = datetime.now()
 
@@ -323,7 +323,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_scheduler.step(epoch)
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. Time {}".format(
-            epoch, num_epochs,
+            epoch + 1, num_epochs,
             train_history[epoch][0],
             train_history[epoch][1],
             val_history[epoch][0],
@@ -339,7 +339,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             )
 
         file_handle.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {}],\n".format(
-            epoch,
+            epoch + 1,
             train_history[epoch][0],
             train_history[epoch][1],
             val_history[epoch][0],
