@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------
-# Plot results for the puncture bubble size explorer experiment
+# # Plot results for the puncture bubbles experiment - explore bubbles size
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib as mpl
@@ -208,9 +208,75 @@ results_fwhm_20 = {
 
 }
 
+results_fwhm_30 = {
+    'iou_vs_epoch': np.array([
+        [0, 0.2579, 0.0913, 0.1534, 0.2212, 0.001],
+        [1, 0.1417, 0.2856, 0.1364, 0.3005, 0.001],
+        [2, 0.1299, 0.3432, 0.1276, 0.3712, 0.001],
+        [3, 0.1217, 0.3767, 0.1183, 0.3913, 0.001],
+        [4, 0.1178, 0.4016, 0.1142, 0.4045, 0.001],
+        [5, 0.1145, 0.4163, 0.1119, 0.4207, 0.001],
+        [6, 0.1217, 0.4097, 0.1122, 0.4223, 0.001],
+        [7, 0.1110, 0.4324, 0.1074, 0.4373, 0.001],
+        [8, 0.1077, 0.4419, 0.1050, 0.4546, 0.001],
+        [9, 0.1066, 0.4476, 0.1047, 0.4599, 0.001],
+        [10, 0.1066, 0.4515, 0.1038, 0.4623, 0.001],
+        [11, 0.1049, 0.4556, 0.1030, 0.4580, 0.001],
+        [12, 0.1042, 0.4585, 0.1026, 0.4595, 0.001],
+        [13, 0.1038, 0.4610, 0.1023, 0.4609, 0.001],
+        [14, 0.1038, 0.4634, 0.1051, 0.4589, 0.001],
+        [15, 0.1030, 0.4655, 0.1050, 0.4583, 0.001],
+        [16, 0.1026, 0.4670, 0.1016, 0.4623, 0.001],
+        [17, 0.1029, 0.4683, 0.1016, 0.4661, 0.001],
+        [18, 0.1022, 0.4698, 0.1012, 0.4624, 0.001],
+        [19, 0.1019, 0.4711, 0.1012, 0.4641, 0.001],
+        [20, 0.1019, 0.4725, 0.1012, 0.4626, 0.001],
+        [21, 0.1015, 0.4734, 0.1009, 0.4656, 0.001],
+        [22, 0.1013, 0.4746, 0.1006, 0.4697, 0.001],
+        [23, 0.1011, 0.4757, 0.1024, 0.4699, 0.001],
+        [24, 0.1008, 0.4769, 0.1006, 0.4688, 0.001],
+        [25, 0.1008, 0.4776, 0.1012, 0.4730, 0.001],
+        [26, 0.1007, 0.4786, 0.1000, 0.4772, 0.001],
+        [27, 0.1009, 0.4790, 0.1011, 0.4737, 0.001],
+        [28, 0.1005, 0.4801, 0.0996, 0.4774, 0.001],
+        [29, 0.1001, 0.4808, 0.0999, 0.4738, 0.001],
+        [30, 0.0999, 0.4816, 0.0995, 0.4767, 0.001],
+        [31, 0.0901, 0.4987, 0.0892, 0.5004, 0.0001],
+        [32, 0.0896, 0.4999, 0.0890, 0.5003, 0.0001],
+        [33, 0.0894, 0.5007, 0.0889, 0.5006, 0.0001],
+        [34, 0.0893, 0.5013, 0.0888, 0.5012, 0.0001],
+        [35, 0.0892, 0.5018, 0.0886, 0.5015, 0.0001],
+        [36, 0.0891, 0.5023, 0.0885, 0.5020, 0.0001],
+        [37, 0.0890, 0.5027, 0.0885, 0.5020, 0.0001],
+        [38, 0.0889, 0.5032, 0.0884, 0.5024, 0.0001],
+        [39, 0.0888, 0.5036, 0.0883, 0.5030, 0.0001],
+        [40, 0.0887, 0.5040, 0.0882, 0.5046, 0.0001],
+        [41, 0.0886, 0.5043, 0.0881, 0.5043, 0.0001],
+        [42, 0.0885, 0.5046, 0.0881, 0.5046, 0.0001],
+        [43, 0.0884, 0.5049, 0.0881, 0.5046, 0.0001],
+        [44, 0.0884, 0.5052, 0.0880, 0.5052, 0.0001],
+        [45, 0.0883, 0.5054, 0.0879, 0.5052, 0.0001],
+        [46, 0.0882, 0.5057, 0.0878, 0.5062, 0.0001],
+        [47, 0.0882, 0.5059, 0.0878, 0.5061, 0.0001],
+        [48, 0.0881, 0.5062, 0.0878, 0.5068, 0.0001],
+        [49, 0.0881, 0.5064, 0.0877, 0.5071, 0.0001],
+    ]),
+    'gain_vs_c_len': {
+        'c_len': np.array([1, 3, 5, 7, 9]),
+        'mean_gain': np.array([1.0000, 1.0031, 1.0043, 1.0060, 1.0075]),
+        'std_gain': np.array([0.1737, 0.0797, 0.0791, 0.0743, 0.0807])
+    },
+    'gain_vs_spacing': {
+        'spacing': np.array([1.00, 1.14, 1.29, 1.43, 1.57, 1.71, 1.86, 2.00]),
+        'mean_gain': np.array([1.0044, 1.0059, 1.0383, 1.0275, 1.0344, 1.0283, 1.0235, 1.0143]),
+        'std_gain': np.array([0.0724, 0.0629, 0.0668, 0.0645, 0.0576, 0.0671, 0.0627, 0.0595])
+    }
+
+}
+
 
 def plot_iou_results(results_dict, ax=None, label='', c='k'):
-    if axis is None:
+    if ax is None:
         f, ax = plt.subplots()
 
     ax.plot(
@@ -231,7 +297,7 @@ def plot_iou_results(results_dict, ax=None, label='', c='k'):
 
 
 def plot_gain_vs_contour_len(results_dict, ax=None, label='', c='k'):
-    if axis is None:
+    if ax is None:
         f, ax = plt.subplots()
 
     ax.errorbar(
@@ -245,7 +311,7 @@ def plot_gain_vs_contour_len(results_dict, ax=None, label='', c='k'):
 
 
 def plot_gain_vs_fragment_spacing(results_dict, ax=None, label='', c='k'):
-    if axis is None:
+    if ax is None:
         f, ax = plt.subplots()
 
     ax.errorbar(
@@ -266,6 +332,7 @@ if __name__ == "__main__":
     plot_iou_results(results_fwhm_5, ax=axis, label='fwhm_5', c='b')
     plot_iou_results(results_fwhm_10, ax=axis, label='fwhm_10', c='r')
     plot_iou_results(results_fwhm_20, ax=axis, label='fwhm_20', c='g')
+    plot_iou_results(results_fwhm_30, ax=axis, label='fwhm_30', c='m')
 
     plt.legend()
     plt.title("IoU vs Epoch")
@@ -279,6 +346,7 @@ if __name__ == "__main__":
     plot_gain_vs_contour_len(results_fwhm_5, ax=axis, label='fwhm_5', c='b')
     plot_gain_vs_contour_len(results_fwhm_10, ax=axis, label='fwhm_10', c='r')
     plot_gain_vs_contour_len(results_fwhm_20, ax=axis, label='fwhm_20', c='g')
+    plot_gain_vs_contour_len(results_fwhm_30, ax=axis, label='fwhm_30', c='m')
 
     plt.legend()
     plt.title("Contour Gain vs Length")
@@ -293,6 +361,7 @@ if __name__ == "__main__":
     plot_gain_vs_fragment_spacing(results_fwhm_5, ax=axis, label='fwhm_5', c='b')
     plot_gain_vs_fragment_spacing(results_fwhm_10, ax=axis, label='fwhm_10', c='r')
     plot_gain_vs_fragment_spacing(results_fwhm_20, ax=axis, label='fwhm_20', c='g')
+    plot_gain_vs_fragment_spacing(results_fwhm_30, ax=axis, label='fwhm_30', c='g')
 
     plt.legend()
     plt.title("Contour Gain vs Fragment Spacing")
