@@ -11,7 +11,7 @@ from PIL import Image
 img_size = (256, 256)
 canny_edge_extract_sigma = 2.0
 
-data_dir = '/data/edge_detection_data_set/val/images'
+data_dir = './data/edge_detection_data_set/val/images'
 
 
 plt.ion()
@@ -51,8 +51,8 @@ for img_file in sorted(image_files):
     plt.imsave(fname='sobel_label.png', arr=edge_img_sobel, cmap=plt.cm.gray)
 
     # Images loaded as is
-    target_canny = Image.open('../canny_label.png').convert("L")
-    target_sobel = Image.open('../sobel_label.png').convert("L")
+    target_canny = Image.open('canny_label.png').convert("L")
+    target_sobel = Image.open('sobel_label.png').convert("L")
 
     ax_arr[1][0].axis('off')
     ax_arr[1][1].imshow(target_canny)
@@ -61,8 +61,8 @@ for img_file in sorted(image_files):
     ax_arr[1][2].set_title("Edge as is")
 
     # Load Images as Binary masks
-    target_canny_map = Image.open('../canny_label.png').convert("1")
-    target_sobel_map = Image.open('../sobel_label.png').convert("1")
+    target_canny_map = Image.open('canny_label.png').convert("1")
+    target_sobel_map = Image.open('sobel_label.png').convert("1")
 
     ax_arr[2][0].axis('off')
     ax_arr[2][1].imshow(target_canny_map)
