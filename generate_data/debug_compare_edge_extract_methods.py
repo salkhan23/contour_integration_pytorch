@@ -6,14 +6,15 @@ from skimage import io
 from skimage import transform as sk_transforms
 from skimage import feature as sk_features
 from skimage import filters
+from skimage import color
 
 from PIL import Image
 
 img_size = (256, 256)
 canny_edge_extract_sigma = 1.0
 
-data_dir = './data/edge_detection_data_set/val/images'
-
+# data_dir = './data/edge_detection_data_set/val/images'
+data_dir = './data/bsds/test'
 
 plt.ion()
 
@@ -24,8 +25,9 @@ for img_file in sorted(image_files):
     img_file = os.path.join(data_dir, img_file)
     print(img_file)
 
-    input_img = io.imread(img_file, as_gray=True)
-    resize_img = sk_transforms.resize(input_img, output_shape=img_size)
+    input_img = io.imread(img_file)
+    resize_img_color = sk_transforms.resize(input_img, output_shape=img_size)
+    resize_img = color.rgb2gray(resize_img_color)
 
     # Set low and high thresholds as a function of img median
     # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
@@ -34,8 +36,8 @@ for img_file in sorted(image_files):
     edge_img_canny = sk_features.canny(
         resize_img,
         sigma=canny_edge_extract_sigma,
-        low_threshold=0.66 * img_median,
-        high_threshold=1.33 * img_median,
+        low_threshold=0.5 * img_median,
+        high_threshold=1 * img_median,
         use_quantiles=False,
     )
 
@@ -48,8 +50,8 @@ for img_file in sorted(image_files):
     # ax_arr[0].set_title('Org - {}'.format(img))
 
     # Show Resized Original
-    ax_arr[0][0].imshow(resize_img, cmap=plt.cm.gray)
-    ax_arr[0][0].set_title("resized Original {}".format(img_size))
+    ax_arr[0][0].imshow(resize_img_color)
+    ax_arr[0][0].set_title("resized original {}".format(img_size))
 
     # Edge Image
     ax_arr[0][1].imshow(edge_img_canny, cmap=plt.cm.gray)

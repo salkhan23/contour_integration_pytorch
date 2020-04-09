@@ -13,7 +13,8 @@ from skimage import feature as sk_features
 IMAGENET_DIR = '/home/salman/workspace/keras/my_projects/contour_integration/data/imagenet-data'
 
 
-def generate_data_set(process_set, n_img_per_cat, store_dir, img_size=(224, 224), canny_edge_extract_sigma=2.5):
+def generate_data_set(
+        process_set, n_img_per_cat, store_dir, img_size=(224, 224), canny_edge_extract_sigma=2.5):
 
     image_dir = os.path.join(IMAGENET_DIR, process_set)
     list_of_dir = [os.path.join(image_dir, d) for d in sorted(os.listdir(image_dir))]
@@ -41,7 +42,16 @@ def generate_data_set(process_set, n_img_per_cat, store_dir, img_size=(224, 224)
             input_img = io.imread(img_file, as_gray=True)
             resize_img = sk_transforms.resize(input_img, output_shape=img_size)
 
-            edge_img = sk_features.canny(resize_img, sigma=canny_edge_extract_sigma)
+            # Set low and high thresholds as a function of img median
+            # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
+            img_median = np.median(resize_img)
+
+            edge_img = sk_features.canny(
+                resize_img,
+                sigma=canny_edge_extract_sigma,
+                low_threshold=0.5 * img_median,
+                high_threshold=1 * img_median,
+            )
 
             # save the images
             plt.imsave(fname=os.path.join(r_img_dir, img), arr=resize_img, cmap=plt.cm.gray)
@@ -68,7 +78,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    edge_extract_sigma = 2.5
+    edge_extract_sigma = 1.0
 
     data_set_dir = './data/edge_detection_data_set_canny_sigma_{}'.format(edge_extract_sigma)
     n_train_images_per_category = 50
