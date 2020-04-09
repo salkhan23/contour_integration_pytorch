@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import os
 
 from skimage import io
@@ -9,7 +10,7 @@ from skimage import filters
 from PIL import Image
 
 img_size = (256, 256)
-canny_edge_extract_sigma = 2.0
+canny_edge_extract_sigma = 1.0
 
 data_dir = './data/edge_detection_data_set/val/images'
 
@@ -26,7 +27,18 @@ for img_file in sorted(image_files):
     input_img = io.imread(img_file, as_gray=True)
     resize_img = sk_transforms.resize(input_img, output_shape=img_size)
 
-    edge_img_canny = sk_features.canny(resize_img, sigma=canny_edge_extract_sigma)
+    # Set low and high thresholds as a function of img median
+    # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
+    img_median = np.median(resize_img)
+
+    edge_img_canny = sk_features.canny(
+        resize_img,
+        sigma=canny_edge_extract_sigma,
+        low_threshold=0.66 * img_median,
+        high_threshold=1.33 * img_median,
+        use_quantiles=False,
+    )
+
     edge_img_sobel = filters.sobel(resize_img)
 
     f, ax_arr = plt.subplots(3, 3)
