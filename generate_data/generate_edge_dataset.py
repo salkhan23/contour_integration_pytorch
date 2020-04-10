@@ -8,6 +8,7 @@ import os
 from skimage import io
 from skimage import transform as sk_transforms
 from skimage import feature as sk_features
+from skimage import color
 
 
 IMAGENET_DIR = '/home/salman/workspace/keras/my_projects/contour_integration/data/imagenet-data'
@@ -39,8 +40,9 @@ def generate_data_set(
             img_file = os.path.join(class_dir, img)
             # print(img_file)
 
-            input_img = io.imread(img_file, as_gray=True)
-            resize_img = sk_transforms.resize(input_img, output_shape=img_size)
+            input_img = io.imread(img_file)
+            resize_img_color = sk_transforms.resize(input_img, output_shape=img_size)
+            resize_img = color.rgb2gray(resize_img_color)
 
             # Set low and high thresholds as a function of img median
             # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
@@ -54,7 +56,7 @@ def generate_data_set(
             )
 
             # save the images
-            plt.imsave(fname=os.path.join(r_img_dir, img), arr=resize_img, cmap=plt.cm.gray)
+            plt.imsave(fname=os.path.join(r_img_dir, img), arr=resize_img_color,)
             plt.imsave(fname=os.path.join(r_label_dir, img), arr=edge_img, cmap=plt.cm.gray)
 
             # Debug
