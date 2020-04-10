@@ -14,6 +14,54 @@ from skimage import color
 IMAGENET_DIR = '/home/salman/workspace/keras/my_projects/contour_integration/data/imagenet-data'
 
 
+def get_edge_image(in_img, sigma):
+    """
+
+    REF:
+    # Set low and high thresholds as a function of img median
+    # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
+    """
+
+    img_median = np.median(in_img)
+
+    use_sigma = sigma
+
+    percent_edges = 0
+    n_iters = 0
+
+    lower_thresh = 0.03  # for percentages of edges in image
+    high_thresh = 0.08
+
+    while not (lower_thresh < percent_edges < high_thresh):
+        edge_img_canny = sk_features.canny(
+            in_img,
+            sigma=use_sigma,
+            low_threshold=0.4 * img_median,
+            high_threshold=1.0 * img_median,
+            use_quantiles=False,
+        )
+
+        percent_edges = \
+            np.count_nonzero(edge_img_canny) / (in_img.shape[0] * in_img.shape[1])
+
+        # print("% edges in Image = {}".format(percent_edges))
+        if percent_edges < lower_thresh:
+            use_sigma -= 0.1
+        elif percent_edges > high_thresh:
+            use_sigma += 0.1
+        n_iters += 1
+
+        # print("[{}] percent edges {}. Updated sigma = {}".format(
+        #     n_iters, percent_edges, use_sigma))
+
+        if n_iters == 15:
+            break
+        elif use_sigma < 0.1:
+            break
+
+    return n_iters
+
+
 def generate_data_set(
         process_set, n_img_per_cat, store_dir, img_size=(224, 224), canny_edge_extract_sigma=2.5):
 
@@ -44,16 +92,7 @@ def generate_data_set(
             resize_img_color = sk_transforms.resize(input_img, output_shape=img_size)
             resize_img = color.rgb2gray(resize_img_color)
 
-            # Set low and high thresholds as a function of img median
-            # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
-            img_median = np.median(resize_img)
-
-            edge_img = sk_features.canny(
-                resize_img,
-                sigma=canny_edge_extract_sigma,
-                low_threshold=0.5 * img_median,
-                high_threshold=1 * img_median,
-            )
+            edge_img = get_edge_image(resize_img, canny_edge_extract_sigma)
 
             # save the images
             plt.imsave(fname=os.path.join(r_img_dir, img), arr=resize_img_color,)
@@ -82,7 +121,8 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     edge_extract_sigma = 1.0
 
-    data_set_dir = './data/edge_detection_data_set_canny_sigma_{}'.format(edge_extract_sigma)
+    # data_set_dir = './data/edge_detection_data_set_canny_sigma_{}'.format(edge_extract_sigma)
+    data_set_dir = './data/edge_detection_data_set_canny_dynamic'
     n_train_images_per_category = 50
     n_val_images_per_category = 2
 

@@ -33,13 +33,37 @@ for img_file in sorted(image_files):
     # Ref: http://www.kerrywong.com/2009/05/07/canny-edge-detection-auto-thresholding/
     img_median = np.median(resize_img)
 
-    edge_img_canny = sk_features.canny(
-        resize_img,
-        sigma=canny_edge_extract_sigma,
-        low_threshold=0.5 * img_median,
-        high_threshold=1 * img_median,
-        use_quantiles=False,
-    )
+    percent_edges = 0
+    use_sigma = canny_edge_extract_sigma
+    n_iters = 0
+
+    lower_thresh = 0.03
+    high_thresh = 0.08
+
+    while not (lower_thresh < percent_edges < high_thresh):
+        edge_img_canny = sk_features.canny(
+            resize_img,
+            sigma=use_sigma,
+            low_threshold=0.4 * img_median,
+            high_threshold=1.0 * img_median,
+            use_quantiles=False,
+        )
+
+        percent_edges = \
+            np.count_nonzero(edge_img_canny) / (resize_img.shape[0] * resize_img.shape[1])
+        print("% edges in Image = {}".format(percent_edges))
+        if percent_edges < lower_thresh:
+            use_sigma -= 0.1
+        elif percent_edges > high_thresh:
+            use_sigma += 0.1
+        n_iters += 1
+
+        print("[{}] percent edges {}. Updated sigma = {}".format(n_iters, percent_edges, use_sigma))
+
+        if n_iters == 15:
+            break
+        elif use_sigma < 0.1:
+            break
 
     edge_img_sobel = filters.sobel(resize_img)
 
@@ -85,6 +109,7 @@ for img_file in sorted(image_files):
     ax_arr[2][2].set_title("Sobel binary mask")
 
     import pdb
+
     pdb.set_trace()
     plt.close(f)
 
@@ -92,4 +117,5 @@ for img_file in sorted(image_files):
 # End
 # ---------------------------------------------------------------------------------------
 import pdb
+
 pdb.set_trace()
