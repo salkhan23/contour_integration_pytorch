@@ -11,7 +11,7 @@ if __name__ == '__main__':
     random_seed = 10
     torch.manual_seed(random_seed)
 
-    bubble_fwhm_arr = [5, 10, 20, 30, 40, 50]
+    bubble_fwhm_arr = [0, 5, 10, 20, 30, 40]
 
     for bubble_fwhm in bubble_fwhm_arr:
         print("{0} Processing bubble size {1}, {0}".format('*'*20, bubble_fwhm))
