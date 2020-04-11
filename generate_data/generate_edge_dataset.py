@@ -59,7 +59,7 @@ def get_edge_image(in_img, sigma):
         elif use_sigma < 0.1:
             break
 
-    return n_iters
+    return edge_img_canny
 
 
 def generate_data_set(
