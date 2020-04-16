@@ -323,6 +323,20 @@ def plot_gain_vs_contour_len(results_dict, ax=None, label='', c='k'):
     )
 
 
+def plot_gain_vs_contour_len_11x11(results_dict, ax=None, label='', c='k'):
+    if ax is None:
+        f, ax = plt.subplots()
+
+    ax.errorbar(
+        results_dict['gain_vs_c_len_11x11']['c_len'],
+        results_dict['gain_vs_c_len_11x11']['mean_gain'],
+        results_dict['gain_vs_c_len_11x11']['std_gain'],
+        label=label,
+        linestyle='--',
+        color=c
+    )
+
+
 def plot_gain_vs_fragment_spacing(results_dict, ax=None, label='', c='k'):
     if ax is None:
         f, ax = plt.subplots()
