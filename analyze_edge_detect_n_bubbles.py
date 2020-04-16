@@ -17,7 +17,7 @@ if __name__ == '__main__':
         print("{0} Processing num bubble = {1}, {0}".format('*' * 20, n_bubbles))
 
         data_set_parameters = {
-            'data_set_dir': './data/edge_detection_data_set',
+            'data_set_dir': './data/edge_detection_data_set_canny_dynamic',
             'train_subset_size': 30000,
             'test_subset_size': None,
             'n_bubbles': n_bubbles,

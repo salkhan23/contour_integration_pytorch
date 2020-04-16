@@ -17,7 +17,7 @@ if __name__ == '__main__':
         print("{0} Processing bubble transparency {1}, {0}".format('*'*20, bubble_transparency))
 
         data_set_parameters = {
-            'data_set_dir': './data/edge_detection_data_set',
+            'data_set_dir': './data/edge_detection_data_set_canny_dynamic',
             'train_subset_size': 30000,
             'test_subset_size': None,
             'n_bubbles': 100,
