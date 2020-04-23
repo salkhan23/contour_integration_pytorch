@@ -37,7 +37,7 @@ class BipedDataSet(Dataset):
             raise Exception("Invalid data set {}. Must be one of {}".format(
                 dataset_type, valid_dataset_types))
 
-        img_dir = os.path.join(base_dir, 'imgs/' + dataset_type)
+        img_dir = os.path.join(data_dir, 'imgs/' + dataset_type)
 
         # Get a list of all files
         list_of_files = []
