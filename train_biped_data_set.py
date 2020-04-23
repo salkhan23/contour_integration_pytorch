@@ -410,7 +410,7 @@ if __name__ == '__main__':
     plt.ion()
 
     data_set_parameters = {
-        'data_set_dir': './data/BIPED',
+        'data_set_dir': './data/BIPED/edges',
         'train_subset_size': 1000,
         # 'test_subset_size': None,
     }
