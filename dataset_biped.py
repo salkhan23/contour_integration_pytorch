@@ -139,6 +139,7 @@ if __name__ == "__main__":
     # Resizing the image appears to cause the edge labels to becoming jagged and
     # discontinuous
     train_batch_size = 1
+    test_batch_size = 1
 
     # Immutable
     import matplotlib.pyplot as plt
@@ -152,14 +153,14 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Training Loader
     # -----------------------------------------------------------------------------------
-    print("Setting up the Train Data Loaders")
+    print("Setting up the Train Data Loaders {}".format('*'*30))
     start_time = datetime.now()
 
     train_set = BipedDataSet(
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        # subset_size=100
+        subset_size=100
     )
 
     training_data_loader = DataLoader(
@@ -170,7 +171,7 @@ if __name__ == "__main__":
         pin_memory=True
     )
 
-    print("setting up the train dataloader took {}".format(datetime.now() - start_time))
+    print("Setting up the train dataloader took {}".format(datetime.now() - start_time))
 
     train_generator = training_data_loader.__iter__()
     train_imgs, train_labels = train_generator.__next__()
@@ -216,30 +217,30 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Test Loader
     # -----------------------------------------------------------------------------------
-    print("Setting up the Train Data Loaders")
+    print("Setting up the Train Data Loaders, {}".format("*"*30))
     start_time = datetime.now()
 
-    train_set = BipedDataSet(
+    test_set = BipedDataSet(
         data_dir=base_dir,
         dataset_type='test',
         transform=pre_process_transforms,
     )
 
-    training_data_loader = DataLoader(
-        dataset=train_set,
+    test_data_loader = DataLoader(
+        dataset=test_set,
         num_workers=4,
-        batch_size=train_batch_size,
+        batch_size=test_batch_size,
         shuffle=False,
         pin_memory=True
     )
 
-    print("setting up the test dataloader took {}".format(datetime.now() - start_time))
+    print("setting up the test data loader took {}".format(datetime.now() - start_time))
 
-    train_generator = training_data_loader.__iter__()
-    train_imgs, train_labels = train_generator.__next__()
-    print("Images shape {}. Labels.shape {} ".format(train_imgs.shape, train_labels.shape))
+    test_generator = test_data_loader.__iter__()
+    test_imgs, test_labels = test_generator.__next__()
+    print("Images shape {}. Labels.shape {} ".format(test_imgs.shape, test_labels.shape))
     print("Batch mean = {}. std = {}".format(
-        torch.mean(train_imgs, dim=[0, 2, 3]), torch.std(train_imgs, dim=[0, 2, 3])))
+        torch.mean(test_imgs, dim=[0, 2, 3]), torch.std(test_imgs, dim=[0, 2, 3])))
 
     # -----------------------------------------------------------------------------------
     # End
