@@ -18,14 +18,15 @@ from datetime import datetime
 
 class BipedDataSet(Dataset):
     def __init__(self, data_dir, dataset_type='train', transform=None, subset_size=None,
-                 resize_size=(400, 400)):
+                 resize_size=None):
 
         self.transform = transform
+        self.resize_size = resize_size
 
-        # Note 1: images are of different sizes, resize them so that batches can be loaded
-        # Note 2: Resizing edge labesl makes them discontinuous. Leave off for now.
-        #         Also disabled some code in __get_item__
-        # self.joint_transform = transforms.Resize(resize_size, interpolation=Image.NEAREST)
+        if resize_size is not None:
+            self.resize = transforms.Resize(resize_size)
+        else:
+            self.resize = None
 
         if not os.path.exists(data_dir):
             raise Exception("Cannot find data dir {}".format(data_dir))
@@ -89,13 +90,15 @@ class BipedDataSet(Dataset):
             tuple: (image, target) where target is the image segmentation.
         """
         img = Image.open(self.images[index]).convert('RGB')
-        target = Image.open(self.labels[index]).convert('1')  # [0,1] Mask
+        target = Image.open(self.labels[index]).convert('L')  # [0,1] Mask
 
-        # img = self.joint_transform(img)
-        # target = self.joint_transform(target)
+        if self.resize is not None:
+            img = self.resize(img)
+            target = self.resize(target)
 
         img = transform_functional.to_tensor(img)
         target = transform_functional.to_tensor(target)
+        target[target > 0.1] = 1  # necessary for smooth contours
 
         if self.transform is not None:
             img = self.transform(img)
@@ -138,7 +141,7 @@ if __name__ == "__main__":
     # Images are of different sizes and cannot be batched together.
     # Resizing the image appears to cause the edge labels to becoming jagged and
     # discontinuous
-    train_batch_size = 1
+    train_batch_size = 32
     test_batch_size = 1
 
     # Immutable
@@ -160,7 +163,8 @@ if __name__ == "__main__":
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=100
+        subset_size=100,
+        resize_size=(256, 256)
     )
 
     training_data_loader = DataLoader(
