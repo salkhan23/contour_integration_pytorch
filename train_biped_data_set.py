@@ -47,6 +47,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Optional
     train_subset_size = data_set_params.get('train_subset_size', None)
     test_subset_size = data_set_params.get('test_subset_size', None)
+    resize_size = data_set_params.get('resize_size', None)
 
     # Validate training parameters
     # ----------------------------
@@ -107,7 +108,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         data_dir=data_set_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=train_subset_size
+        subset_size=train_subset_size,
+        resize_size=resize_size,
     )
     train_batch_size = min(train_batch_size, len(train_set))
 
@@ -123,7 +125,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         data_dir=data_set_dir,
         dataset_type='test',
         transform=pre_process_transforms,
-        subset_size=test_subset_size
+        subset_size=test_subset_size,
+        resize_size=resize_size,
     )
     test_batch_size = min(test_batch_size, len(val_set))
 
@@ -393,14 +396,19 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.grid(True)
     f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
 
-    # # -----------------------------------------------------------------------------------
-    # # Run Li 2006 experiments
-    # # -----------------------------------------------------------------------------------
-    # print("====> Running Experiments")
-    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
-    # experiment_gain_vs_len.main(
-    #     model, base_results_dir=results_store_dir, iou_results=False, frag_size=np.array([11, 11]))
-    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_len.main(
+        model,
+        base_results_dir=results_store_dir,
+        iou_results=False,
+        frag_size=np.array([11, 11])
+    )
+
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
 
 if __name__ == '__main__':
@@ -411,12 +419,13 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir': './data/BIPED/edges',
+        'resize_size': (256, 256),
         'train_subset_size': 1000,
         # 'test_subset_size': None,
     }
 
     train_parameters = {
-        'train_batch_size': 1,
+        'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
         'num_epochs': 5,
