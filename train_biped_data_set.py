@@ -399,16 +399,16 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # -----------------------------------------------------------------------------------
     # Run Li 2006 experiments
     # -----------------------------------------------------------------------------------
-    # print("====> Running Experiments")
-    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
-    # experiment_gain_vs_len.main(
-    #     model,
-    #     base_results_dir=results_store_dir,
-    #     iou_results=False,
-    #     frag_size=np.array([11, 11])
-    # )
-    #
-    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_len.main(
+        model,
+        base_results_dir=results_store_dir,
+        iou_results=False,
+        frag_size=np.array([11, 11])
+    )
+
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
 
 if __name__ == '__main__':
@@ -420,7 +420,7 @@ if __name__ == '__main__':
     data_set_parameters = {
         'data_set_dir': './data/BIPED/edges',
         'resize_size': (256, 256),
-        'train_subset_size': 1000,
+        # 'train_subset_size': 1000,
         # 'test_subset_size': None,
     }
 
@@ -428,7 +428,7 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
-        'num_epochs': 5,
+        'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
