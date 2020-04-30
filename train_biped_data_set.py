@@ -63,6 +63,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Optional
     lambda1 = train_params.get('gaussian_reg_weight', None)
     gaussian_kernel_sigma = train_params.get('gaussian_reg_sigma', None)
+    use_gaussian_reg_on_lateral_kernels = False
+    if lambda1 is not None and gaussian_kernel_sigma is not None:
+        use_gaussian_reg_on_lateral_kernels = True
 
     # -----------------------------------------------------------------------------------
     # Model
@@ -187,18 +190,20 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
             label_out = model(img)
 
-            batch_loss = criterion(label_out, label.float())
+            bce_loss = criterion(label_out, label.float())
+            reg_loss = 0
 
-            kernel_loss = \
-                inverse_gaussian_regularization(
-                    model.contour_integration_layer.lateral_e.weight,
-                    model.contour_integration_layer.lateral_i.weight
-                )
+            if use_gaussian_reg_on_lateral_kernels:
+                reg_loss = \
+                    inverse_gaussian_regularization(
+                        model.contour_integration_layer.lateral_e.weight,
+                        model.contour_integration_layer.lateral_i.weight
+                    )
 
-            total_loss = batch_loss + lambda1 * kernel_loss
+            total_loss = bce_loss + lambda1 * reg_loss
 
-            # print("Total Loss: {:0.4f}, cross_entropy_loss {:0.4f}, kernel_loss {:0.4f}".format(
-            #     total_loss, batch_loss,  lambda1 * kernel_loss))
+            # print("Loss: {:0.4f}, bce_loss {:0.4f}, lateral kernels reg_loss {:0.4f}".format(
+            #     total_loss, bce_loss,  lambda1 * reg_loss))
 
             total_loss.backward()
             optimizer.step()
@@ -228,15 +233,17 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 label = label.to(device)
 
                 label_out = model(img)
-                batch_loss = criterion(label_out, label.float())
+                bce_loss = criterion(label_out, label.float())
+                reg_loss = 0
 
-                kernel_loss = \
-                    inverse_gaussian_regularization(
-                        model.contour_integration_layer.lateral_e.weight,
-                        model.contour_integration_layer.lateral_i.weight
-                    )
+                if use_gaussian_reg_on_lateral_kernels:
+                    reg_loss = \
+                        inverse_gaussian_regularization(
+                            model.contour_integration_layer.lateral_e.weight,
+                            model.contour_integration_layer.lateral_i.weight
+                        )
 
-                total_loss = batch_loss + lambda1 * kernel_loss
+                total_loss = bce_loss + lambda1 * reg_loss
 
                 e_loss += total_loss.item()
                 preds = (torch.sigmoid(label_out) > detect_thres)
@@ -284,9 +291,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
     file_handle.write("learning rate    : {}\n".format(learning_rate))
     file_handle.write("Loss Fcn         : {}\n".format(criterion.__class__.__name__))
-    file_handle.write(
-        "Gaussian Regularization sigma        : {}\n".format(gaussian_kernel_sigma))
-    file_handle.write("Gaussian Regularization weight        : {}\n".format(lambda1))
+
+    file_handle.write("Use Gaussian Regularization on lateral kernels: {}\n".format(
+        use_gaussian_reg_on_lateral_kernels))
+    if use_gaussian_reg_on_lateral_kernels:
+        file_handle.write("Gaussian Regularization sigma        : {}\n".format(
+            gaussian_kernel_sigma))
+        file_handle.write("Gaussian Regularization weight        : {}\n".format(lambda1))
+
     file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
     file_handle.write("Image pre-processing :\n")
     print(pre_process_transforms, file=file_handle)
