@@ -476,22 +476,22 @@ if __name__ == '__main__':
         'data_set_dir': './data/BIPED/edges',
         # 'data_set_dir': '/home/salman/workspace/pytorch/MBIPED/dataset/BIPED/edges',
         'resize_size': (256, 256),
-        'train_subset_size': 32,
+        'train_subset_size': 20000,
         # 'test_subset_size': 8,
     }
 
     train_parameters = {
-        'train_batch_size': 8,
+        'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
-        'num_epochs': 5,
+        'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
 
     # Create Model
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=5, lateral_i_size=5, n_iters=5)
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
