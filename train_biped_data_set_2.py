@@ -411,6 +411,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     train_history = np.array(train_history)
     val_history = np.array(val_history)
 
+    train_iou_mat = np.zeros((num_epochs, len(detect_thres)))
+    val_iou_mat = np.zeros_like(train_iou_mat)
+    for e_idx in range(num_epochs):
+        train_iou_mat[e_idx, ] = train_history[e_idx, 1]
+        val_iou_mat[e_idx, ] = val_iou_mat[e_idx, 1]
+
     f = plt.figure()
     plt.title("Loss")
     plt.plot(train_history[:, 0], label='train')
@@ -424,8 +430,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.title("IoU")
 
     for thres_idx, thres in enumerate(detect_thres):
-        plt.plot(train_history[:, 1][thres_idx], label='train_th_{}'.format(thres))
-        plt.plot(val_history[:, 1][thres_idx], label='val_th_{}'.format(thres))
+        plt.plot(train_iou_mat[:, thres_idx], label='train_th_{}'.format(thres))
+        plt.plot(val_iou_mat[:, thres_idx], label='val_th_{}'.format(thres))
         plt.xlabel('Epoch')
         plt.legend()
         plt.grid(True)
@@ -456,12 +462,12 @@ if __name__ == '__main__':
         'data_set_dir': './data/BIPED/edges',
         # 'data_set_dir': '/home/salman/workspace/pytorch/MBIPED/dataset/BIPED/edges',
         'resize_size': (256, 256),
-        'train_subset_size': 20000,
+        'train_subset_size': 32,
         # 'test_subset_size': 8,
     }
 
     train_parameters = {
-        'train_batch_size': 32,
+        'train_batch_size': 8,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
         'num_epochs': 5,
@@ -471,7 +477,7 @@ if __name__ == '__main__':
 
     # Create Model
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+        lateral_e_size=5, lateral_i_size=5, n_iters=5)
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
