@@ -159,19 +159,20 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     criterion = nn.BCEWithLogitsLoss().to(device)
 
-    gaussian_mask_e = 1 - utils.get_2d_gaussian_kernel(
-        model.contour_integration_layer.lateral_e.weight.shape[2:], sigma=gaussian_kernel_sigma)
-    gaussian_mask_i = 1 - utils.get_2d_gaussian_kernel(
-        model.contour_integration_layer.lateral_i.weight.shape[2:], sigma=gaussian_kernel_sigma)
+    if use_gaussian_reg_on_lateral_kernels:
+        gaussian_mask_e = 1 - utils.get_2d_gaussian_kernel(
+            model.contour_integration_layer.lateral_e.weight.shape[2:], sigma=gaussian_kernel_sigma)
+        gaussian_mask_i = 1 - utils.get_2d_gaussian_kernel(
+            model.contour_integration_layer.lateral_i.weight.shape[2:], sigma=gaussian_kernel_sigma)
 
-    gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(device)
-    gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(device)
+        gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(device)
+        gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(device)
 
-    def inverse_gaussian_regularization(weight_e, weight_i):
-        loss1 = (gaussian_mask_e * weight_e).abs().sum() + (gaussian_mask_i * weight_i).abs().sum()
-        # print("Loss1: {:0.4f}".format(loss1))
+        def inverse_gaussian_regularization(weight_e, weight_i):
+            loss1 = (gaussian_mask_e * weight_e).abs().sum() + (gaussian_mask_i * weight_i).abs().sum()
+            # print("Loss1: {:0.4f}".format(loss1))
 
-        return loss1
+            return loss1
 
     # -----------------------------------------------------------------------------------
     #  Training Validation Routines
