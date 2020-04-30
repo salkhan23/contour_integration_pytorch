@@ -415,7 +415,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     val_iou_mat = np.zeros_like(train_iou_mat)
     for e_idx in range(num_epochs):
         train_iou_mat[e_idx, ] = train_history[e_idx, 1]
-        val_iou_mat[e_idx, ] = val_iou_mat[e_idx, 1]
+        val_iou_mat[e_idx, ] = val_history[e_idx, 1]
 
     f = plt.figure()
     plt.title("Loss")
@@ -434,7 +434,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         ax_arr2.plot(val_iou_mat[:, thres_idx], label='val_th_{}'.format(thres))
 
         ax_arr1.set_title('Train IoU - various thresholds')
-        ax_arr2.set_ylabel('Validation IoU - various thresholds')
+        ax_arr2.set_title('Validation IoU - various thresholds')
 
         ax_arr1.set_xlabel('Epoch')
         ax_arr2.set_xlabel('Epoch')
