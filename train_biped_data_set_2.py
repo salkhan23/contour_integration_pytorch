@@ -461,7 +461,7 @@ if __name__ == '__main__':
     }
 
     train_parameters = {
-        'train_batch_size': 8,
+        'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
         'num_epochs': 5,
