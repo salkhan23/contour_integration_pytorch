@@ -426,16 +426,30 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.legend()
     f.savefig(os.path.join(results_store_dir, 'loss.jpg'), format='jpg')
 
-    f = plt.figure()
-    plt.title("IoU")
+    f1, ax_arr1 = plt.subplots(1, figsize=(12.8, 9.6))
+    f2, ax_arr2 = plt.subplots(1, figsize=(12.8, 9.6))
 
     for thres_idx, thres in enumerate(detect_thres):
-        plt.plot(train_iou_mat[:, thres_idx], label='train_th_{}'.format(thres))
-        plt.plot(val_iou_mat[:, thres_idx], label='val_th_{}'.format(thres))
-        plt.xlabel('Epoch')
-        plt.legend()
-        plt.grid(True)
-        f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
+        ax_arr1.plot(train_iou_mat[:, thres_idx], label='train_th_{}'.format(thres))
+        ax_arr2.plot(val_iou_mat[:, thres_idx], label='val_th_{}'.format(thres))
+
+        ax_arr1.set_title('Train IoU - various thresholds')
+        ax_arr2.set_ylabel('Validation IoU - various thresholds')
+
+        ax_arr1.set_xlabel('Epoch')
+        ax_arr2.set_xlabel('Epoch')
+
+        ax_arr1.set_ylabel('IoU')
+        ax_arr2.set_ylabel('IoU')
+
+        ax_arr1.legend()
+        ax_arr2.legend()
+
+        ax_arr1.grid(True)
+        ax_arr2.grid(True)
+
+        f1.savefig(os.path.join(results_store_dir, 'iou_train.jpg'), format='jpg')
+        f2.savefig(os.path.join(results_store_dir, 'iou_val.jpg'), format='jpg')
 
     # -----------------------------------------------------------------------------------
     # Run Li 2006 experiments
