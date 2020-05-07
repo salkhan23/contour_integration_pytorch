@@ -170,8 +170,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
         return loss1
 
-    # lambda1 = 0.0001
-
     # -----------------------------------------------------------------------------------
     #  Training Validation Routines
     # -----------------------------------------------------------------------------------
