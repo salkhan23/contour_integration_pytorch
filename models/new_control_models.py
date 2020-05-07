@@ -1,5 +1,4 @@
 import torch.nn as nn
-import torch.nn.functional as nn_functional
 import torchvision
 
 from .new_piech_models import ClassifierHead
@@ -7,15 +6,14 @@ from .new_piech_models import ClassifierHead
 
 class ControlMatchParametersLayer(nn.Module):
 
-    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7):
+    def __init__(self, edge_out_ch=64, lateral_e_size=7, lateral_i_size=7):
         super(ControlMatchParametersLayer, self).__init__()
 
         self.lateral_e_size = lateral_e_size
         self.lateral_i_size = lateral_i_size
-        self.n_iters = n_iters
         self.edge_out_ch = edge_out_ch
 
-        self.control_conv1 = nn.Conv2d(
+        self.lateral_e = nn.Conv2d(
             in_channels=edge_out_ch,
             out_channels=edge_out_ch,
             kernel_size=self.lateral_e_size,
@@ -27,7 +25,7 @@ class ControlMatchParametersLayer(nn.Module):
         self.control_bn1 = nn.BatchNorm2d(num_features=edge_out_ch)
         self.control_dp1 = nn.Dropout(p=0.3)
 
-        self.control_conv2 = nn.Conv2d(
+        self.lateral_i = nn.Conv2d(
             in_channels=edge_out_ch,
             out_channels=edge_out_ch,
             kernel_size=self.lateral_i_size,
@@ -41,12 +39,12 @@ class ControlMatchParametersLayer(nn.Module):
 
     def forward(self, ff):
 
-        ff = self.control_conv1(ff)
+        ff = self.lateral_e(ff)
         ff = self.control_bn1(ff)
         ff = nn.functional.relu(ff)
         ff = self.control_dp1(ff)
 
-        ff = self.control_conv2(ff)
+        ff = self.lateral_i(ff)
         ff = self.control_bn2(ff)
         ff = nn.functional.relu(ff)
 
@@ -55,11 +53,11 @@ class ControlMatchParametersLayer(nn.Module):
 
 class ControlMatchParametersModel(nn.Module):
     """
-    Full Model With Control Layer that matches the number of parameters (Number of convolutional layers)
-    and their spatial extent.
+    Full Model With Control Layer that matches the number of parameters (Number of convolutional
+    layers and their spatial extent.
     """
 
-    def __init__(self, n_iters=5, lateral_e_size=7, lateral_i_size=7):
+    def __init__(self, lateral_e_size=7, lateral_i_size=7):
         super(ControlMatchParametersModel, self).__init__()
 
         # # First Convolutional Layer of Alexnet
@@ -79,7 +77,6 @@ class ControlMatchParametersModel(nn.Module):
         # Current Subtractive Layer
         self.contour_integration_layer = ControlMatchParametersLayer(
             edge_out_ch=self.num_edge_extract_chan,  # number of channels of edge extract layer
-            n_iters=n_iters,
             lateral_e_size=lateral_e_size,
             lateral_i_size=lateral_i_size
         )

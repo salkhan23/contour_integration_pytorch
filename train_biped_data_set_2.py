@@ -19,6 +19,7 @@ import torch.optim as optim
 import dataset_biped
 import utils
 import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
 
 import experiment_gain_vs_len
 import experiment_gain_vs_spacing
@@ -483,22 +484,26 @@ if __name__ == '__main__':
     data_set_parameters = {
         'data_set_dir': './data/BIPED/edges',
         'resize_size': (256, 256),
-        'train_subset_size': 20000,
-        # 'test_subset_size': 8,
+        'train_subset_size': 16,
+        'test_subset_size': 8,
     }
 
     train_parameters = {
-        'train_batch_size': 32,
+        'train_batch_size': 8,
         'test_batch_size': 1,
         'learning_rate': 1e-3,
-        'num_epochs': 50,
+        'num_epochs': 5,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
 
     # Create Model
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+        lateral_e_size=15, lateral_i_size=15)
+
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
