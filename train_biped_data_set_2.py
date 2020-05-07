@@ -382,8 +382,16 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 val_iou_arr,
                 datetime.now() - epoch_start_time))
 
-        # if val_history[epoch][1] > best_iou:
-        #     best_iou = val_history[epoch][1]
+        # Save best val accuracy weights
+        max_val_iou = max(val_history[epoch][1]) > best_iou
+        if max_val_iou > best_iou:
+            best_iou = max_val_iou
+            torch.save(
+                model.state_dict(),
+                os.path.join(results_store_dir, 'best_accuracy.pth')
+            )
+
+        # Save Last epoch weights
         torch.save(
             model.state_dict(),
             os.path.join(results_store_dir, 'last_epoch.pth')
@@ -474,7 +482,6 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir': './data/BIPED/edges',
-        # 'data_set_dir': '/home/salman/workspace/pytorch/MBIPED/dataset/BIPED/edges',
         'resize_size': (256, 256),
         'train_subset_size': 20000,
         # 'test_subset_size': 8,
