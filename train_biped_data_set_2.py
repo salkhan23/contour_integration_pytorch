@@ -105,7 +105,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # print("Channel mean {}, std {}".format(meta_data['channel_mean'], meta_data['channel_std']))
 
     # Pre-processing
-    transforms_list = [transforms.Normalize(mean=ch_mean, std=ch_std)]
+    transforms_list = [
+        transforms.Normalize(mean=ch_mean, std=ch_std),
+        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+    ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
     train_set = dataset_biped.BipedDataSet(
