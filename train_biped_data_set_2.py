@@ -61,10 +61,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     num_epochs = train_params['num_epochs']
 
     # Optional
-    lambda1 = train_params.get('gaussian_reg_weight', None)
-    gaussian_kernel_sigma = train_params.get('gaussian_reg_sigma', None)
+    lambda1 = train_params.get('gaussian_reg_weight', 0)
+    gaussian_kernel_sigma = train_params.get('gaussian_reg_sigma', 0)
     use_gaussian_reg_on_lateral_kernels = False
-    if lambda1 is not None and gaussian_kernel_sigma is not None:
+    if lambda1 is not 0 and gaussian_kernel_sigma is not 0:
         use_gaussian_reg_on_lateral_kernels = True
 
     # -----------------------------------------------------------------------------------
