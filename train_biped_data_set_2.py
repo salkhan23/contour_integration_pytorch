@@ -501,8 +501,10 @@ if __name__ == '__main__':
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
-    cont_int_layer = new_control_models.ControlMatchParametersLayer(
-        lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    #     lateral_e_size=15, lateral_i_size=15)
+    cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
