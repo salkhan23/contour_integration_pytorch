@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------
-# Get performance or view perdictions of a trained model on the contour integration
+# Get performance or view predictions of a trained model on the contour integration
 # dataset
 # ---------------------------------------------------------------------------------------
 import os
@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     saved_model = \
         'results/biped' \
-        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_puncture100_20200401_201840' \
-        '/best_accuracy.pth'
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200503_182742_100_punct_fwhm_20_transparency_0' \
+        '/last_epoch.pth'
 
     data_set_dir = '/home/salman/workspace/pytorch/MBIPED/dataset/BIPED/edges'
 
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # Loss Function
     # -----------------------------------------------------------------------------------
     criterion = nn.BCEWithLogitsLoss().to(device)
-    detect_thres = 0.5
+    detect_thres = 0.3
 
     # -----------------------------------------------------------------------------------
     # Main Loop
@@ -126,25 +126,31 @@ if __name__ == "__main__":
             display_img = img.detach().cpu().numpy()
             display_img = np.squeeze(display_img)
             display_img = np.transpose(display_img, axes=(1, 2, 0))
+            display_img = (display_img - display_img.min()) / \
+                (display_img.max() - display_img.min())
 
-            f, ax_arr = plt.subplots(1, 3)
+            f, ax_arr = plt.subplots(2, 2)
 
-            ax_arr[0].imshow(display_img)
-            ax_arr[0].set_title("Image")
+            ax_arr[0][0].imshow(display_img)
+            ax_arr[0][0].set_title("Image")
 
             label = label.detach().cpu().numpy()
             label = np.squeeze(label)
 
-            p = ax_arr[1].imshow(label)
-            f.colorbar(p, ax=ax_arr[1], orientation="horizontal")
-            ax_arr[1].set_title("Label")
+            p = ax_arr[1][0].imshow(label)
+            # f.colorbar(p, ax=ax_arr[1], orientation="horizontal")
+            ax_arr[1][0].set_title("GT")
 
             label_out = label_out.detach().cpu().numpy()
             label_out = np.squeeze(label_out)
 
-            p = ax_arr[2].imshow(label_out)
-            f.colorbar(p, ax=ax_arr[2], orientation="horizontal")
-            ax_arr[2].set_title('predictions')
+            p = ax_arr[0][1].imshow(label_out)
+            f.colorbar(p, ax=ax_arr[0][1], orientation="vertical")
+            ax_arr[0][1].set_title('Model Output')
+
+            p1 = ax_arr[1][1].imshow(np.squeeze(preds))
+            # f.colorbar(p, ax=ax_arr[1][1], orientation="horizontal")
+            ax_arr[1][1].set_title('Thresholded ({}) output'.format(detect_thres))
 
             # Plot Contour Integration Layer Input and output
             # ---------------------------------------------------------------------------

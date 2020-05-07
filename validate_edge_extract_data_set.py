@@ -64,6 +64,11 @@ if __name__ == "__main__":
         '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_puncture100_20200401_201840' \
         '/best_accuracy.pth'
 
+    # saved_model = \
+    #     'results/biped' \
+    #     '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200503_182742_100_punct_fwhm_20_transparency_0' \
+    #     '/last_epoch.pth'
+
     data_set_dir = "./data/edge_detection_data_set"
 
     # ---------------------------------------------------
@@ -88,7 +93,7 @@ if __name__ == "__main__":
     # Pre-processing
     pre_process_transforms = transforms.Compose([
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=1),
+        utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0),
     ])
 
     val_set = dataset_edge.EdgeDataSet(
@@ -126,7 +131,8 @@ if __name__ == "__main__":
             batch_loss = criterion(label_out, label.float())
 
             preds = (torch.sigmoid(label_out) > detect_thres)
-            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+            e_iou += utils.intersection_over_union(
+                preds.float(), label.float()).cpu().detach().numpy()
 
             # Before visualizing Sigmoid the output. This is already done in the loss function
             label_out = torch.sigmoid(label_out)
@@ -136,25 +142,31 @@ if __name__ == "__main__":
             display_img = img.detach().cpu().numpy()
             display_img = np.squeeze(display_img)
             display_img = np.transpose(display_img, axes=(1, 2, 0))
+            display_img = (display_img - display_img.min()) / \
+                          (display_img.max() - display_img.min())
 
-            f, ax_arr = plt.subplots(1, 3)
+            f, ax_arr = plt.subplots(2, 2)
 
-            ax_arr[0].imshow(display_img)
-            ax_arr[0].set_title("Image")
+            ax_arr[0][0].imshow(display_img)
+            ax_arr[0][0].set_title("Image")
 
             label = label.detach().cpu().numpy()
             label = np.squeeze(label)
 
-            p = ax_arr[1].imshow(label)
-            f.colorbar(p, ax=ax_arr[1], orientation="horizontal")
-            ax_arr[1].set_title("Label")
+            p = ax_arr[1][0].imshow(label)
+            # f.colorbar(p, ax=ax_arr[1], orientation="horizontal")
+            ax_arr[1][0].set_title("GT")
 
             label_out = label_out.detach().cpu().numpy()
             label_out = np.squeeze(label_out)
 
-            p = ax_arr[2].imshow(label_out)
-            f.colorbar(p, ax=ax_arr[2], orientation="horizontal")
-            ax_arr[2].set_title('predictions')
+            p = ax_arr[0][1].imshow(label_out)
+            f.colorbar(p, ax=ax_arr[0][1], orientation="vertical")
+            ax_arr[0][1].set_title('Model Output')
+
+            p1 = ax_arr[1][1].imshow(np.squeeze(preds))
+            # f.colorbar(p, ax=ax_arr[1][1], orientation="horizontal")
+            ax_arr[1][1].set_title('Thresholded ({}) output'.format(detect_thres))
 
             # Plot Contour Integration Layer Input and output
             # ---------------------------------------------------------------------------
@@ -192,7 +204,8 @@ if __name__ == "__main__":
 
             f3, ax_arr = plt.subplots(1, 2)
             f3.suptitle("Modifications added by the contour integration layer")
-            p = ax_arr[0].imshow(normed_diff, cmap='seismic', vmin=-normed_diff.max(), vmax=normed_diff.max())
+            p = ax_arr[0].imshow(
+                normed_diff, cmap='seismic', vmin=-normed_diff.max(), vmax=normed_diff.max())
             f.colorbar(p, ax=ax_arr[0], orientation="horizontal")
             ax_arr[0].set_title("Difference")
             p = ax_arr[1].imshow(normed_gain, cmap='seismic', vmin=-1, vmax=1)
