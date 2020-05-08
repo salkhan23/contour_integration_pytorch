@@ -488,7 +488,7 @@ if __name__ == '__main__':
         'data_set_dir': './data/BIPED/edges',
         'resize_size': (256, 256),
         'train_subset_size': 20000,
-        'test_subset_size': 8,
+        # 'test_subset_size': 8,
     }
 
     train_parameters = {
