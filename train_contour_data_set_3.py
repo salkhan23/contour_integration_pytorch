@@ -17,7 +17,7 @@ import torch.optim as optim
 import dataset
 import utils
 import models.new_piech_models as new_piech_models
-from models.new_control_models import ControlMatchParametersModel
+import models.new_control_models as new_control_models
 import validate_contour_data_set
 
 import experiment_gain_vs_len
@@ -54,7 +54,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     # Validate training parameters
     # ----------------------------
-    required_training_params = ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
+    required_training_params = \
+        ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
     for key in required_training_params:
         assert key in train_params, 'training_params does not have required key {}'.format(key)
     train_batch_size = train_params['train_batch_size']
@@ -219,7 +220,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             e_loss += total_loss.item()
 
             preds = (torch.sigmoid(label_out) > detect_thres)
-            e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+            e_iou += utils.intersection_over_union(
+                preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(train_data_loader)
         e_iou = e_iou / len(train_data_loader)
@@ -252,7 +254,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
                 e_loss += total_loss.item()
                 preds = (torch.sigmoid(label_out) > detect_thres)
-                e_iou += utils.intersection_over_union(preds.float(), label.float()).cpu().detach().numpy()
+                e_iou += utils.intersection_over_union(
+                    preds.float(), label.float()).cpu().detach().numpy()
 
         e_loss = e_loss / len(val_data_loader)
         e_iou = e_iou / len(val_data_loader)
@@ -288,8 +291,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("  Gabor Sets     : {}\n".format(gabor_set_arr))
     file_handle.write("  Train Set Size : {}\n".format(train_subset_size))
     file_handle.write("  Test Set Size  : {}\n".format(test_subset_size))
-    file_handle.write("Train Set Mean {}, std {}\n".format(train_set.data_set_mean, train_set.data_set_std))
-    file_handle.write("Validation Set Mean {}, std {}\n".format(val_set.data_set_mean, train_set.data_set_std))
+    file_handle.write("Train Set Mean {}, std {}\n".format(
+        train_set.data_set_mean, train_set.data_set_std))
+    file_handle.write("Validation Set Mean {}, std {}\n".format(
+        val_set.data_set_mean, train_set.data_set_std))
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
@@ -319,9 +324,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         # print fixed hyper parameters
         file_handle.write("Contour Integration Layer:\n")
         file_handle.write("Type : {}\n".format(model.contour_integration_layer.__class__.__name__))
-        cont_int_layer_vars = [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+        cont_int_layer_vars = \
+            [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
         for var in sorted(cont_int_layer_vars):
-            file_handle.write("\t{}: {}\n".format(var, getattr(model.contour_integration_layer, var)))
+            file_handle.write("\t{}: {}\n".format(
+                var, getattr(model.contour_integration_layer, var)))
 
         # print parameter names and whether they are trainable
         file_handle.write("Contour Integration Layer Parameters\n")
@@ -346,14 +353,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. Time {}".format(
-            epoch + 1, num_epochs,
-            train_history[epoch][0],
-            train_history[epoch][1],
-            val_history[epoch][0],
-            val_history[epoch][1],
-            datetime.now() - epoch_start_time
-        ))
+        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. "
+              "Time {}".format(
+                epoch + 1, num_epochs,
+                train_history[epoch][0],
+                train_history[epoch][1],
+                val_history[epoch][0],
+                val_history[epoch][1],
+                datetime.now() - epoch_start_time))
 
         if val_history[epoch][1] > best_iou:
             best_iou = val_history[epoch][1]
@@ -413,8 +420,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plt.ylabel("IoU")
     plt.grid(True)
     plt.ylim([0, 1])
-    plt.axhline(np.mean(c_len_iou_arr), label='average_iou = {:0.2f}'.format(np.mean(c_len_iou_arr)),
-                color='red', linestyle=':')
+    plt.axhline(np.mean(c_len_iou_arr), label='average_iou = {:0.2f}'.format(
+        np.mean(c_len_iou_arr)), color='red', linestyle=':')
     plt.legend()
     plt.title("IoU vs Length (Validation Dataset-Straight Contours)")
     f.savefig(os.path.join(results_store_dir, 'iou_vs_len.jpg'), format='jpg')
@@ -445,7 +452,7 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir':  "./data/channel_wise_optimal_full14_frag7",
-        # 'train_subset_size': 20000,
+        'train_subset_size': 20000,
         # 'test_subset_size': 2000
     }
 
@@ -458,8 +465,14 @@ if __name__ == '__main__':
         'gaussian_reg_sigma': 10,
     }
 
+    # Build Model
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    #     lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
     # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
