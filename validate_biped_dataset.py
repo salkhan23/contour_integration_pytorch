@@ -2,7 +2,6 @@
 # Get performance or view predictions of a trained model on the contour integration
 # dataset
 # ---------------------------------------------------------------------------------------
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -13,6 +12,7 @@ from torch.utils.data import DataLoader
 
 import dataset_biped
 import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
 import utils
 
 
@@ -45,17 +45,29 @@ if __name__ == "__main__":
     # Initialization
     # -----------------------------------------------------------------------------------
     random_seed = 5
+    data_set_dir = './data/BIPED/edges'
 
+    # # Control Model
+    # ----------------
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    # #     lateral_e_size=15, lateral_i_size=15)
+    # saved_model = \
+    #     'results/biped' \
+    #     '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
+    #     '/last_epoch.pth'
+
+    # Model
+    # -----
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
-
     saved_model = \
         'results/biped' \
-        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200503_182742_100_punct_fwhm_20_transparency_0' \
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base' \
         '/last_epoch.pth'
 
-    data_set_dir = '/home/salman/workspace/pytorch/MBIPED/dataset/BIPED/edges'
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     # ---------------------------------------------------
     plt.ion()
@@ -76,6 +88,7 @@ if __name__ == "__main__":
     # Pre-processing
     pre_process_transforms = transforms.Compose([
         transforms.Normalize(mean=ch_mean, std=ch_std),
+        utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
     ])
 
     val_set = dataset_biped.BipedDataSet(
@@ -115,8 +128,9 @@ if __name__ == "__main__":
             batch_loss = criterion(label_out, label.float())
 
             preds = (torch.sigmoid(label_out) > detect_thres)
-            e_iou += utils.intersection_over_union(
+            iou = utils.intersection_over_union(
                 preds.float(), label.float()).cpu().detach().numpy()
+            e_iou += iou
 
             # Before visualizing Sigmoid the output. This is already done in the loss function
             label_out = torch.sigmoid(label_out)
@@ -129,7 +143,7 @@ if __name__ == "__main__":
             display_img = (display_img - display_img.min()) / \
                 (display_img.max() - display_img.min())
 
-            f, ax_arr = plt.subplots(2, 2)
+            f, ax_arr = plt.subplots(2, 2, figsize=(11, 9))
 
             ax_arr[0][0].imshow(display_img)
             ax_arr[0][0].set_title("Image")
@@ -150,7 +164,7 @@ if __name__ == "__main__":
 
             p1 = ax_arr[1][1].imshow(np.squeeze(preds))
             # f.colorbar(p, ax=ax_arr[1][1], orientation="horizontal")
-            ax_arr[1][1].set_title('Thresholded ({}) output'.format(detect_thres))
+            ax_arr[1][1].set_title('Threshold {} output. IoU={:0.4f}'.format(detect_thres, iou))
 
             # Plot Contour Integration Layer Input and output
             # ---------------------------------------------------------------------------
