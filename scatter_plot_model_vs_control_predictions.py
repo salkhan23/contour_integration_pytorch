@@ -46,9 +46,15 @@ if __name__ == "__main__":
     # Initialization
     # -----------------------------------------------------------------------------------
 
-    model_predictions_dir = './results/predictions/biped_dataset_val/model'
-    control_predictions_dir = './results/predictions/biped_dataset_val/control'
-    gt_dir = './results/predictions/biped_dataset_val/gt'
+    model_predictions_dir = \
+        './results/biped' \
+        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base/predictions'
+
+    control_predictions_dir = \
+        './results/biped' \
+        '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base/predictions'
+
+    gt_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
     th_arr = np.arange(0, 1.1, 0.1)
 
@@ -88,8 +94,8 @@ if __name__ == "__main__":
     for idx, img in enumerate(sorted(list_of_files)):
         print("[{}] processing image: {}".format(idx, img))
 
-        gt = np.asarray(
-            Image.open(os.path.join(gt_dir, img)).convert("1"))
+        gt = Image.open(os.path.join(gt_dir, img)).convert("1")
+        gt = np.asarray(gt.resize((256, 256)))
         model_out = np.asarray(
             Image.open(os.path.join(model_predictions_dir, img)).convert("L")) / 255.
         control_out = np.asarray(
