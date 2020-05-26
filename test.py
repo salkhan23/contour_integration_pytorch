@@ -58,7 +58,7 @@ if __name__ == "__main__":
     saved_model = \
         'results/new_model_resnet_based/' \
         'ContourIntegrationResnet50_ControlMatchParametersLayer_20200508_223114_baseline' \
-        '/last_epoch.pth'
+        '/best_accuracy.pth'
 
 
     # # Model
