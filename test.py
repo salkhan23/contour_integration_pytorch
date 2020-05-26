@@ -147,11 +147,12 @@ if __name__ == "__main__":
                 label_out = torch.sigmoid(label_out)
 
                 if save_predictions:
-                    plt.imsave(
-                        fname=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]),
-                        arr=np.squeeze(label_out),
-                        cmap=plt.cm.gray,
-                    )
+                    # plt.imsave(
+                    #     fname=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]),
+                    #     arr=np.squeeze(label_out.detach().cpu().numpy()),
+                    #     cmap=plt.cm.gray,
+                    # )
+                    np.save(file=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]), arr=np.squeeze(label_out.detach().cpu().numpy()))
 
         e_loss = e_loss / len(val_data_loader)
         e_iou = e_iou / len(val_data_loader)
