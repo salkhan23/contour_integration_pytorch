@@ -51,15 +51,24 @@ if __name__ == "__main__":
 
     # # Control Model
     # ----------------
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+        lateral_e_size=15, lateral_i_size=15)
+    saved_model = \
+        'results/new_model_resnet_based/' \
+        'ContourIntegrationResnet50_ControlMatchParametersLayer_20200508_223114_baseline' \
+        '/last_epoch.pth'
+
 
     # # Model
     # # -----
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    saved_model =\
-        "./results/new_model_resnet_based/" \
-        "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline" \
-        "/best_accuracy.pth"
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # saved_model =\
+    #     "./results/new_model_resnet_based/" \
+    #     "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline" \
+    #     "/best_accuracy.pth"
 
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
