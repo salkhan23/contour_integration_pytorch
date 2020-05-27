@@ -182,7 +182,7 @@ if __name__ == "__main__":
     for bin_idx in range(len(th_arr) - 1):
         print("bin [{:0.1f},{:0.1f}]. above {}, below {}, on {}".format(
             th_arr[bin_idx], th_arr[bin_idx + 1],
-            edges_count[bin_idx, 0], edges_count[bin_idx, 1], edges_count[bin_idx, 2]))
+            non_edges_count[bin_idx, 0], non_edges_count[bin_idx, 1], non_edges_count[bin_idx, 2]))
 
     # Plot Above, below and On diagonal counts for each threshold bin
     plt.figure()
