@@ -56,10 +56,9 @@ if __name__ == "__main__":
     cont_int_layer = new_control_models.ControlMatchParametersLayer(
         lateral_e_size=15, lateral_i_size=15)
     saved_model = \
-        'results/new_model_resnet_based/' \
+        './results/new_model_resnet_based/' \
         'ContourIntegrationResnet50_ControlMatchParametersLayer_20200508_223114_baseline' \
         '/best_accuracy.pth'
-
 
     # # Model
     # # -----
@@ -156,12 +155,24 @@ if __name__ == "__main__":
                 label_out = torch.sigmoid(label_out)
 
                 if save_predictions:
+
+                    filename = list_of_files[iteration].split('/')[-1]
+                    file_path = os.path.dirname(list_of_files[iteration].split('labels')[-1])
+
+                    store_path = preds_dir + file_path
+
+                    if not os.path.exists(store_path):
+                        os.makedirs(store_path)
+
+                    np.save(
+                        file=os.path.join(store_path, filename),
+                        arr=np.squeeze(label_out.detach().cpu().numpy()))
+
                     # plt.imsave(
                     #     fname=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]),
                     #     arr=np.squeeze(label_out.detach().cpu().numpy()),
                     #     cmap=plt.cm.gray,
                     # )
-                    np.save(file=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]), arr=np.squeeze(label_out.detach().cpu().numpy()))
 
         e_loss = e_loss / len(val_data_loader)
         e_iou = e_iou / len(val_data_loader)
