@@ -130,8 +130,20 @@ class Fields1993(Dataset):
             use_file_names = [file_names[idx] for idx in use_idxs]
             file_names = use_file_names
 
+        # Sort the list of files
         self.images = [os.path.join(image_dir, x + ".png") for x in file_names]
         self.labels = [os.path.join(label_dir, x + ".npy") for x in file_names]
+
+        self.images = np.array(self.images)
+        self.labels = np.array(self.labels)
+
+        sort_idxs = np.argsort(self.images)
+
+        self.images = self.images[sort_idxs]
+        self.labels = self.labels[sort_idxs]
+
+        self.images = self.images.tolist()
+        self.labels = self.labels.tolist()
 
         assert (len(self.images) == len(self.labels))
 
