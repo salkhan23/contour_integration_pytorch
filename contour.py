@@ -5,39 +5,41 @@ import matplotlib.pyplot as plt
 import matplotlib.image as img
 import pdb
 
+MIN_VALID_CONTOUR_LEN = 30
 
-def get_random_point_on_an_edge(image):
+
+def get_random_point_on_an_edge(in_img):
     """
-    :param image: 2D array of edge (1) and non-edge (0) pixels
+    :param in_img: 2D array of edge (1) and non-edge (0) pixels
     :return: row,col of a random point that is on one of the edges
     """
-    edge_indices = np.where(image.flatten())[0]
+    edge_indices = np.where(in_img.flatten())[0]
     random_edge_index = np.random.choice(edge_indices)
-    row_ind = int(np.floor(random_edge_index / image.shape[1]))
-    col_ind = random_edge_index - row_ind*image.shape[1]
-    return (row_ind, col_ind)
+    row_ind = int(np.floor(random_edge_index / in_img.shape[1]))
+    col_ind = random_edge_index - row_ind * in_img.shape[1]
+    return row_ind, col_ind
 
 
-def get_neighbourhood(image, point):
+def get_neighbourhood(in_img, point):
     """
-    :param image: 2D array of edge (1) and non-edge (0) pixels
+    :param in_img: 2D array of edge (1) and non-edge (0) pixels
     :param point: row, col of a point in the image
     :return: 3x3 patch of image with point at centre
     """
     def get_offset_range(image_dimension, coordinate):
         if coordinate == 0:
-            return [0,1]
+            return [0, 1]
         elif coordinate == image_dimension - 1:
-            return [-1,0]
+            return [-1, 0]
         else:
-            return [-1,1]
+            return [-1, 1]
 
-    ro = get_offset_range(image.shape[0], point[0])
-    co = get_offset_range(image.shape[1], point[1])
+    ro = get_offset_range(in_img.shape[0], point[0])
+    co = get_offset_range(in_img.shape[1], point[1])
     p = point
 
-    result = np.zeros((3,3))
-    neighbourhood = image[p[0]+ro[0]:p[0]+ro[1]+1, p[1]+co[0]:p[1]+co[1]+1]
+    result = np.zeros((3, 3))
+    neighbourhood = in_img[p[0] + ro[0]:p[0] + ro[1] + 1, p[1] + co[0]:p[1] + co[1] + 1]
     result[1+ro[0]:1+ro[1]+1, 1+co[0]:1+co[1]+1] = neighbourhood
     return result
 
@@ -105,9 +107,9 @@ def difference_of_angles(a1, a2):
     return d
 
 
-def extend(image, contour):
+def extend(in_img, contour):
     """
-    :param image: 2D array of edge (1) and non-edge (0) pixels
+    :param in_img: 2D array of edge (1) and non-edge (0) pixels
     :param contour: list of points that makes up part of a contour
     :return: True if the contour keeps going in this direction (can extend further)
     """
@@ -125,7 +127,7 @@ def extend(image, contour):
     contour_angle = angle_between_points(contour[-3], contour[-1])
 
     def candidate_valid(c):
-        return c[0] >= 0 and c[0] < image.shape[0] and c[1] >= 0 and c[1] < image.shape[1]
+        return 0 <= c[0] < in_img.shape[0] and 0 <= c[1] < in_img.shape[1]
 
     best_difference = np.pi
     best_candidate = None
@@ -133,7 +135,7 @@ def extend(image, contour):
         if candidate_valid(candidate):
             candidate_angle = angle_between_points(contour[-2], candidate)
             difference = abs(difference_of_angles(candidate_angle, contour_angle))
-            if difference < best_difference and image[candidate[0]][candidate[1]] == 1:
+            if difference < best_difference and in_img[candidate[0]][candidate[1]] == 1:
                 best_difference = difference
                 best_candidate = candidate
 
@@ -152,35 +154,37 @@ def extend(image, contour):
     return keep_going
 
 
-def show_contour(image, contour):
+def show_contour(in_img, contour):
     for point in contour:
-        image[point[0], point[1]] = .5
-    plt.imshow(image)
-    print(contour)
+        in_img[point[0], point[1]] = .5
+    plt.imshow(in_img)
+    # print(contour)
     # plt.show()
 
 
-def get_random_contour(image, show=False):
+def get_random_contour(in_img, show=False):
     done = False
+    contour = []
+
     while not done:
-        point = get_random_point_on_an_edge(image)
-        n = get_neighbourhood(image, point)
+        point = get_random_point_on_an_edge(in_img)
+        n = get_neighbourhood(in_img, point)
 
         if has_clean_line(n):
             contour = init_contour(point, n)
 
             ok = True
             while ok:
-                ok = extend(image, contour)
+                ok = extend(in_img, contour)
 
             # go the other way
             contour = list(reversed(contour))
             ok = True
             while ok:
-                ok = extend(image, contour)
+                ok = extend(in_img, contour)
 
-            if len(contour) > 30:
-                show_contour(image, contour)
+            if len(contour) > MIN_VALID_CONTOUR_LEN and show:
+                show_contour(in_img, contour)
                 done = True
 
     return contour
