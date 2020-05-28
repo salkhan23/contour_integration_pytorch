@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import os
 from PIL import Image
 import pdb
-import pdb
 import matplotlib as mpl
 
 mpl.rcParams.update({

@@ -112,7 +112,7 @@ if __name__ == "__main__":
         dataset=val_data_set,
         num_workers=4,
         batch_size=1,
-        shuffle=False,
+        shuffle=False,  # Do not change needed to save predictions with correct file names
         pin_memory=True
     )
 

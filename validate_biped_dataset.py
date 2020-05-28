@@ -1,6 +1,10 @@
 # ---------------------------------------------------------------------------------------
-# Get performance or view predictions of a trained model on the contour integration
-# dataset
+# Get or view PREDICTIONs of a trained model on the contour integration dataset
+# This is equivalent to the validate_biped_dataset.py script but for the contour dataset.
+#
+# validate_contour_data_set.py calculates IoU scores for different subsets of the data,
+# ie. per length, per length for straight contours, per length for curved contours.
+# Both scripts can be used to view predictions.
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -109,7 +113,7 @@ if __name__ == "__main__":
         dataset=val_set,
         num_workers=4,
         batch_size=1,
-        shuffle=False, # Do not change this, needed to save predictions with correct file names
+        shuffle=False,  # Do not change needed to save predictions with correct file names
         pin_memory=True
     )
 
