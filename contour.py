@@ -160,7 +160,7 @@ def show_contour(in_img, contour):
     # plt.show()
 
 
-def get_random_contour(in_img, show=False, min_contour_len=30):
+def get_random_contour(in_img, show=False, min_contour_len=30, max_contour_len=None):
     done = False
     contour = []
 
@@ -182,9 +182,14 @@ def get_random_contour(in_img, show=False, min_contour_len=30):
                 ok = extend(in_img, contour)
 
             if len(contour) > min_contour_len:
-                if show:
-                    show_contour(in_img, contour)
+
                 done = True
+
+                if max_contour_len is not None and len(contour) > max_contour_len:
+                    done = False
+
+                if done and show:
+                    show_contour(in_img, contour)
 
     return contour
 
