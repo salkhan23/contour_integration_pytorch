@@ -183,25 +183,29 @@ def get_random_contour(in_img, show=False):
             while ok:
                 ok = extend(in_img, contour)
 
-            if len(contour) > MIN_VALID_CONTOUR_LEN and show:
-                show_contour(in_img, contour)
+            if len(contour) > MIN_VALID_CONTOUR_LEN:
+                if show:
+                    show_contour(in_img, contour)
                 done = True
 
     return contour
 
 
 # ---------------------------------------------------------------------------------------
-plt.ion()
-
-# hard-coded image (part of image)
-filename = 'data/BIPED/edges/edge_maps/test/rgbr/RGB_008.png'
-
-for idx in range(10):
-    image = img.imread(filename)
-    # image = image[:300,:300]
-    print("Contour Length {}".format(len(get_random_contour(image, show=True))))
-    pdb.set_trace()
-
+# Main
 # ---------------------------------------------------------------------------------------
-print("End")
-pdb.set_trace()
+if __name__ == "__main__":
+    plt.ion()
+
+    # hard-coded image (part of image)
+    filename = 'data/BIPED/edges/edge_maps/test/rgbr/RGB_008.png'
+
+    for idx in range(10):
+        image = img.imread(filename)
+        # image = image[:300,:300]
+        print("Contour Length {}".format(len(get_random_contour(image, show=True))))
+        pdb.set_trace()
+
+    # ---------------------------------------------------------------------------------------
+    print("End")
+    pdb.set_trace()
