@@ -5,8 +5,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as img
 import pdb
 
-MIN_VALID_CONTOUR_LEN = 30
-
 
 def get_random_point_on_an_edge(in_img):
     """
@@ -162,7 +160,7 @@ def show_contour(in_img, contour):
     # plt.show()
 
 
-def get_random_contour(in_img, show=False):
+def get_random_contour(in_img, show=False, min_contour_len=30):
     done = False
     contour = []
 
@@ -183,7 +181,7 @@ def get_random_contour(in_img, show=False):
             while ok:
                 ok = extend(in_img, contour)
 
-            if len(contour) > MIN_VALID_CONTOUR_LEN:
+            if len(contour) > min_contour_len:
                 if show:
                     show_contour(in_img, contour)
                 done = True
