@@ -90,15 +90,15 @@ class BipedDataSet(Dataset):
             tuple: (image, target) where target is the image segmentation.
         """
         img = Image.open(self.images[index]).convert('RGB')
-        target = Image.open(self.labels[index]).convert('L')  # [0,1] Mask
+        target = Image.open(self.labels[index]).convert('L')  # Greyscale
 
         if self.resize is not None:
             img = self.resize(img)
-            target = self.resize(target)
+            target = self.resize(target)  # uses interpolation
 
         img = transform_functional.to_tensor(img)
         target = transform_functional.to_tensor(target)
-        target[target > 0.1] = 1  # necessary for smooth contours
+        target[target > 0.1] = 1  # necessary for smooth contours after interpolation
 
         if self.transform is not None:
             img = self.transform(img)
