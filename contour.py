@@ -149,6 +149,11 @@ def extend(in_img, contour):
             if difference_of_angles(last_angle, previous_angle) >= np.pi/4:
                 keep_going = False
 
+        # Stop if there is an overlap of previous points (Guard against circles)
+        if len(set(contour)) < len(contour):
+            print("overlap with previous detected!")
+            keep_going = False
+
     return keep_going
 
 
@@ -160,15 +165,18 @@ def show_contour(in_img, contour):
     # plt.show()
 
 
-def get_random_contour(in_img, show=False, min_contour_len=30, max_contour_len=None):
+def get_random_contour(
+        in_img, show=False, min_contour_len=30, max_contour_len=None, max_iterations=20000):
     done = False
     contour = []
 
+    iteration = 0
     while not done:
         point = get_random_point_on_an_edge(in_img)
         n = get_neighbourhood(in_img, point)
 
         if has_clean_line(n):
+
             contour = init_contour(point, n)
 
             ok = True
@@ -190,6 +198,15 @@ def get_random_contour(in_img, show=False, min_contour_len=30, max_contour_len=N
 
                 if done and show:
                     show_contour(in_img, contour)
+
+        if not done:
+            iteration += 1
+            # print("Iteration {}".format(iteration))
+            if iteration >= max_iterations:
+                print("Could not find valid contour after {} iterations. Giving up".format(
+                    max_iterations))
+                contour = []  # return an empty contour
+                done = True
 
     return contour
 
