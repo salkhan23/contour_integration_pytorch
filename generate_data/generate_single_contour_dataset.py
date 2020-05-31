@@ -25,7 +25,7 @@ if __name__ == "__main__":
     input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
     input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
-    data_store_dir = './data/test'
+    data_store_dir = './data/single_contour_natural_images'
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
 
