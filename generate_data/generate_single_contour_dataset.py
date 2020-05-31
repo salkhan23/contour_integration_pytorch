@@ -25,13 +25,14 @@ if __name__ == "__main__":
     input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
     input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
-    data_store_dir = './data/single_contour_natural_images'
+    # data_store_dir = './data/single_contour_natural_images'
+    data_store_dir = './data/test'
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
 
     script_start_time = datetime.now()
 
-    min_pixels_per_bin = 25000
+    min_pixels_per_bin = 25
 
     # Immutable
     # --------------------------------------
@@ -61,19 +62,19 @@ if __name__ == "__main__":
     for bin_idx, bin_len in enumerate(contour_lengths_bins):
 
         min_len = bin_len
-        max_len = None
+        max_len = 500
         bin_start_time = datetime.now()
 
         if bin_idx < len(contour_lengths_bins) - 1:
             max_len = contour_lengths_bins[bin_idx + 1]
 
-        print("Generating Images with Contour length in [{}, {}]".format(min_len, max_len))
+        print("Generating Images with Contour length in [{}, {}]".format(min_len, max_len - 1))
 
         # Create the bin data store directories
         bin_imgs_dir = \
-            os.path.join(data_store_dir, 'len_{}_{}'.format(bin_len, max_len), 'images')
+            os.path.join(data_store_dir, 'len_{}_{}'.format(bin_len, max_len - 1), 'images')
         bin_labels_dir = \
-            os.path.join(data_store_dir, 'len_{}-{}'.format(bin_len, max_len), 'labels')
+            os.path.join(data_store_dir, 'len_{}_{}'.format(bin_len, max_len - 1), 'labels')
         if not os.path.exists(bin_imgs_dir):
             os.makedirs(bin_imgs_dir)
         if not os.path.exists(bin_labels_dir):
