@@ -12,6 +12,8 @@ import pdb
 from PIL import Image
 from datetime import datetime
 
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 import contour
 
 if __name__ == "__main__":
@@ -20,16 +22,16 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 7
 
-    input_data_imgs_dir = '../data/BIPED/edges/imgs/test/rgbr'
-    input_data_labels_dir = '../data/BIPED/edges/edge_maps/test/rgbr'
+    input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
+    input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
-    data_store_dir = '../data/single_contour_natural_images'
+    data_store_dir = './data/test'
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
 
     script_start_time = datetime.now()
 
-    min_pixels_per_bin = 20000
+    min_pixels_per_bin = 25000
 
     # Immutable
     # --------------------------------------
@@ -68,8 +70,10 @@ if __name__ == "__main__":
         print("Generating Images with Contour length in [{}, {}]".format(min_len, max_len))
 
         # Create the bin data store directories
-        bin_imgs_dir = os.path.join(data_store_dir, 'len_{}'.format(bin_len), 'images')
-        bin_labels_dir = os.path.join(data_store_dir, 'len_{}'.format(bin_len), 'labels')
+        bin_imgs_dir = \
+            os.path.join(data_store_dir, 'len_{}_{}'.format(bin_len, max_len), 'images')
+        bin_labels_dir = \
+            os.path.join(data_store_dir, 'len_{}-{}'.format(bin_len, max_len), 'labels')
         if not os.path.exists(bin_imgs_dir):
             os.makedirs(bin_imgs_dir)
         if not os.path.exists(bin_labels_dir):
