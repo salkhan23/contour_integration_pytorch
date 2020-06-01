@@ -18,7 +18,7 @@ from models import new_control_models
 
 
 class SingleContourDataSet(Dataset):
-    def __init__(self, data_dir,  transform=None):
+    def __init__(self, data_dir, c_len_sub_dir, transform=None):
 
         self.transform = transform
 
@@ -26,8 +26,13 @@ class SingleContourDataSet(Dataset):
             raise Exception("Cannot find data dir {}".format(data_dir))
         self.data_dir = data_dir
 
-        img_dir = os.path.join(data_dir, 'images')
-        label_dir = os.path.join(data_dir, 'labels')
+        img_dir = os.path.join(data_dir, 'images', c_len_sub_dir)
+        label_dir = os.path.join(data_dir, 'labels', c_len_sub_dir)
+
+        if not os.path.exists(img_dir):
+            raise Exception("Images dir {} DNE".format(img_dir))
+        if not os.path.exists(label_dir):
+            raise Exception("Labels dir {} DNE".format(label_dir))
 
         list_of_files = os.listdir(img_dir)
         self.images = [os.path.join(img_dir, file) for file in list_of_files]
@@ -60,7 +65,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_set_dir = './data/single_contour_natural_images'
+    data_set_dir = './data/single_contour_natural_images_2'
     random_seed = 5
 
     save_predictions = True
@@ -98,12 +103,12 @@ if __name__ == "__main__":
     model = net.to(device)
     model.load_state_dict(torch.load(saved_model, map_location=device))
 
-    list_of_sub_dirs = os.listdir(data_set_dir)
-    list_of_sub_dirs.sort(key=lambda x: float(x.strip('len_')))
+    list_of_sub_dirs = os.listdir(os.path.join(data_set_dir, 'labels'))
+    list_of_sub_dirs.sort(key=lambda x1: float(x1.split('_')[1]))
 
     for sb_dir_idx, sub_dir in enumerate(list_of_sub_dirs):
 
-        print("Processing sub directory {} ...".format(sub_dir))
+        print("Processing contours of length {} ...".format(sub_dir))
 
         # Create the predictions store directory
         base_store_dir = os.path.dirname(saved_model)
@@ -127,7 +132,7 @@ if __name__ == "__main__":
             # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
         ])
 
-        dataset = SingleContourDataSet(os.path.join(data_set_dir, sub_dir), pre_process_transforms)
+        dataset = SingleContourDataSet(data_set_dir, sub_dir, pre_process_transforms)
         data_loader = DataLoader(
             dataset=dataset,
             num_workers=4,
