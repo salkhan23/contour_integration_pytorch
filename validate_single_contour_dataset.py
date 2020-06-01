@@ -154,6 +154,7 @@ if __name__ == "__main__":
                 # This is already done in the loss function
                 label_out = torch.sigmoid(label_out)
                 label_out = label * label_out
+                label_out = label_out.cpu().detach().numpy()
 
                 if save_predictions:
                     plt.imsave(
