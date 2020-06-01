@@ -113,7 +113,7 @@ if __name__ == "__main__":
         # Create the predictions store directory
         base_store_dir = os.path.dirname(saved_model)
         preds_dir = os.path.join(
-            base_store_dir, 'predictions_single_contour_dataset', sub_dir)
+            base_store_dir, 'predictions_{}'.format(data_set_dir.split('/')[-1]), sub_dir)
         if not os.path.exists(preds_dir):
             os.makedirs(preds_dir)
         # print('storing results @ {}'.format(preds_store_dir))
