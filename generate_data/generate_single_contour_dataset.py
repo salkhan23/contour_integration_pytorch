@@ -16,6 +16,8 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 import contour
 
+MAX_DUPLICATE_COUNT = 500
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -90,7 +92,7 @@ if __name__ == "__main__":
         list_of_contours = []  # list of saved (image name, contour) to prevent duplicating contours
         duplicates_count = 0
 
-        while bin_pixel_count <= min_pixels_per_bin:
+        while (bin_pixel_count <= min_pixels_per_bin) and (duplicates_count < MAX_DUPLICATE_COUNT):
 
             # Randomly choose an image from the start database to search for contours
             data_idx = np.random.randint(0, len(list_of_imgs))
@@ -112,7 +114,7 @@ if __name__ == "__main__":
                 label, min_contour_len=min_len, max_contour_len=max_len)
             len_single_contour = len(single_contour)
 
-            if (len_single_contour > 0) and (duplicates_count < 500):
+            if len_single_contour > 0:
                 # print("Contour of Length {} Found. Bin pixels count {}".format(
                 #     len_single_contour, bin_pixel_count))
 
@@ -126,6 +128,9 @@ if __name__ == "__main__":
                             is_unique = False
 
                 if is_unique:
+
+                    list_of_contours.append((img_file, single_contour))
+
                     # Create Single contour label
                     single_contour_label = np.zeros_like(label)
                     for point in single_contour:
