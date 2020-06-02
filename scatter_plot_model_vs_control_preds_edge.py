@@ -93,12 +93,23 @@ if __name__ == "__main__":
     for idx, img in enumerate(sorted(list_of_files)):
         print("[{}] processing image: {}".format(idx, img))
 
-        gt = Image.open(os.path.join(gt_dir, img)).convert("1")
-        gt = np.asarray(gt.resize((256, 256)))
+        gt = Image.open(os.path.join(gt_dir, img)).convert("L")
+        gt = np.asarray(gt.resize((256, 256), Image.BILINEAR)) / 255.0
+        gt[gt >= 0.1] = 1
+        gt[gt < 0.1] = 0
+
         model_out = np.asarray(
             Image.open(os.path.join(model_predictions_dir, img)).convert("L")) / 255.
         control_out = np.asarray(
             Image.open(os.path.join(control_predictions_dir, img)).convert("L")) / 255.
+
+        # f, ax_arr = plt.subplots(1, 3)
+        # ax_arr[0].imshow(gt)
+        # ax_arr[1].imshow(model_out * gt)
+        # ax_arr[2].imshow(control_out * gt)
+        #
+        # import pdb
+        # pdb.set_trace()
 
         # -------------------------------------------------------------------------------
         # Process Edges
