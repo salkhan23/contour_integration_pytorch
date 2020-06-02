@@ -25,7 +25,8 @@ if __name__ == "__main__":
     input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
     input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
-    data_store_dir = './data/single_contour_natural_images_2'
+    data_store_dir = './data/single_contour_natural_images_3'
+    print("Dataset will be stored @ {}".format(data_store_dir))
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
 
@@ -67,7 +68,8 @@ if __name__ == "__main__":
         if bin_idx < len(contour_lengths_bins) - 1:
             max_len = contour_lengths_bins[bin_idx + 1]
 
-        print("Generating Images/labels with Contour length in [{}, {}]".format(min_len, max_len - 1))
+        print("Generating Images/labels with Contour length in [{}, {}]".format(
+            min_len, max_len - 1))
 
         # Create the bin data store directories
         bin_imgs_dir = \
@@ -84,6 +86,9 @@ if __name__ == "__main__":
 
         bin_pixel_count = 0
         bin_img_count = 0
+
+        list_of_contours = []  # list of saved (image name, contour) to prevent duplicating contours
+        duplicates_count = 0
 
         while bin_pixel_count <= min_pixels_per_bin:
 
@@ -107,35 +112,50 @@ if __name__ == "__main__":
                 label, min_contour_len=min_len, max_contour_len=max_len)
             len_single_contour = len(single_contour)
 
-            if len_single_contour > 0:
+            if (len_single_contour > 0) and (duplicates_count < 500):
                 # print("Contour of Length {} Found. Bin pixels count {}".format(
                 #     len_single_contour, bin_pixel_count))
 
-                # Create Single contour label
-                single_contour_label = np.zeros_like(label)
-                for point in single_contour:
-                    single_contour_label[point[0], point[1]] = 1
+                # check for uniqueness
+                is_unique = True
+                for (stored_img_name, stored_contour) in list_of_contours:
+                    if stored_img_name == img_file:
+                        if set(single_contour) == set(stored_contour):
+                            duplicates_count += 1
+                            print("Duplicate contour {}".format(duplicates_count))
+                            is_unique = False
 
-                # save the image and label
-                img_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
-                    list_of_imgs[data_idx]
-                label_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
-                    list_of_labels[data_idx]
+                if is_unique:
+                    # Create Single contour label
+                    single_contour_label = np.zeros_like(label)
+                    for point in single_contour:
+                        single_contour_label[point[0], point[1]] = 1
 
-                plt.imsave(fname=os.path.join(bin_imgs_dir, img_name), arr=img)
-                plt.imsave(fname=os.path.join(bin_labels_dir, label_name), arr=single_contour_label)
+                    # save the image and label
+                    img_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
+                        list_of_imgs[data_idx]
+                    label_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
+                        list_of_labels[data_idx]
 
-                # # Debug
-                # f, ax_arr = plt.subplots(1, 3)
-                # ax_arr[0].imshow(img)
-                # ax_arr[0].set_title("Image")
-                # ax_arr[1].imshow(label)
-                # ax_arr[1].set_title("Original Label")
-                # ax_arr[2].imshow(single_contour_label)
-                # ax_arr[2].set_title("Single Contour Label (Length {})".format(len_single_contour))
+                    plt.imsave(fname=os.path.join(bin_imgs_dir, img_name), arr=img)
+                    plt.imsave(fname=os.path.join(bin_labels_dir, label_name),
+                               arr=single_contour_label)
 
-                bin_pixel_count += len_single_contour
-                bin_img_count += 1
+                    # # Debug
+                    # f, ax_arr = plt.subplots(1, 3)
+                    # ax_arr[0].imshow(img)
+                    # ax_arr[0].set_title("Image")
+                    # ax_arr[1].imshow(label)
+                    # ax_arr[1].set_title("Original Label")
+                    # ax_arr[2].imshow(single_contour_label)
+                    # ax_arr[2].set_title("Single Contour Label (Length {})".format(
+                    #     len_single_contour))
+                    #
+                    # import pdb
+                    # pdb.set_trace()
+
+                    bin_pixel_count += len_single_contour
+                    bin_img_count += 1
 
         images_per_bin_arr[bin_idx] = bin_img_count
         pixels_per_bin_arr[bin_idx] = bin_pixel_count
