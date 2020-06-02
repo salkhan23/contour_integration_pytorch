@@ -153,7 +153,7 @@ if __name__ == "__main__":
             edges_count[bin_idx, 2] += on_diag
 
             # # Plot
-            scat_edges_ax.scatter(x_in_bin, y_in_bin)
+            # scat_edges_ax.scatter(x_in_bin, y_in_bin)
 
         # -------------------------------------------------------------------------------
         # Process Non-Edges
@@ -175,7 +175,7 @@ if __name__ == "__main__":
             non_edges_count[bin_idx, 2] += on_diag
 
             # # Plot
-            scat_non_edges_ax.scatter(x_in_bin, y_in_bin)
+            # scat_non_edges_ax.scatter(x_in_bin, y_in_bin)
 
     # -----------------------------------------------------------------------------------
     # Plot Edges Count
