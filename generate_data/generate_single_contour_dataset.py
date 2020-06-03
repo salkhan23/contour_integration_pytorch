@@ -27,7 +27,7 @@ if __name__ == "__main__":
     input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
     input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
 
-    data_store_dir = './data/single_contour_natural_images_3'
+    data_store_dir = './data/single_contour_natural_images_4'
     print("Dataset will be stored @ {}".format(data_store_dir))
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         if bin_idx < len(contour_lengths_bins) - 1:
             max_len = contour_lengths_bins[bin_idx + 1]
 
-        print("Generating Images/labels with Contour length in [{}, {}]".format(
+        print("Generating Images/labels with contour of length in [{}, {}]".format(
             min_len, max_len - 1))
 
         # Create the bin data store directories
@@ -78,10 +78,15 @@ if __name__ == "__main__":
             os.path.join(data_store_dir, 'images', 'len_{}_{}'.format(bin_len, max_len - 1))
         bin_labels_dir = \
             os.path.join(data_store_dir, 'labels', 'len_{}_{}'.format(bin_len, max_len - 1))
+        bin_full_labels_dir = \
+            os.path.join(data_store_dir, 'labels_full', 'len_{}_{}'.format(bin_len, max_len - 1))
+
         if not os.path.exists(bin_imgs_dir):
             os.makedirs(bin_imgs_dir)
         if not os.path.exists(bin_labels_dir):
             os.makedirs(bin_labels_dir)
+        if not os.path.exists(bin_full_labels_dir):
+            os.makedirs(bin_full_labels_dir)
 
         # Randomly choose an image from the dataset to store the labels
         data_idx = np.random.randint(0, len(list_of_imgs))
@@ -107,7 +112,8 @@ if __name__ == "__main__":
             label = Image.open(label_file).convert('L')  # [0, 1] Mask
             label = label.resize((256, 256), Image.BILINEAR)  # Need for continuous edges
             label = np.array(label) / 255.0
-            label[label > 0.1] = 1  # needed because of interpolation
+            label[label >= 0.1] = 1  # needed because of interpolation
+            label[label < 0.1] = 0
 
             # Find a single contour with length in the bin
             single_contour = contour.get_random_contour(
@@ -115,8 +121,8 @@ if __name__ == "__main__":
             len_single_contour = len(single_contour)
 
             if len_single_contour > 0:
-                # print("Contour of Length {} Found. Bin pixels count {}".format(
-                #     len_single_contour, bin_pixel_count))
+                print("Len {} contour found. n_pixels {}, n_images {}. ".format(
+                    len_single_contour, bin_pixel_count, bin_img_count))
 
                 # check for uniqueness
                 is_unique = True
@@ -145,6 +151,7 @@ if __name__ == "__main__":
                     plt.imsave(fname=os.path.join(bin_imgs_dir, img_name), arr=img)
                     plt.imsave(fname=os.path.join(bin_labels_dir, label_name),
                                arr=single_contour_label)
+                    plt.imsave(fname=os.path.join(bin_full_labels_dir, label_name), arr=label)
 
                     # # Debug
                     # f, ax_arr = plt.subplots(1, 3)

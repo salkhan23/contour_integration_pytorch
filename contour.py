@@ -151,7 +151,7 @@ def extend(in_img, contour):
 
         # Stop if there is an overlap of previous points (Guard against circles)
         if len(set(contour)) < len(contour):
-            print("overlap with previous detected!")
+            # print("Extend Contour: Overlap with previous contour element detected!")
             keep_going = False
 
     return keep_going
