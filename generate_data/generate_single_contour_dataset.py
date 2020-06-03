@@ -120,11 +120,8 @@ if __name__ == "__main__":
                 label, min_contour_len=min_len, max_contour_len=max_len)
             len_single_contour = len(single_contour)
 
+            # check for uniqueness
             if len_single_contour > 0:
-                print("Len {} contour found. n_pixels {}, n_images {}. ".format(
-                    len_single_contour, bin_pixel_count, bin_img_count))
-
-                # check for uniqueness
                 is_unique = True
                 for (stored_img_name, stored_contour) in list_of_contours:
                     if stored_img_name == img_file:
@@ -134,6 +131,8 @@ if __name__ == "__main__":
                             is_unique = False
 
                 if is_unique:
+                    print("Len {} contour found. n_pixels {}, n_images {}. ".format(
+                        len_single_contour, bin_pixel_count, bin_img_count))
 
                     list_of_contours.append((img_file, single_contour))
 
