@@ -51,9 +51,8 @@ class SingleContourDataSet(Dataset):
         img1 = transform_functional.to_tensor(img1)
         target = transform_functional.to_tensor(target)
 
-        # todo: What is this weird scaling
-        target[target > 0.2] = 1
-        target[target <= 0.2] = 0
+        # todo: Figure out why this weird scaling is happening
+        target = (target - target.min()) / (target.max() - target.min())
 
         if self.transform is not None:
             img1 = self.transform(img1)
@@ -65,7 +64,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_set_dir = './data/single_contour_natural_images_2'
+    data_set_dir = './data/single_contour_natural_images_4'
     random_seed = 5
 
     save_predictions = True
@@ -160,6 +159,7 @@ if __name__ == "__main__":
                 label_out = torch.sigmoid(label_out)
                 label_out = label * label_out
                 label_out = label_out.cpu().detach().numpy()
+                label_out = np.squeeze(label_out)
 
                 if save_predictions:
                     plt.imsave(
@@ -168,16 +168,14 @@ if __name__ == "__main__":
                         cmap=plt.cm.gray,
                     )
 
-                # # Plot Input image, label and prediction
-                # img = img.detach().cpu().numpy()
-                # img = np.squeeze(img)
-                #
-                # label = label.detach().cpu().numpy()
-                # label = np.squeeze(label)
-                #
-                # label_out = label_out.detach().cpu().numpy()
-                # label_out = np.squeeze(label_out)
-                #
+                # Plot Input image, label and prediction
+                img = img.detach().cpu().numpy()
+                img = np.squeeze(img)
+
+                label = label.detach().cpu().numpy()
+                label = np.squeeze(label)
+
+                # # Debug Plot
                 # f, ax_arr = plt.subplots(1, 3)
                 #
                 # img = np.transpose(img, axes=[1, 2, 0])
