@@ -98,7 +98,8 @@ class BipedDataSet(Dataset):
 
         img = transform_functional.to_tensor(img)
         target = transform_functional.to_tensor(target)
-        target[target > 0.1] = 1  # necessary for smooth contours after interpolation
+        target[target >= 0.1] = 1  # necessary for smooth contours after interpolation
+        target[target < 0.1] = 0
 
         if self.transform is not None:
             img = self.transform(img)
