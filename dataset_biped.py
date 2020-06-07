@@ -119,7 +119,11 @@ class BipedDataSet(Dataset):
         snd_moment = torch.empty(3)
 
         for idx in range(self.__len__()):
-            img, _ = self.__getitem__(idx)
+            outputs = self.__getitem__(idx)
+
+            # Outputs = img, label (BIPED Dataset)
+            # Outputs = img_with_end_dots, classification_label, single_contour_with_end_dots
+            img = outputs[0]
 
             c, h, w = img.shape
             nb_pixels = h * w
