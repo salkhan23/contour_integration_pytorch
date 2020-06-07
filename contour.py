@@ -49,7 +49,7 @@ def has_clean_line(neighbourhood):
         in a straight line
     """
     result = False
-    if np.sum(neighbourhood) == 3:
+    if np.sum(neighbourhood) == 3 or np.sum(neighbourhood) == 4:
         if neighbourhood[0][0] == 1 and neighbourhood[2][2] == 1:
             result = True
         elif neighbourhood[0][1] == 1 and neighbourhood[2][1] == 1:
