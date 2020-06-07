@@ -73,22 +73,25 @@ def init_contour(point, neighbourhood):
         raise Exception("Need neighbourhood with clean line to initialize")
 
     contour = []
-    if neighbourhood[0][0] == 1:
+    if (neighbourhood[0][0] == 1) and (neighbourhood[2][2] == 1):  # descending diagonal
         contour.append((point[0]-1, point[1]-1))
         contour.append((point[0], point[1]))
         contour.append((point[0]+1, point[1]+1))
-    elif neighbourhood[0][1] == 1:
+    elif (neighbourhood[0][1] == 1) and (neighbourhood[2][1] == 1):  # vertical
         contour.append((point[0]-1, point[1]))
         contour.append((point[0], point[1]))
         contour.append((point[0]+1, point[1]))
-    elif neighbourhood[0][2] == 1:
+    elif (neighbourhood[0][2] == 1) and (neighbourhood[2][0] == 1):  # ascending diagonal(top first)
         contour.append((point[0]-1, point[1]+1))
         contour.append((point[0], point[1]))
         contour.append((point[0]+1, point[1]-1))
-    elif neighbourhood[1][0] == 1:
+    elif neighbourhood[1][0] == 1 and (neighbourhood[1][2] == 1):  # horizontal
         contour.append((point[0], point[1]-1))
         contour.append((point[0], point[1]))
         contour.append((point[0], point[1]+1))
+    else:
+        raise Exception("init_contour: Weird cas no smooth line in neighborhood")
+
     return contour
 
 
