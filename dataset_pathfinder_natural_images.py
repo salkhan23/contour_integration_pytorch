@@ -1,13 +1,13 @@
 # ---------------------------------------------------------------------------------------
 # Pytorch Data Set/loader for the pathfinder on natural images task.
 #
-#
-#
 # Uses the BIPED dataset and its pytorch data set/loaders
 # ---------------------------------------------------------------------------------------
 import numpy as np
 from PIL import Image
+import matplotlib.pyplot as plt
 from datetime import datetime
+import os
 
 import torch
 import torchvision.transforms.functional as transform_functional
@@ -18,93 +18,38 @@ import dataset_biped
 import contour
 
 
-def add_end_stop(img1, center=(0, 0), radius=5):
-    ax = torch.arange(center[0] - radius, center[0] + radius + 1)
-    ay = torch.arange(center[1] - radius, center[1] + radius + 1)
-
-    max_value = torch.max(img1)
-
-    if img1.ndim == 3:
-        x_max = img1.shape[1]
-        y_max = img1.shape[2]
-    else:
-        x_max = img1.shape[0]
-        y_max = img1.shape[1]
-
-    for x in ax:
-        for y in ay:
-            # print("processing point ({},{}): Distance from center {}".format(
-            #     x, y, np.sqrt(((x - center[0]) ** 2 + (y - center[1]) ** 2))))
-
-            if ((0 <= x < x_max)
-                    and (0 <= y < y_max)
-                    and ((x - center[0]) ** 2 + (y - center[1]) ** 2) <= radius ** 2):
-
-                x = x.int()
-                y = y.int()
-
-                if img1.ndim == 3:
-                    img1[:, x, y] = max_value  # Channel First
-                else:
-                    img1[x, y] = max_value  # Channel First
-
-    return img1
-
-
 def get_distance_between_two_points(p1, p2):
+    """
+    Get the distance between points p1 & p2. Points specified as  (x,y)
+    """
     dist = np.sqrt((p1[0] - p2[0])**2 + (p1[1]-p2[1])**2)
     return dist
 
 
-def get_point_within_distance_range(d, p1, img_shape, d_hyst=5):
+def get_distance_point_and_contour(p, contour1):
     """
-    Returns the coordinates of a point in the image that lies within
-    d +- hysteresis distance away from p1
+    Get distance between a single point (x,y) and a list of points [(x1,y1), (x2,y2) ...]
     """
+    contour1 = np.array(contour1)
+    dist_arr = np.sqrt((contour1[:, 0] - p[0]) ** 2 + (contour1[:, 1] - p[1]) ** 2)
 
-    x = np.arange(0, img_shape[0])
-    y = np.arange(0, img_shape[1])
-
-    xx, yy = np.meshgrid(x, y)
-    dist_arr = np.sqrt((xx - p1[0]) ** 2 + (yy - p1[1]) ** 2)
-
-    below_upper_bound = dist_arr < (d + d_hyst)
-    above_lower_bound = dist_arr > (d - d_hyst)
-    within_range = below_upper_bound * above_lower_bound
-
-    # get all non zero indices
-    valid_x, valid_y = np.nonzero(within_range)
-
-    # choose one randomly
-    selected_idx = np.random.randint(len(valid_x))
-
-    # finally the end point
-    # todo: For some reason these are flipped
-    p2 = (valid_y[selected_idx], valid_x[selected_idx])
-
-    # # debug
-    # img = np.zeros(img_shape)
-    # for x1, y1 in zip(valid_x, valid_y):
-    #     img[y1, x1] = 1
-    # add_end_stop(torch.from_numpy(img), p1)
-    #
-    # plt.figure()
-    # plt.imshow(img)
-    # import pdb
-    # pdb.set_trace()
-
-    return p2
+    return dist_arr
 
 
 def does_point_overlap_with_contour(p1, contour1, width):
+    """
+    Is the minimum distance between p1 and any point in contour 1 < width
+    p = (x,y)
+    contour1 = list of points [(x1,y1), (x2,y2) , ...]
+    """
     overlaps = True
 
-    contour1 = np.array(contour1)
-    dist_arr = np.sqrt((contour1[:, 0] - p1[0]) ** 2 + (contour1[:, 1] - p1[1]) ** 2)
+    dist_arr = get_distance_point_and_contour(p1, contour1)
 
     if not np.any(dist_arr <= width):
         overlaps = False
 
+    # # Debug
     # plt.figure()
     # plt.plot(dist_arr)
     # plt.axhline(width, color='red', label='overlapping below')
@@ -115,10 +60,57 @@ def does_point_overlap_with_contour(p1, contour1, width):
     return overlaps
 
 
+def add_end_stop(img1, center=(0, 0), radius=8):
+    """
+    img1 should be 3d (channel first)
+    """
+    ax = torch.arange(center[0] - radius, center[0] + radius + 1)
+    ay = torch.arange(center[1] - radius, center[1] + radius + 1)
+
+    max_value = torch.max(img1)
+    n_channels = img1.shape[0]
+
+    # Labels
+    if n_channels == 1:
+        for x in ax:
+            for y in ay:
+                if ((0 <= x < img1.shape[1]) and (0 <= y < img1.shape[2])
+                        and ((x - center[0]) ** 2 + (y - center[1]) ** 2) <= radius ** 2):
+                    x = x.int()
+                    y = y.int()
+                    img1[:, x, y] = 0
+                    img1[0, x, y] = max_value
+
+    else:  # images
+        for x in ax:
+            for y in ay:
+                if (0 <= x < img1.shape[1]) and (0 <= y < img1.shape[2]):
+
+                    d = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
+                    x = x.int()
+                    y = y.int()
+
+                    if d < 2:
+                        img1[:, x, y] = 0
+                        img1[0, x, y] = max_value
+                    elif d < 4:
+                        img1[:, x, y] = 0
+                        img1[2, x, y] = max_value
+                    elif d <= radius:
+                        img1[:, x, y] = 0
+                        img1[0, x, y] = max_value
+    return img1
+
+
 class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
     """
-    returns tuples of img, connected, single_contour_label, full_label
+    TODO:
     """
+    def __init__(self, *args, **kwargs):
+        # cumulative moving average
+        self.avg_connected_dist = 0
+        self.n_connected_samples = 0
+        super(NaturalImagesPathfinder, self).__init__(*args, **kwargs)
 
     def __getitem__(self, index):
         img = Image.open(self.images[index]).convert('RGB')
@@ -130,96 +122,140 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         img = transform_functional.to_tensor(img)
         full_label = transform_functional.to_tensor(full_label)
-        full_label[full_label >= 0.1] = 1  # necessary for smooth contours after interpolation
-        full_label[full_label < 0.1] = 0
+        full_label[full_label >= 0.15] = 1  # necessary for smooth contours after interpolation
+        full_label[full_label < 0.15] = 0
 
-        # Select a single contour
-        single_contour = contour.get_random_contour(full_label[0, ])
-        while len(single_contour) <= 0:
-            single_contour = contour.get_random_contour(full_label[0, ])
+        # TODO: Move these to init
+        end_stop_radius = 5
+        p_connect = 0.5
+        min_sep_dist = 20
 
-        dist_contour_start_stop = \
-            get_distance_between_two_points(single_contour[0], single_contour[-1])
+        # [1] Select a random contour
+        c1 = contour.get_random_contour(full_label[0, ])
+        while len(c1) <= 0:
+            c1 = contour.get_random_contour(full_label[0, ])
 
-        # Create a single contour label
-        single_contour_label = torch.zeros_like(full_label)
-        for point in single_contour:
-            single_contour_label[:, point[0], point[1]] = 1  # channel First
+        dist_start_stop_c1 = get_distance_between_two_points(c1[0], c1[-1])
 
-        # todo: move to init
-        end_stopper_radius = 5
-        probability_connect = 0.5
-        dist_hyst = 5
+        # [2] Select a second non-overlapping contour
+        is_overlapping = True
 
-        # Add starting dot to image, full label and single_contour label
-        start_point = single_contour[0]
-        add_end_stop(single_contour_label, start_point, radius=end_stopper_radius)
-        add_end_stop(img, start_point, radius=end_stopper_radius)
-        add_end_stop(full_label, start_point, radius=end_stopper_radius)
+        c2 = []
+        while is_overlapping:
+            c2 = contour.get_random_contour(full_label[0, ])
+
+            while len(c2) <= 0:
+                c2 = contour.get_random_contour(full_label[0, ])
+
+            for p in c1:
+                is_overlapping = does_point_overlap_with_contour(p, c2, min_sep_dist)
+                if is_overlapping:
+                    # print("point {} in contour 2 overlaps with contour 1".format(p))
+                    break
+        dist_start_stop_c2 = get_distance_between_two_points(c2[0], c2[-1])
 
         # Randomly choose to connect the end dot to the contour
-        connected = np.random.choice([0, 1], p=[1 - probability_connect, probability_connect])
+        connected = np.random.choice([0, 1], p=[1 - p_connect, p_connect])
         connected = connected.astype(bool)
 
+        start_point = None
         end_point = None
+
         if connected:
-            # Add the other end stop at the end of the contour
-            end_point = single_contour[-1]
+            start_point = c1[0]
+            end_point = c1[-1]
+
+            self.avg_connected_dist = \
+                (dist_start_stop_c1 + (self.n_connected_samples * self.avg_connected_dist)) /\
+                (self.n_connected_samples + 1)
+            self.n_connected_samples += 1
+
         else:
-            # Add the other end stop at the same distance from the starting point
-            # making sure it does not overlap with any points  on the contour
-            is_overlapping = True
+            dist_arr = np.array([
+                get_distance_between_two_points(c1[0], c2[0]),      # c1_start_c2_start
+                get_distance_between_two_points(c1[0], c2[0]),      # c1_start_c2_stop
+                get_distance_between_two_points(c1[-1], c2[0]),     # c1_stop_c2_start
+                get_distance_between_two_points(c1[-1], c2[-1])     # c1_stop_c2_stop
+            ])
 
-            while is_overlapping:
+            # find points closest to the stored connected sample distance:
+            closest_points_idx = (np.abs(dist_arr - self.avg_connected_dist)).argmin()
 
-                # Get a point within range
-                end_point = get_point_within_distance_range(
-                    dist_contour_start_stop,
-                    start_point,
-                    single_contour_label.shape[1:],  # first is channel
-                    dist_hyst,
-                )
+            if closest_points_idx == 0:
+                start_point = c1[0]
+                end_point = c2[0]
+            elif closest_points_idx == 1:
+                start_point = c1[0]
+                end_point = c2[-1]
+            elif closest_points_idx == 2:
+                start_point = c1[-1]
+                end_point = c2[0]
+            elif closest_points_idx == 3:
+                start_point = c1[-1]
+                end_point = c2[-1]
 
-                is_overlapping = does_point_overlap_with_contour(
-                    end_point, single_contour, end_stopper_radius)
+        # [3] Create a new label with the two contours
+        single_contours_label = torch.zeros_like(full_label)
+        for p in c1:
+            single_contours_label[:, p[0], p[1]] = 1  # channel first
+        for p in c2:
+            single_contours_label[:, p[0], p[1]] = 0.5  # channel first
 
-        # Add the End point
-        if end_point is not None:
-            add_end_stop(single_contour_label, end_point, radius=end_stopper_radius)
-            add_end_stop(img, end_point, radius=end_stopper_radius)
-            add_end_stop(full_label, end_point, radius=end_stopper_radius)
+        # Add the starting point
+        add_end_stop(single_contours_label, start_point, radius=end_stop_radius)
+        add_end_stop(img, start_point, radius=end_stop_radius)
+        add_end_stop(full_label, start_point, radius=end_stop_radius)
 
-        # # Debug
-        # # ------
-        # f, ax_arr = plt.subplots(1, 3, figsize=(15, 6))
-        #
-        # display_img = (img - img.min()) / (img.max() - img.min())
-        # display_img = display_img.numpy()
-        # display_img = np.transpose(display_img, axes=(1, 2, 0))
-        # ax_arr[0].imshow(display_img)
-        #
-        # single_contour_label = single_contour_label.numpy()
-        # single_contour_label = np.squeeze(single_contour_label)
-        # ax_arr[1].imshow(single_contour_label)
-        # ax_arr[1].set_title("Single Contour Label")
-        #
-        # full_label = full_label.numpy()
-        # full_label = np.squeeze(full_label)
-        # ax_arr[2].imshow(full_label)
-        # ax_arr[2].set_title("Full label")
-        #
-        # f.suptitle(
-        #     "CLen {}.\nEnd Points Connected {},\ndistance contour start stop={:0.2f}, "
-        #     "\ndistance start stop={:0.2f}".format(
-        #         len(single_contour), connected, dist_contour_start_stop,
-        #         get_distance_between_two_points(start_point, end_point)
-        #     ))
-        #
-        # import pdb
-        # pdb.set_trace()
-        # plt.close(f)
+        # Add the end point
+        add_end_stop(single_contours_label, end_point, radius=end_stop_radius)
+        add_end_stop(img, end_point, radius=end_stop_radius)
+        add_end_stop(full_label, end_point, radius=end_stop_radius)
 
-        return img, connected, single_contour_label, full_label, index
+        dist_between_points = get_distance_between_two_points(start_point, end_point)
+
+        # Debug
+        # ------
+        f, ax_arr = plt.subplots(1, 3, figsize=(15, 6))
+
+        display_img = (img - img.min()) / (img.max() - img.min())
+        display_img = display_img.numpy()
+        display_img = np.transpose(display_img, axes=(1, 2, 0))
+        ax_arr[0].imshow(display_img)
+
+        single_contours_label = single_contours_label.numpy()
+        single_contours_label = np.squeeze(single_contours_label)
+        ax_arr[1].imshow(single_contours_label)
+        ax_arr[1].set_title("Single Contour Label: {}".format(connected))
+
+        full_label = full_label.numpy()
+        full_label = np.squeeze(full_label)
+        ax_arr[2].imshow(full_label)
+        ax_arr[2].set_title("Full label")
+
+        f.suptitle(
+            "Are connected {}, [Lengths C1={},C2={}, Dist between End-points {:0.1f}, "
+            "Distance between contour start/stop C1={:0.1f}, C2={:0.1f}]".format(
+                connected, len(c1), len(c2),
+                get_distance_between_two_points(start_point, end_point),
+                get_distance_between_two_points(c1[0], c1[-1]),
+                get_distance_between_two_points(c2[0], c2[-1])))
+
+        results_dir = './results/sample_images'
+        if not os.path.exists(results_dir):
+            os.makedirs(results_dir)
+
+        f.savefig(
+            os.path.join(
+                results_dir, "img{}_{}".format(index, self.images[index].split('/')[-1])),
+            format='jpg'
+        )
+
+        import pdb
+        pdb.set_trace()
+
+        plt.close(f)
+
+        return img, connected, single_contours_label, full_label, dist_between_points, index
 
 
 if __name__ == "__main__":
@@ -228,38 +264,37 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     base_dir = './data/BIPED/edges'
 
-    random_seed = 7
+    random_seed = 5
 
     train_batch_size = 32
     test_batch_size = 1
 
     # Immutable ----------------------
-    import matplotlib.pyplot as plt
-
     plt.ion()
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
 
+    # -----------------------------------------------------------------------------------
+    # Data Loader
+    # -----------------------------------------------------------------------------------
     # Imagenet normalization
     ch_mean = [0.485, 0.456, 0.406]
     ch_std = [0.229, 0.224, 0.225]
     pre_process_transforms = transforms.Normalize(mean=ch_mean, std=ch_std)
 
-    # Training Loader
-    # -----------------------------------------------------------------------------------
-    print("Setting up the Train Data Loaders {}".format('*' * 30))
+    print("Setting up the Data Loaders {}".format('*' * 30))
     start_time = datetime.now()
 
-    train_set = NaturalImagesPathfinder(
+    data_set = NaturalImagesPathfinder(
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=100,
+        subset_size=500,
         resize_size=(256, 256)
     )
 
-    training_data_loader = DataLoader(
-        dataset=train_set,
+    data_loader = DataLoader(
+        dataset=data_set,
         num_workers=0,
         batch_size=train_batch_size,
         shuffle=False,
@@ -268,38 +303,32 @@ if __name__ == "__main__":
 
     print("Setting up the train data loader took {}".format(datetime.now() - start_time))
 
-    train_generator = training_data_loader.__iter__()
-    imgs, class_labels, single_contour_labels, full_labels, org_img_idx_arr = \
-        train_generator.__next__()
+    dist_not_connected = []
+    dist_connected = []
 
-    for img_idx in range(imgs.shape[0]):
-        image = imgs[img_idx, ].numpy()
-        image = np.transpose(image, axes=(1, 2, 0))
+    for iteration, data_loader_out in enumerate(data_loader, 1):
 
-        class_label = class_labels[img_idx]
+        print("Iteration {}".format(iteration))
 
-        s_label = single_contour_labels[img_idx]
-        s_label = np.squeeze(s_label)
+        for idx in range(data_loader_out[1].shape[0]):
+            if data_loader_out[1][idx]:
+                dist_connected.append(data_loader_out[4][idx])
+            else:
+                dist_not_connected.append(data_loader_out[4][idx])
 
-        f_label = full_labels[img_idx]
-        f_label = np.squeeze(f_label)
+    print("Not connected. Avg Distance {}, std {}".format(
+        np.mean(dist_not_connected), np.std(dist_not_connected)))
+    print("Connected. Avg Distance {}, std {}".format(
+        np.mean(dist_connected), np.std(dist_connected)))
 
-        fig, axis_arr = plt.subplots(1, 3)
-        d_img = (image - image.min()) / (image.max() - image.min())
-        axis_arr[0].imshow(d_img)
-        axis_arr[0].set_title("Input Image")
+    f, ax_arr = plt.subplots(1, 2)
+    ax_arr[0].hist(dist_connected)
+    ax_arr[0].set_title("Connected. Mean {:0.2f}, Std {:0.2f}".format(
+        np.mean(dist_connected), np.std(dist_connected)))
 
-        axis_arr[1].imshow(s_label)
-        axis_arr[1].set_title("Debug Single Contour Label")
-
-        axis_arr[2].imshow(f_label)
-        axis_arr[2].set_title("Debug Full Contour Label")
-
-        fig.suptitle("Classification Label {}. img name {}".format(
-            class_label, training_data_loader.dataset.images[org_img_idx_arr[img_idx]]))
-
-        import pdb
-        pdb.set_trace()
+    ax_arr[1].hist(dist_not_connected)
+    ax_arr[1].set_title("Not Connected. Mean {:0.2f}, std {:0.2f}".format(
+        np.mean(dist_not_connected), np.std(dist_not_connected)))
 
     # -----------------------------------------------------------------------------------
     # End
