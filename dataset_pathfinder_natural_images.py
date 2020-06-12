@@ -213,47 +213,47 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         dist_between_points = get_distance_between_two_points(start_point, end_point)
 
-        # Debug
-        # ------
-        f, ax_arr = plt.subplots(1, 3, figsize=(15, 6))
-
-        display_img = (img - img.min()) / (img.max() - img.min())
-        display_img = display_img.numpy()
-        display_img = np.transpose(display_img, axes=(1, 2, 0))
-        ax_arr[0].imshow(display_img)
-
-        single_contours_label = single_contours_label.numpy()
-        single_contours_label = np.squeeze(single_contours_label)
-        ax_arr[1].imshow(single_contours_label)
-        ax_arr[1].set_title("Single Contour Label: {}".format(connected))
-
-        full_label = full_label.numpy()
-        full_label = np.squeeze(full_label)
-        ax_arr[2].imshow(full_label)
-        ax_arr[2].set_title("Full label")
-
-        f.suptitle(
-            "Are connected {}, [Lengths C1={},C2={}, Dist between End-points {:0.1f}, "
-            "Distance between contour start/stop C1={:0.1f}, C2={:0.1f}]".format(
-                connected, len(c1), len(c2),
-                get_distance_between_two_points(start_point, end_point),
-                get_distance_between_two_points(c1[0], c1[-1]),
-                get_distance_between_two_points(c2[0], c2[-1])))
-
-        results_dir = './results/sample_images'
-        if not os.path.exists(results_dir):
-            os.makedirs(results_dir)
-
-        f.savefig(
-            os.path.join(
-                results_dir, "img{}_{}".format(index, self.images[index].split('/')[-1])),
-            format='jpg'
-        )
-
-        import pdb
-        pdb.set_trace()
-
-        plt.close(f)
+        # # Debug
+        # # ------
+        # f, ax_arr = plt.subplots(1, 3, figsize=(15, 6))
+        #
+        # display_img = (img - img.min()) / (img.max() - img.min())
+        # display_img = display_img.numpy()
+        # display_img = np.transpose(display_img, axes=(1, 2, 0))
+        # ax_arr[0].imshow(display_img)
+        #
+        # single_contours_label = single_contours_label.numpy()
+        # single_contours_label = np.squeeze(single_contours_label)
+        # ax_arr[1].imshow(single_contours_label)
+        # ax_arr[1].set_title("Single Contour Label: {}".format(connected))
+        #
+        # full_label = full_label.numpy()
+        # full_label = np.squeeze(full_label)
+        # ax_arr[2].imshow(full_label)
+        # ax_arr[2].set_title("Full label")
+        #
+        # f.suptitle(
+        #     "Are connected {}, [Lengths C1={},C2={}, Dist between End-points {:0.1f}, "
+        #     "Distance between contour start/stop C1={:0.1f}, C2={:0.1f}]".format(
+        #         connected, len(c1), len(c2),
+        #         get_distance_between_two_points(start_point, end_point),
+        #         get_distance_between_two_points(c1[0], c1[-1]),
+        #         get_distance_between_two_points(c2[0], c2[-1])))
+        #
+        # results_dir = './results/sample_images'
+        # if not os.path.exists(results_dir):
+        #     os.makedirs(results_dir)
+        #
+        # f.savefig(
+        #     os.path.join(
+        #         results_dir, "img{}_{}".format(index, self.images[index].split('/')[-1])),
+        #     format='jpg'
+        # )
+        #
+        # import pdb
+        # pdb.set_trace()
+        #
+        # plt.close(f)
 
         return img, connected, single_contours_label, full_label, dist_between_points, index
 
