@@ -59,7 +59,7 @@ class BipedDataSet(Dataset):
             [file.replace('imgs', 'edge_maps').replace('.jpg', '.png') for file in self.images]
 
         if subset_size is not None:
-            assert subset_size < len(
+            assert subset_size <= len(
                 self.images), 'subset size {} is greater than dataset size {}'.format(
                 subset_size, len(self.images))
 
