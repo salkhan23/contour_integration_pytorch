@@ -106,15 +106,24 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
     """
     TODO:
     """
-    def __init__(self, *args, **kwargs):
-        # cumulative moving average
+    def __init__(self, p_connect=0.5, min_sep_dist=20, end_stop_radius=8, *args, **kwargs):
+
+        self.end_stop_radius = end_stop_radius
+        self.p_connect = p_connect
+        self.min_sep_dist = min_sep_dist
+
+        # cumulative moving average of distance between points.
+        # This is use to choose points on c2
         self.avg_connected_dist = 0
         self.n_connected_samples = 0
+
         super(NaturalImagesPathfinder, self).__init__(*args, **kwargs)
 
     def __getitem__(self, index):
+
         img = Image.open(self.images[index]).convert('RGB')
         full_label = Image.open(self.labels[index]).convert('L')  # Greyscale
+        print("Index {}".format(index))
 
         if self.resize is not None:
             img = self.resize(img)
@@ -125,13 +134,8 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
         full_label[full_label >= 0.15] = 1  # necessary for smooth contours after interpolation
         full_label[full_label < 0.15] = 0
 
-        # TODO: Move these to init
-        end_stop_radius = 5
-        p_connect = 0.5
-        min_sep_dist = 20
-
         # [1] Select a random contour
-        c1 = contour.get_random_contour(full_label[0, ])
+        c1 = []
         while len(c1) <= 0:
             c1 = contour.get_random_contour(full_label[0, ])
 
@@ -142,20 +146,18 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         c2 = []
         while is_overlapping:
-            c2 = contour.get_random_contour(full_label[0, ])
-
+            c2 = []
             while len(c2) <= 0:
                 c2 = contour.get_random_contour(full_label[0, ])
 
             for p in c1:
-                is_overlapping = does_point_overlap_with_contour(p, c2, min_sep_dist)
+                is_overlapping = does_point_overlap_with_contour(p, c2, self.min_sep_dist)
                 if is_overlapping:
                     # print("point {} in contour 2 overlaps with contour 1".format(p))
                     break
-        dist_start_stop_c2 = get_distance_between_two_points(c2[0], c2[-1])
 
         # Randomly choose to connect the end dot to the contour
-        connected = np.random.choice([0, 1], p=[1 - p_connect, p_connect])
+        connected = np.random.choice([0, 1], p=[1 - self.p_connect, self.p_connect])
         connected = connected.astype(bool)
 
         start_point = None
@@ -202,14 +204,14 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
             single_contours_label[:, p[0], p[1]] = 0.5  # channel first
 
         # Add the starting point
-        add_end_stop(single_contours_label, start_point, radius=end_stop_radius)
-        add_end_stop(img, start_point, radius=end_stop_radius)
-        add_end_stop(full_label, start_point, radius=end_stop_radius)
+        add_end_stop(single_contours_label, start_point, radius=self.end_stop_radius)
+        add_end_stop(img, start_point, radius=self.end_stop_radius)
+        add_end_stop(full_label, start_point, radius=self.end_stop_radius)
 
         # Add the end point
-        add_end_stop(single_contours_label, end_point, radius=end_stop_radius)
-        add_end_stop(img, end_point, radius=end_stop_radius)
-        add_end_stop(full_label, end_point, radius=end_stop_radius)
+        add_end_stop(single_contours_label, end_point, radius=self.end_stop_radius)
+        add_end_stop(img, end_point, radius=self.end_stop_radius)
+        add_end_stop(full_label, end_point, radius=self.end_stop_radius)
 
         dist_between_points = get_distance_between_two_points(start_point, end_point)
 
