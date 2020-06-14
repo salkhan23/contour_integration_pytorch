@@ -140,17 +140,33 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         # [2] Select a second non-overlapping contour
         is_overlapping = True
+        overlap_count = 0
+        # scale the probabilities for the second contour. Lower values put emphasis for
+        # contours at the specified distance. Higher values broaden the search for contours
+        # more uniform selection of contours.
+        p_scale = 10
 
         c2 = []
         while is_overlapping:
             c2 = []
             while len(c2) <= 0:
-                c2 = contour.get_nearby_contour(full_label[0, ], c1[0], ideal_dist=ideal_dist)
+                c2 = contour.get_nearby_contour(
+                    full_label[0, ], c1[0], ideal_dist=ideal_dist, p_scale=p_scale)
 
             for p in c1:
                 is_overlapping = does_point_overlap_with_contour(p, c2, self.min_sep_dist)
                 if is_overlapping:
-                    # print("point {} in contour 2 overlaps with contour 1".format(p))
+                    # print("C2 overlaps with C1. count {}".format(overlap_count))
+                    overlap_count += 1
+
+                    if overlap_count >= 100:
+                        old_p_scale = p_scale
+                        p_scale = p_scale + 10
+                        print("C2 overlapped with C1 more than 100 times. "
+                              "Broaden contour search space. {}->{}".format(old_p_scale, p_scale))
+
+                        overlap_count = 0
+
                     break
 
         # Randomly choose to connect the end dot to the contour
@@ -282,7 +298,7 @@ if __name__ == "__main__":
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=100,
+        subset_size=500,
         resize_size=(256, 256)
     )
 
@@ -303,7 +319,7 @@ if __name__ == "__main__":
     dist_connected = []
 
     for iteration, data_loader_out in enumerate(data_loader, 1):
-        print("Iteration {}".format(iteration))
+        # print("Iteration {}".format(iteration))
 
         for idx in range(data_loader_out[1].shape[0]):
             if data_loader_out[1][idx]:

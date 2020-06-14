@@ -231,12 +231,17 @@ def softmax(x):
 
 def get_nearby_contour(
         in_img, point, ideal_dist, min_contour_len=20, max_contour_len=None,
-        max_iterations=20000, show=False):
+        max_iterations=20000, show=False, p_scale=10.):
     """
      Get a contour  ideally a specified distance away from point
      This is essentially get random contour, except starting points are found with a
      non-uniform distribution. Edges that a certain distance from the starting point are
      more probable
+
+     p_scale (probability scale)= how much to scale the probabilities.
+        Higher -> more uniform.
+        Lower -> more likely to choose points closer to specified distance
+
     """
 
     # Get all Edge Points
@@ -253,7 +258,7 @@ def get_nearby_contour(
     # Convert to Probability
     # Note the negative sign: points closer to zero have higher probability
     # The divide is for scaling relative probabilities
-    probabilities = softmax(-dist_from_ideal / 10.)
+    probabilities = softmax(-dist_from_ideal / p_scale)
 
     # The rest is similar to get random contour,
     # but with a non uniform probability distribution of finding starting points
