@@ -214,6 +214,96 @@ def get_random_contour(
     return contour
 
 
+def get_distances_point_to_contour(p, contour1):
+    """
+    Get distance between a single point (x,y) and a list of points [(x1,y1), (x2,y2) ...]
+    """
+    contour1 = np.array(contour1)
+    dist_arr = np.sqrt((contour1[:, 0] - p[0]) ** 2 + (contour1[:, 1] - p[1]) ** 2)
+
+    return dist_arr
+
+
+def softmax(x):
+    """Compute softmax values for each sets of scores in x."""
+    return np.exp(x) / np.sum(np.exp(x), axis=0)
+
+
+def get_nearby_contour(
+        in_img, point, ideal_dist, min_contour_len=20, max_contour_len=None,
+        max_iterations=20000, show=False):
+    """
+     Get a contour  ideally a specified distance away from point
+     This is essentially get random contour, except starting points are found with a
+     non-uniform distribution. Edges that a certain distance from the starting point are
+     more probable
+    """
+
+    # Get all Edge Points
+    edges_x, edges_y = np.where(in_img == 1)
+    all_edge_points = np.array([edges_x, edges_y])
+    all_edge_points = all_edge_points.T
+
+    # Get distance of all edges to specified point
+    dist_from_point = get_distances_point_to_contour(point, all_edge_points)
+
+    # Get distance away from ideal distance
+    dist_from_ideal = np.abs(dist_from_point - ideal_dist)
+
+    # Convert to Probability
+    # Note the negative sign: points closer to zero have higher probability
+    # The divide is for scaling relative probabilities
+    probabilities = softmax(-dist_from_ideal / 10.)
+
+    # The rest is similar to get random contour,
+    # but with a non uniform probability distribution of finding starting points
+    # -----------------------------------------------------------------------------
+    done = False
+    contour = []
+
+    iteration = 0
+    while not done:
+        point_idx = np.random.choice(len(all_edge_points), replace=False, p=probabilities)
+        point = all_edge_points[point_idx, ]
+
+        n = get_neighbourhood(in_img, point)
+
+        if has_clean_line(n):
+
+            contour = init_contour(point, n)
+
+            ok = True
+            while ok:
+                ok = extend(in_img, contour)
+
+            # go the other way
+            contour = list(reversed(contour))
+            ok = True
+            while ok:
+                ok = extend(in_img, contour)
+
+            if len(contour) > min_contour_len:
+
+                done = True
+
+                if max_contour_len is not None and len(contour) > max_contour_len:
+                    done = False
+
+                if done and show:
+                    show_contour(in_img, contour, value=0.25)
+
+        if not done:
+            iteration += 1
+            # print("Iteration {}".format(iteration))
+            if iteration >= max_iterations:
+                print("Could not find valid contour after {} iterations. Giving up".format(
+                    max_iterations))
+                contour = []  # return an empty contour
+                done = True
+
+    return contour
+
+
 # ---------------------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------------------
