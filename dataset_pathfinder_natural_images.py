@@ -296,11 +296,13 @@ if __name__ == "__main__":
 
     print("Setting up the train data loader took {}".format(datetime.now() - start_time))
 
+    # -----------------------------------------------------------------------------------
+    # Get the distribution of distances between points
+    # -----------------------------------------------------------------------------------
     dist_not_connected = []
     dist_connected = []
 
     for iteration, data_loader_out in enumerate(data_loader, 1):
-
         print("Iteration {}".format(iteration))
 
         for idx in range(data_loader_out[1].shape[0]):
