@@ -160,9 +160,9 @@ def extend(in_img, contour):
     return keep_going
 
 
-def show_contour(in_img, contour):
+def show_contour(in_img, contour, value=0.5):
     for point in contour:
-        in_img[point[0], point[1]] = .5
+        in_img[point[0], point[1]] = value
     plt.imshow(in_img)
     # print(contour)
     # plt.show()
