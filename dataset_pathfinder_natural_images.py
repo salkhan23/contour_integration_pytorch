@@ -114,25 +114,43 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         super(NaturalImagesPathfinder, self).__init__(*args, **kwargs)
 
+    @staticmethod
+    def _get_threshold_label(label, th):
+        label_th = torch.zeros_like(label)
+        label_th[label >= th] = 1
+        label_th[label < th] = 0
+        return label_th
+
     def __getitem__(self, index):
 
         img = Image.open(self.images[index]).convert('RGB')
-        full_label = Image.open(self.labels[index]).convert('L')  # Greyscale
+        full_label_raw = Image.open(self.labels[index]).convert('L')  # Greyscale
         print("Index {}".format(index))
 
         if self.resize is not None:
             img = self.resize(img)
-            full_label = self.resize(full_label)  # uses interpolation
+            full_label_raw = self.resize(full_label_raw)  # uses interpolation
+
+        th_arr = [0.1, 0.2, 0.15]
+        th = th_arr.pop()
 
         img = transform_functional.to_tensor(img)
-        full_label = transform_functional.to_tensor(full_label)
-        full_label[full_label >= 0.15] = 1  # necessary for smooth contours after interpolation
-        full_label[full_label < 0.15] = 0
+        full_label_raw = transform_functional.to_tensor(full_label_raw)
+
+        # necessary for smooth contours after interpolation
+        full_label = self._get_threshold_label(full_label_raw, th)
 
         # [1] Select a random contour
         c1 = []
         while len(c1) <= 0:
             c1 = contour.get_random_contour(full_label[0, ])
+            if len(c1) == 0:
+                th_old = th
+                th = th_arr.pop()
+                print("No valid C1 contour found. Change interpolation th {}->{}. "
+                      "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
+
+                full_label = self._get_threshold_label(full_label_raw, th)
 
         dist_start_stop_c1 = get_distance_between_two_points(c1[0], c1[-1])
         # Guard against circular contours
@@ -151,7 +169,15 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
             c2 = []
             while len(c2) <= 0:
                 c2 = contour.get_nearby_contour(
-                    full_label[0, ], c1[0], ideal_dist=ideal_dist, p_scale=p_scale)
+                    full_label[0, ], c1[0], ideal_dist=ideal_dist,
+                    p_scale=p_scale, max_iterations=200000)
+
+                if len(c2) == 0:
+                    th_old = th
+                    th = th_arr.pop()
+                    print("No valid C2 contour found. Change interpolation th {}->{}.\n "
+                          "[Image idx {}: {}]".format(th_old, th, index, self.labels[index]))
+                    full_label = self._get_threshold_label(full_label_raw, th)
 
             for p in c1:
                 is_overlapping = does_point_overlap_with_contour(p, c2, self.min_sep_dist)
@@ -163,7 +189,8 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
                         old_p_scale = p_scale
                         p_scale = p_scale + 10
                         print("C2 overlapped with C1 more than 100 times. "
-                              "Broaden contour search space. {}->{}".format(old_p_scale, p_scale))
+                              "Broaden contour search space. {}->{}.\n[Image idx {}: {}]".format(
+                                old_p_scale, p_scale, index, self.labels[index]))
 
                         overlap_count = 0
 
