@@ -276,11 +276,12 @@ def get_nearby_contour(
             while ok:
                 ok = extend(in_img, contour)
 
-            # go the other way
-            contour = list(reversed(contour))
-            ok = True
-            while ok:
-                ok = extend(in_img, contour)
+            # No need to go the other way for this case
+            # # go the other way
+            # contour = list(reversed(contour))
+            # ok = True
+            # while ok:
+            #     ok = extend(in_img, contour)
 
             if len(contour) > min_contour_len:
 

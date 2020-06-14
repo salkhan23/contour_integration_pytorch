@@ -112,11 +112,6 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
         self.p_connect = p_connect
         self.min_sep_dist = min_sep_dist
 
-        # cumulative moving average of distance between points.
-        # This is use to choose points on c2
-        self.avg_connected_dist = 0
-        self.n_connected_samples = 0
-
         super(NaturalImagesPathfinder, self).__init__(*args, **kwargs)
 
     def __getitem__(self, index):
@@ -140,6 +135,8 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
             c1 = contour.get_random_contour(full_label[0, ])
 
         dist_start_stop_c1 = get_distance_between_two_points(c1[0], c1[-1])
+        # Guard against circular contours
+        ideal_dist = np.max((dist_start_stop_c1, self.min_sep_dist))
 
         # [2] Select a second non-overlapping contour
         is_overlapping = True
@@ -148,7 +145,7 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
         while is_overlapping:
             c2 = []
             while len(c2) <= 0:
-                c2 = contour.get_random_contour(full_label[0, ])
+                c2 = contour.get_nearby_contour(full_label[0, ], c1[0], ideal_dist=ideal_dist)
 
             for p in c1:
                 is_overlapping = does_point_overlap_with_contour(p, c2, self.min_sep_dist)
@@ -166,12 +163,6 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
         if connected:
             start_point = c1[0]
             end_point = c1[-1]
-
-            self.avg_connected_dist = \
-                (dist_start_stop_c1 + (self.n_connected_samples * self.avg_connected_dist)) /\
-                (self.n_connected_samples + 1)
-            self.n_connected_samples += 1
-
         else:
             dist_arr = np.array([
                 get_distance_between_two_points(c1[0], c2[0]),      # c1_start_c2_start
@@ -180,8 +171,8 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 get_distance_between_two_points(c1[-1], c2[-1])     # c1_stop_c2_stop
             ])
 
-            # find points closest to the stored connected sample distance:
-            closest_points_idx = (np.abs(dist_arr - self.avg_connected_dist)).argmin()
+            # closest in terms of most similar to distance between c1[0] and c1[-1]
+            closest_points_idx = (np.abs(dist_arr - ideal_dist)).argmin()
 
             if closest_points_idx == 0:
                 start_point = c1[0]
@@ -291,7 +282,7 @@ if __name__ == "__main__":
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=500,
+        subset_size=100,
         resize_size=(256, 256)
     )
 
@@ -318,12 +309,12 @@ if __name__ == "__main__":
             else:
                 dist_not_connected.append(data_loader_out[4][idx])
 
-    print("Not connected. Avg Distance {}, std {}".format(
+    print("Connected: m={:0.2f}, std={:0.2f}, Not connected: m={:0.2f}, std={:0.2f}".format(
+        np.mean(dist_connected), np.std(dist_connected),
         np.mean(dist_not_connected), np.std(dist_not_connected)))
-    print("Connected. Avg Distance {}, std {}".format(
-        np.mean(dist_connected), np.std(dist_connected)))
 
-    f, ax_arr = plt.subplots(1, 2)
+    # Histogram of distances between points
+    f, ax_arr = plt.subplots(2, 1, sharex=True)
     ax_arr[0].hist(dist_connected)
     ax_arr[0].set_title("Connected. Mean {:0.2f}, Std {:0.2f}".format(
         np.mean(dist_connected), np.std(dist_connected)))
@@ -331,6 +322,9 @@ if __name__ == "__main__":
     ax_arr[1].hist(dist_not_connected)
     ax_arr[1].set_title("Not Connected. Mean {:0.2f}, std {:0.2f}".format(
         np.mean(dist_not_connected), np.std(dist_not_connected)))
+
+    f.suptitle("Distribution of distances between end-points. [Counts Connected={}, Not={}]".format(
+        len(dist_connected), len(dist_not_connected)))
 
     # -----------------------------------------------------------------------------------
     # End
