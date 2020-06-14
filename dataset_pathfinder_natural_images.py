@@ -112,7 +112,7 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
         self.p_connect = p_connect
         self.min_sep_dist = min_sep_dist
 
-        super(NaturalImagesPathfinder, self).__init__(*args, **kwargs)
+        super(NaturalImagesPathfinder, self).__init__(calculate_stats=False, *args, **kwargs)
 
     @staticmethod
     def _get_threshold_label(label, th):

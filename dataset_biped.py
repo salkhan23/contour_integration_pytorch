@@ -18,7 +18,7 @@ from datetime import datetime
 
 class BipedDataSet(Dataset):
     def __init__(self, data_dir, dataset_type='train', transform=None, subset_size=None,
-                 resize_size=None):
+                 resize_size=None, calculate_stats=True):
 
         self.transform = transform
         self.resize_size = resize_size
@@ -73,7 +73,11 @@ class BipedDataSet(Dataset):
                 "Number of images {} and Labels  {} don't match".format(
                     len(self.images), len(self.labels)))
 
-        self.data_set_mean, self.data_set_std = self.get_data_set_mean_and_std()
+        if calculate_stats:
+            self.data_set_mean, self.data_set_std = self.get_data_set_mean_and_std()
+        else:
+            self.data_set_mean = 0
+            self.data_set_std = 0
 
         print("DataSet Contains {} Images.\nChannel mean {},\nChannel std {}".format(
             len(self.images), self.data_set_mean, self.data_set_std))
