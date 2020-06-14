@@ -125,7 +125,7 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         img = Image.open(self.images[index]).convert('RGB')
         full_label_raw = Image.open(self.labels[index]).convert('L')  # Greyscale
-        print("Index {}".format(index))
+        # print("Index {}".format(index))
 
         if self.resize is not None:
             img = self.resize(img)
@@ -198,7 +198,7 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         # Randomly choose to connect the end dot to the contour
         connected = np.random.choice([0, 1], p=[1 - self.p_connect, self.p_connect])
-        connected = connected.astype(bool)
+        connected = torch.tensor(connected)
 
         start_point = None
         end_point = None
