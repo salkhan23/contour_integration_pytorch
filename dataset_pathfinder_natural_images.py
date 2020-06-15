@@ -325,7 +325,7 @@ if __name__ == "__main__":
         data_dir=base_dir,
         dataset_type='train',
         transform=pre_process_transforms,
-        subset_size=500,
+        subset_size=5000,
         resize_size=(256, 256)
     )
 
