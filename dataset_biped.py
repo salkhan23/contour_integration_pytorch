@@ -75,12 +75,13 @@ class BipedDataSet(Dataset):
 
         if calculate_stats:
             self.data_set_mean, self.data_set_std = self.get_data_set_mean_and_std()
+
+            print("DataSet Contains {} Images.\nChannel mean {},\nChannel std {}".format(
+                len(self.images), self.data_set_mean, self.data_set_std))
+
         else:
             self.data_set_mean = 0
             self.data_set_std = 0
-
-        print("DataSet Contains {} Images.\nChannel mean {},\nChannel std {}".format(
-            len(self.images), self.data_set_mean, self.data_set_std))
 
     def __len__(self):
         return len(self.images)

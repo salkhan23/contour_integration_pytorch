@@ -106,7 +106,7 @@ class NaturalImagesPathfinder(dataset_biped.BipedDataSet):
     """
     TODO:
     """
-    def __init__(self, p_connect=0.5, min_sep_dist=20, end_stop_radius=8, *args, **kwargs):
+    def __init__(self, p_connect=0.5, min_sep_dist=20, end_stop_radius=6, *args, **kwargs):
 
         self.end_stop_radius = end_stop_radius
         self.p_connect = p_connect
