@@ -117,14 +117,14 @@ if __name__ == "__main__":
             ind_contour_label = indv_contours_label[0]
             ind_contour_label = np.squeeze(ind_contour_label)
             plt.imsave(
-                fname=os.path.join(indv_contours_labels_dir, 'img_{}'.format(iteration)),
+                fname=os.path.join(indv_contours_labels_dir, 'img_{}.png'.format(iteration)),
                 arr=ind_contour_label.numpy())
 
             full_label = full_labels[0]
             full_label = np.squeeze(full_label)
 
             plt.imsave(
-                fname=os.path.join(full_labels_dir, 'img_{}'.format(iteration)),
+                fname=os.path.join(full_labels_dir, 'img_{}.png'.format(iteration)),
                 arr=full_label.numpy())
 
             d_between_points = int(distances[0])
