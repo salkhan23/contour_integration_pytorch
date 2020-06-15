@@ -52,11 +52,14 @@ if __name__ == "__main__":
         if not os.path.exists(folder):
             os.makedirs(folder)
 
+    data_key_filename = os.path.join(data_store_dir, 'data_key.txt')
     class_labels_filename = os.path.join(data_store_dir, 'classification_labels.txt')
     map_to_org_imgs_filename = os.path.join(data_store_dir, 'map_to_original_images.txt')
     distances_filename = os.path.join(data_store_dir, 'distances_between_points.txt')
 
+    data_key_handle = open(data_key_filename, 'w+')
     class_labels_handle = open(class_labels_filename, 'w+')
+
     org_imgs_map_handle = open(map_to_org_imgs_filename, 'w+')
     distances_handle = open(distances_filename, 'w+')
 
@@ -70,16 +73,14 @@ if __name__ == "__main__":
         data_dir=biped_dataset_dir,
         dataset_type='train',
         transform=None,
-        subset_size=500,
+        subset_size=100,
         resize_size=(256, 256),
-        # min_contour_len=50,
-        # max_contour_len=50
     )
 
     data_loader = DataLoader(
         dataset=data_set,
         num_workers=0,
-        batch_size=10,   # must stay as one
+        batch_size=1,   # must stay as one
         shuffle=False,
         pin_memory=True
     )
@@ -102,10 +103,12 @@ if __name__ == "__main__":
             # b_size = imgs.shape[0]
 
             img = np.transpose(imgs[0, ], axes=(1, 2, 0))
-            plt.imsave(fname=os.path.join(imgs_dir, 'img_{}'.format(iteration)), arr=img)
+            img_file_name = 'img_{}.png'.format(iteration)
+            plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img)
+            data_key_handle.write("{}\n".format(img_file_name))
 
             class_label = class_labels[0]
-            class_labels_handle.write("{}\n".format(bool(class_label)))
+            class_labels_handle.write("{}\n".format(int(class_label)))
 
             org_img_idx = org_img_idxs[0]
             org_img_name = data_loader.dataset.images[org_img_idx]
@@ -123,7 +126,7 @@ if __name__ == "__main__":
                 fname=os.path.join(full_labels_dir, 'img_{}'.format(iteration)),
                 arr=full_label)
 
-            d_between_points = distances[0]
+            d_between_points = int(distances[0])
             distances_handle.write("{}\n".format(d_between_points))
 
             # Store distances between points
@@ -154,6 +157,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
+    data_key_handle.close()
     class_labels_handle.close()
     org_imgs_map_handle.close()
     distances_handle.close()
