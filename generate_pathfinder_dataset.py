@@ -73,7 +73,7 @@ if __name__ == "__main__":
         data_dir=biped_dataset_dir,
         dataset_type='train',
         transform=None,
-        subset_size=100,
+        subset_size=5000,
         resize_size=(256, 256),
     )
 
@@ -122,6 +122,7 @@ if __name__ == "__main__":
 
             full_label = full_labels[0]
             full_label = np.squeeze(full_label)
+
             plt.imsave(
                 fname=os.path.join(full_labels_dir, 'img_{}'.format(iteration)),
                 arr=full_label)
