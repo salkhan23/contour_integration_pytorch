@@ -104,7 +104,7 @@ if __name__ == "__main__":
 
             img = np.transpose(imgs[0, ], axes=(1, 2, 0))
             img_file_name = 'img_{}.png'.format(iteration)
-            plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img)
+            plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img.numpy())
             data_key_handle.write("{}\n".format(img_file_name))
 
             class_label = class_labels[0]
@@ -118,14 +118,14 @@ if __name__ == "__main__":
             ind_contour_label = np.squeeze(ind_contour_label)
             plt.imsave(
                 fname=os.path.join(indv_contours_labels_dir, 'img_{}'.format(iteration)),
-                arr=ind_contour_label)
+                arr=ind_contour_label.numpy())
 
             full_label = full_labels[0]
             full_label = np.squeeze(full_label)
 
             plt.imsave(
                 fname=os.path.join(full_labels_dir, 'img_{}'.format(iteration)),
-                arr=full_label)
+                arr=full_label.numpy())
 
             d_between_points = int(distances[0])
             distances_handle.write("{}\n".format(d_between_points))
