@@ -304,14 +304,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, Acc={}.Time {}".format(
+        print("Epoch [{}/{}], Train: loss={:0.4f}, Acc={:0.2f}. Time {}".format(
             epoch + 1, num_epochs,
             train_history[epoch][0],
             train_history[epoch][1],
             datetime.now() - epoch_start_time))
 
         # Save best val accuracy weights
-        max_val_acc = max(train_history[epoch][1]) > best_acc
+        max_val_acc = train_history[epoch][1] > best_acc
         if max_val_acc > best_acc:
             best_acc = max_val_acc
             torch.save(
@@ -325,7 +325,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             os.path.join(results_store_dir, 'last_epoch.pth')
         )
 
-        file_handle.write("[{}, {:0.4f}, {:0.4f}, {}],\n".format(
+        file_handle.write("[{}, {:0.4f}, {:0.2f}, {}],\n".format(
             epoch + 1,
             train_history[epoch][0],
             train_history[epoch][1],
