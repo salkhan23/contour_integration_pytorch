@@ -20,12 +20,13 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_store_dir = './data/pathfinder_natural_images'
+    data_store_dir = './data/pathfinder_natural_images_test'
+
+    # Total images generated will be biped_data_subset_size * n_epochs
+    biped_data_subset_size = 50
+    n_epochs = 10
 
     random_seed = 5
-    n_epochs = 1  # must be = 1 otherwise will overwrite data
-
-    contour_lengths_bins = [20, 50, 100, 150, 200]
 
     # Immutable ----------------------
     plt.ion()
@@ -66,14 +67,14 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Setup the Online Pathfinder Data loader
     # -----------------------------------------------------------------------------------
-    print("Setting up the Data Loaders {}".format('*' * 30))
+    print("New Dataset will be created @ {}\n{}".format(data_store_dir, '*' * 80))
     start_time = datetime.now()
 
     data_set = dataset_pathfinder_natural_images.NaturalImagesPathfinder(
         data_dir=biped_dataset_dir,
         dataset_type='train',
         transform=None,
-        subset_size=5000,
+        subset_size=biped_data_subset_size,
         resize_size=(256, 256),
     )
 
@@ -85,15 +86,16 @@ if __name__ == "__main__":
         pin_memory=True
     )
 
-    print("Setting up the train data loader took {}".format(datetime.now() - start_time))
-
     # -----------------------------------------------------------------------------------
     # Main
     # -----------------------------------------------------------------------------------
     dist_not_connected = []
     dist_connected = []
+    n_imgs_created = 0
 
     for epoch in range(0, n_epochs):
+        print("Epoch {}".format(n_epochs))
+
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
             imgs, class_labels, indv_contours_label, full_labels, distances, org_img_idxs = \
@@ -103,7 +105,7 @@ if __name__ == "__main__":
             # b_size = imgs.shape[0]
 
             img = np.transpose(imgs[0, ], axes=(1, 2, 0))
-            img_file_name = 'img_{}.png'.format(iteration)
+            img_file_name = 'img_{}.png'.format(n_imgs_created)
             plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img.numpy())
             data_key_handle.write("{}\n".format(img_file_name))
 
@@ -117,14 +119,14 @@ if __name__ == "__main__":
             ind_contour_label = indv_contours_label[0]
             ind_contour_label = np.squeeze(ind_contour_label)
             plt.imsave(
-                fname=os.path.join(indv_contours_labels_dir, 'img_{}.png'.format(iteration)),
+                fname=os.path.join(indv_contours_labels_dir, 'img_{}.png'.format(n_imgs_created)),
                 arr=ind_contour_label.numpy())
 
             full_label = full_labels[0]
             full_label = np.squeeze(full_label)
 
             plt.imsave(
-                fname=os.path.join(full_labels_dir, 'img_{}.png'.format(iteration)),
+                fname=os.path.join(full_labels_dir, 'img_{}.png'.format(n_imgs_created)),
                 arr=full_label.numpy())
 
             d_between_points = int(distances[0])
@@ -137,9 +139,11 @@ if __name__ == "__main__":
                 else:
                     dist_not_connected.append(data_loader_out[4][idx])
 
-        print("Connected: m={:0.2f}, std={:0.2f}, Not connected: m={:0.2f}, std={:0.2f}".format(
-                np.mean(dist_connected), np.std(dist_connected),
-                np.mean(dist_not_connected), np.std(dist_not_connected)))
+            n_imgs_created += 1
+
+    print("Connected: m={:0.2f}, std={:0.2f}, Not connected: m={:0.2f}, std={:0.2f}".format(
+            np.mean(dist_connected), np.std(dist_connected),
+            np.mean(dist_not_connected), np.std(dist_not_connected)))
 
     f, ax_arr = plt.subplots(2, 1, sharex=True, figsize=(9, 9))
     ax_arr[0].hist(dist_connected, bins=np.arange(0, 300, 50))
@@ -163,8 +167,8 @@ if __name__ == "__main__":
     org_imgs_map_handle.close()
     distances_handle.close()
 
-    print("Print Dataset Created. Number images {}. Time {}".format(
-        len(data_loader.dataset.images), datetime.now() - start_time))
+    print("Dataset Created. Number images {} from {} unique images. Time {}".format(
+        n_imgs_created, biped_data_subset_size, datetime.now() - start_time))
 
     import pdb
     pdb.set_trace()
