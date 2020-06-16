@@ -160,7 +160,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     def binary_acc(y_pred, y_target):
         y_pred_tag = torch.round(torch.sigmoid(y_pred))
 
-        correct_results_sum = (y_pred_tag == y_target).sum().float()
+        correct_results_sum = (y_pred_tag == y_target.float()).sum().float()
         acc = correct_results_sum / y_target.shape[0]
         acc = torch.round(acc * 100)
 
