@@ -29,6 +29,33 @@ class DummyHead(nn.Module):
         return x
 
 
+class BinaryClassifier(nn.Module):
+    def __init__(self, n_in_channels):
+        super(BinaryClassifier, self).__init__()
+        self.n_in_channels = n_in_channels
+
+        self.conv_first = nn.Conv2d(
+            in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(3, 3),
+            padding=(1, 1), groups=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(num_features=8)
+
+        self.conv_final = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=(1, 1), bias=True)
+
+        self.avg_pool = nn.AvgPool2d(43)  # 43=C=R
+
+    def forward(self, x):
+        x = self.conv_first(x)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.conv_final(x)
+        x = self.avg_pool(x)
+        x = torch.squeeze(x)
+
+        return x
+
+
 class EdgeExtractClassifier(nn.Module):
     """
     Multiple conv layers that map to a single output channel without changing spatial
@@ -593,6 +620,45 @@ class EdgeDetectionResnet50(nn.Module):
 
         # Up sample to the input image size
         x = nn.functional.interpolate(x, size=img_size, mode='bilinear')
+
+        x = self.classifier(x)
+
+        return x
+
+
+class BinaryClassifierResnet50(nn.Module):
+    """
+          Model for  Binary Classification on Images
+    """
+    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True):
+        super(BinaryClassifierResnet50, self).__init__()
+
+        self.pre_trained_edge_extract = pre_trained_edge_extract
+
+        self.edge_extract = torchvision.models.resnet50(
+            pretrained=self.pre_trained_edge_extract).conv1
+        if self.pre_trained_edge_extract:
+            self.edge_extract.weight.requires_grad = False
+        else:
+            init.xavier_normal_(self.edge_extract.weight)
+
+        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
+        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
+
+        self.contour_integration_layer = contour_integration_layer
+
+        self.classifier = BinaryClassifier(n_in_channels=self.num_edge_extract_chan)
+
+    def forward(self, in_img):
+
+        img_size = in_img.shape[2:]
+
+        # Edge Extraction
+        x = self.edge_extract(in_img)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.contour_integration_layer(x)
 
         x = self.classifier(x)
 
