@@ -23,10 +23,10 @@ if __name__ == "__main__":
     data_store_dir = './data/pathfinder_natural_images_test'
 
     # Total images generated will be biped_data_subset_size * n_epochs
-    biped_data_subset_size = 50
+    biped_data_subset_size = 500
     n_epochs = 10
 
-    random_seed = 5
+    random_seed = 8
 
     # Immutable ----------------------
     plt.ion()
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     n_imgs_created = 0
 
     for epoch in range(0, n_epochs):
-        print("Epoch {}".format(n_epochs))
+        print("Processing Epoch {}/{}".format(epoch + 1, n_epochs))
 
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
@@ -146,16 +146,20 @@ if __name__ == "__main__":
             np.mean(dist_not_connected), np.std(dist_not_connected)))
 
     f, ax_arr = plt.subplots(2, 1, sharex=True, figsize=(9, 9))
-    ax_arr[0].hist(dist_connected, bins=np.arange(0, 300, 50))
+    connected_hist = ax_arr[0].hist(dist_connected, bins=np.arange(0, 300, 50))
     ax_arr[0].set_title("Connected. Mean {:0.2f}, Std {:0.2f}".format(
         np.mean(dist_connected), np.std(dist_connected)))
 
-    ax_arr[1].hist(dist_not_connected, bins=np.arange(0, 300, 50))
+    not_connected_hist = ax_arr[1].hist(dist_not_connected, bins=np.arange(0, 300, 50))
     ax_arr[1].set_title("Not Connected. Mean {:0.2f}, std {:0.2f}".format(
         np.mean(dist_not_connected), np.std(dist_not_connected)))
 
     f.suptitle("Distribution of distances between end-points. [Counts Connected={}, Not={}]".format(
         len(dist_connected), len(dist_not_connected)))
+
+    y_max = np.max((np.max(connected_hist[0]), np.max(not_connected_hist[0])))
+    ax_arr[0].set_ylim(0, y_max * 1.1)
+    ax_arr[1].set_ylim(0, y_max * 1.1)
 
     f.savefig(os.path.join(data_store_dir, 'histogram.jpg'), format='jpg')
 
