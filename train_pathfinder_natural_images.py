@@ -428,7 +428,7 @@ if __name__ == '__main__':
     plt.ion()
 
     data_set_parameters = {
-        'data_set_dir': './data/pathfinder_natural_images_test',
+        'data_set_dir': './data/pathfinder_natural_images_2',
     }
 
     train_parameters = {
