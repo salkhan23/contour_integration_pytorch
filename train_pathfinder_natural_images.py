@@ -402,6 +402,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # PLots
     # -------------------------------------------------------------------
     train_history = np.array(train_history)
+    val_history = np.array(val_history)
 
     f, ax_arr = plt.subplots(1, 2)
 
