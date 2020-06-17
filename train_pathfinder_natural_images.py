@@ -242,7 +242,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 label = label.to(device)
 
                 label_out = model(img)
-                bce_loss = criterion(label_out, label.float())
+                bce_loss = criterion(torch.unsqueeze(label_out, dim=0), label.float())
                 reg_loss = 0
 
                 if use_gaussian_reg_on_lateral_kernels:
