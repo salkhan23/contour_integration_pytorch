@@ -105,7 +105,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     pre_process_transforms = transforms.Compose(transforms_list)
 
     train_set = view_pathfinder_natural_images.PathfinderNaturalImages(
-        data_dir=data_set_dir,
+        data_dir=os.path.join(data_set_dir, 'train'),
         transforms=pre_process_transforms,
     )
 
@@ -119,10 +119,25 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         pin_memory=True
     )
 
+    val_set = view_pathfinder_natural_images.PathfinderNaturalImages(
+        data_dir=os.path.join(data_set_dir, 'test'),
+        transforms=pre_process_transforms,
+    )
+
+    test_batch_size = min(test_batch_size, len(val_set))
+
+    val_data_loader = DataLoader(
+        dataset=val_set,
+        num_workers=4,
+        batch_size=test_batch_size,
+        shuffle=True,
+        pin_memory=True
+    )
+
     print("Data loading Took {}. # Train {}, # Test {}".format(
         datetime.now() - data_load_start_time,
         len(train_data_loader) * train_batch_size,
-        0
+        len(val_data_loader) * test_batch_size
     ))
 
     # -------------------------------------------------------------------------------
@@ -212,6 +227,44 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
         return e_loss, e_acc
 
+    def validate():
+        """ Get loss over validation set """
+        model.eval()
+        e_loss = 0
+        e_acc = 0
+
+        with torch.no_grad():
+            for iteration, data_loader_out in enumerate(val_data_loader, 1):
+
+                img, label, _, _, _, _ = data_loader_out
+
+                img = img.to(device)
+                label = label.to(device)
+
+                label_out = model(img)
+                bce_loss = criterion(label_out, label.float())
+                reg_loss = 0
+
+                if use_gaussian_reg_on_lateral_kernels:
+                    reg_loss = \
+                        inverse_gaussian_regularization(
+                            model.contour_integration_layer.lateral_e.weight,
+                            model.contour_integration_layer.lateral_i.weight
+                        )
+
+                total_loss = bce_loss + lambda1 * reg_loss
+                acc = binary_acc(label_out, label)
+
+                e_loss += total_loss.item()
+                e_acc += acc.item()
+
+        e_loss = e_loss / len(val_data_loader)
+        e_acc = e_acc / len(val_data_loader)
+
+        # print("Val Loss = {:0.4f}, IoU={}".format(e_loss, e_iou))
+
+        return e_loss, e_acc
+
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
@@ -219,6 +272,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     training_start_time = datetime.now()
 
     train_history = []
+    val_history = []
     lr_history = []
 
     best_acc = 0
@@ -236,7 +290,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
-    # file_handle.write("Val images       : {}\n".format(len(val_set.images)))
+    file_handle.write("Val images       : {}\n".format(len(val_set.images)))
     file_handle.write("Train batch size : {}\n".format(train_batch_size))
     file_handle.write("Val batch size   : {}\n".format(test_batch_size))
     file_handle.write("Epochs           : {}\n".format(num_epochs))
@@ -289,29 +343,32 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Training details\n")
-    # file_handle.write("Epoch, train_loss, train_iou, val_loss, val_iou, lr\n")
-    file_handle.write("Epoch, train_loss, Acc, lr\n")
+    file_handle.write("Epoch, train_loss, train_acc, val_loss, val_acc, lr\n")
 
-    print("train_batch_size={},  lr={}, epochs={}".format(
-        train_batch_size, learning_rate, num_epochs))
+    print("train_batch_size={}, test_batch_size= {}, lr={}, epochs={}".format(
+        train_batch_size, test_batch_size, learning_rate, num_epochs))
 
     for epoch in range(0, num_epochs):
 
         epoch_start_time = datetime.now()
 
         train_history.append(train())
+        val_history.append(validate())
 
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, Acc={:0.2f}. Time {}".format(
-            epoch + 1, num_epochs,
-            train_history[epoch][0],
-            train_history[epoch][1],
-            datetime.now() - epoch_start_time))
+        print("Epoch [{}/{}], Train: loss={:0.4f}, Acc={:0.2f}. Val: loss={:0.4f}, Acc={:0.2f}."
+              " Time {}".format(
+                epoch + 1, num_epochs,
+                train_history[epoch][0],
+                train_history[epoch][1],
+                val_history[epoch][0],
+                val_history[epoch][1],
+                datetime.now() - epoch_start_time))
 
         # Save best val accuracy weights
-        max_val_acc = train_history[epoch][1] > best_acc
+        max_val_acc = val_history[epoch][1]
         if max_val_acc > best_acc:
             best_acc = max_val_acc
             torch.save(
@@ -325,10 +382,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             os.path.join(results_store_dir, 'last_epoch.pth')
         )
 
-        file_handle.write("[{}, {:0.4f}, {:0.2f}, {}],\n".format(
+        file_handle.write("[{}, {:0.4f}, {:0.2f}, {:0.4f}, {:0.2f}, {}],\n".format(
             epoch + 1,
             train_history[epoch][0],
             train_history[epoch][1],
+            val_history[epoch][0],
+            val_history[epoch][1],
             lr_history[epoch]
         ))
 
@@ -347,12 +406,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     f, ax_arr = plt.subplots(1, 2)
 
     ax_arr[0].plot(np.arange(1, num_epochs + 1), train_history[:, 0], label='train')
+    ax_arr[0].plot(np.arange(1, num_epochs + 1), val_history[:, 0], label='val')
     ax_arr[0].set_xlabel('Epoch')
     ax_arr[0].set_title("Loss Vs Time")
     ax_arr[0].grid(True)
     ax_arr[0].legend()
 
     ax_arr[1].plot(np.arange(1, num_epochs + 1), train_history[:, 1], label='train')
+    ax_arr[1].plot(np.arange(1, num_epochs + 1), val_history[:, 1], label='val')
     ax_arr[1].set_xlabel('Epoch')
     ax_arr[1].set_title("Accuracy Vs Time")
     ax_arr[1].grid(True)
@@ -367,15 +428,15 @@ if __name__ == '__main__':
     plt.ion()
 
     data_set_parameters = {
-        'data_set_dir': './data/pathfinder_natural_images',
+        'data_set_dir': './data/pathfinder_natural_images_test',
     }
 
     train_parameters = {
         'train_batch_size': 32,
         'test_batch_size': 1,
-        'learning_rate': 1e-3,
+        'learning_rate': 1e-2,
         'num_epochs': 50,
-        'gaussian_reg_weight': 0.0001,
+        'gaussian_reg_weight': 0.000001,
         'gaussian_reg_sigma': 10,
     }
 
