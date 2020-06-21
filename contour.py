@@ -168,39 +168,56 @@ def show_contour(in_img, contour, value=0.5):
     # plt.show()
 
 
-def get_random_contour(
-        in_img, show=False, min_contour_len=30, max_contour_len=None, max_iterations=20000):
-    done = False
+def get_contour_around_point(in_img, p, extend_direction='both'):
+    """
+    Get a contour around a point.
+    """
+    valid_extend_directions = ['single', 'both']
+    if extend_direction.lower() not in valid_extend_directions:
+        raise Exception(
+            "Invalid direction {} for get_contour_around_point. Must be one of {}".format(
+                extend_direction, valid_extend_directions))
+
+    n = get_neighbourhood(in_img, p)
+
     contour = []
+    if has_clean_line(n):
 
-    iteration = 0
-    while not done:
-        point = get_random_point_on_an_edge(in_img)
-        n = get_neighbourhood(in_img, point)
+        contour = init_contour(p, n)
 
-        if has_clean_line(n):
+        ok = True
+        while ok:
+            ok = extend(in_img, contour)
 
-            contour = init_contour(point, n)
-
-            ok = True
-            while ok:
-                ok = extend(in_img, contour)
-
-            # go the other way
+        # go the other way
+        if extend_direction == 'both':
             contour = list(reversed(contour))
             ok = True
             while ok:
                 ok = extend(in_img, contour)
 
-            if len(contour) > min_contour_len:
+    return contour
 
-                done = True
 
-                if max_contour_len is not None and len(contour) > max_contour_len:
-                    done = False
+def get_random_contour(
+        in_img, show=False, min_contour_len=30, max_contour_len=None, max_iterations=20000):
 
-                if done and show:
-                    show_contour(in_img, contour)
+    if max_contour_len is None:
+        # unlikely to get a contour of this length
+        max_contour_len = 4 * np.max((in_img.shape[0], in_img.shape[1]))
+
+    done = False
+    iteration = 0
+    contour = []
+
+    while not done:
+        point = get_random_point_on_an_edge(in_img)
+        contour = get_contour_around_point(in_img, point)
+
+        if min_contour_len < len(contour) < max_contour_len:
+            done = True
+            if show:
+                show_contour(in_img, contour)
 
         if not done:
             iteration += 1
@@ -263,40 +280,22 @@ def get_nearby_contour(
     # The rest is similar to get random contour,
     # but with a non uniform probability distribution of finding starting points
     # -----------------------------------------------------------------------------
+    if max_contour_len is None:
+        max_contour_len = 4 * np.max((in_img.shape[0], in_img.shape[1]))
+
     done = False
     contour = []
-
     iteration = 0
+
     while not done:
         point_idx = np.random.choice(len(all_edge_points), replace=False, p=probabilities)
         point = all_edge_points[point_idx, ]
+        contour = get_contour_around_point(in_img, point, extend_direction='single')
 
-        n = get_neighbourhood(in_img, point)
-
-        if has_clean_line(n):
-
-            contour = init_contour(point, n)
-
-            ok = True
-            while ok:
-                ok = extend(in_img, contour)
-
-            # No need to go the other way for this case
-            # # go the other way
-            # contour = list(reversed(contour))
-            # ok = True
-            # while ok:
-            #     ok = extend(in_img, contour)
-
-            if len(contour) > min_contour_len:
-
-                done = True
-
-                if max_contour_len is not None and len(contour) > max_contour_len:
-                    done = False
-
-                if done and show:
-                    show_contour(in_img, contour, value=0.25)
+        if min_contour_len < len(contour) < max_contour_len:
+            done = True
+            if show:
+                show_contour(in_img, contour, value=0.25)
 
         if not done:
             iteration += 1
