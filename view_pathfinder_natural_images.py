@@ -86,7 +86,7 @@ class PathfinderNaturalImages(Dataset):
 
 if __name__ == "__main__":
 
-    dataset_dir = './data/pathfinder_natural_images'
+    dataset_dir = './data/pathfinder_natural_images_test/train'
     random_seed = 5
 
     # Immutable ----------------------

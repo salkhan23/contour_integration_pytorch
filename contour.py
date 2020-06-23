@@ -309,6 +309,29 @@ def get_nearby_contour(
     return contour
 
 
+def find_all_edge_points_within_distance(in_img, p1, d):
+    # Get all Edge Points
+    edges_x, edges_y = np.where(in_img == 1)
+    all_edge_points = np.array([edges_x, edges_y])
+    all_edge_points = all_edge_points.T
+
+    # Get distance of all edges to specified point
+    dist_from_point = get_distances_point_to_contour(np.array(p1), all_edge_points)
+
+    indices = dist_from_point <= d
+    valid_points = all_edge_points[indices]
+
+    # # Debug
+    # plt.figure()
+    # plt.scatter(p1[1], p1[0], color='red', marker='+', s=200)
+    # plt.scatter(valid_points[:,1], valid_points[:, 0])
+    # show_contour(in_img, [])
+    # import pdb
+    # pdb.set_trace()
+
+    return valid_points
+
+
 # ---------------------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------------------
