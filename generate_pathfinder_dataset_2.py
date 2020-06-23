@@ -60,7 +60,6 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         """
         Override the get item routine
         """
-
         img = Image.open(self.images[index]).convert('RGB')
         full_label_raw = Image.open(self.labels[index]).convert('L')  # Greyscale
         # print("Index {}".format(index))

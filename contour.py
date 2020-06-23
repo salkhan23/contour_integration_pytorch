@@ -142,20 +142,22 @@ def extend(in_img, contour):
 
     keep_going = False
     if best_candidate is not None:
-        contour.append(best_candidate)
         keep_going = True
 
         # stop if there has been a sharp turn recently
         if len(contour) >= 8:
-            last_angle = angle_between_points(contour[-4], contour[-1])
+            last_angle = angle_between_points(contour[-4], best_candidate)
             previous_angle = angle_between_points(contour[-8], contour[-5])
-            if difference_of_angles(last_angle, previous_angle) >= np.pi/4:
+            if not -np.pi/4 <= difference_of_angles(last_angle, previous_angle) <= np.pi/4:
                 keep_going = False
 
         # Stop if there is an overlap of previous points (Guard against circles)
         if len(set(contour)) < len(contour):
             # print("Extend Contour: Overlap with previous contour element detected!")
             keep_going = False
+
+        if keep_going:
+            contour.append(best_candidate)
 
     return keep_going
 
