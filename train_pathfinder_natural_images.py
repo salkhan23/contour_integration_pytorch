@@ -422,6 +422,20 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     ax_arr[1].legend()
     f.savefig(os.path.join(results_store_dir, 'loss_and accuracy.jpg'), format='jpg')
 
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_len.main(
+        model,
+        base_results_dir=results_store_dir,
+        iou_results=False,
+        frag_size=np.array([7, 7])
+    )
+
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+
 
 if __name__ == '__main__':
     random_seed = 7
