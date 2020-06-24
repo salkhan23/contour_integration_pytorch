@@ -166,9 +166,11 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 # check that no point is near is within overlapping distance from c1
                 for point in points_on_nearby_contours:
                     dist_arr = contour.get_distances_point_to_contour(point, c1)
-                    if np.min(dist_arr) < self.min_sep_dist:
-                        print("Nearby connected point is too close to C1. "
-                              "[Image idx {}: {}]".format(index, self.labels[index]))
+                    if np.min(dist_arr) < self.end_stop_radius:
+                        print("Nearby connected point is too close to C1: Dist={:0.2f} "
+                              "[Image idx {}: {}]".format(
+                                np.min(dist_arr), index, self.labels[index]))
+
                         is_overlapping = True
 
                         # # Debug
@@ -527,11 +529,11 @@ if __name__ == "__main__":
     random_seed = 8
 
     # Total number of images = n_biped_images * n_epochs
-    train_n_biped_imgs = 20000
+    train_n_biped_imgs = 1000
     train_n_epochs = 1
 
     val_n_biped_imgs = 50
-    val_n_epochs = 20
+    val_n_epochs = 2
 
     # Immutable ----------------------
     plt.ion()
