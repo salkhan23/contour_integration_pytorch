@@ -19,7 +19,7 @@ import torch.optim as optim
 import utils
 import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
-import view_pathfinder_natural_images
+import dataset_pathfinder
 
 import experiment_gain_vs_len
 import experiment_gain_vs_spacing
@@ -104,7 +104,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
-    train_set = view_pathfinder_natural_images.PathfinderNaturalImages(
+    train_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'train'),
         transform=pre_process_transforms,
     )
@@ -119,7 +119,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         pin_memory=True
     )
 
-    val_set = view_pathfinder_natural_images.PathfinderNaturalImages(
+    val_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'test'),
         transform=pre_process_transforms,
     )
