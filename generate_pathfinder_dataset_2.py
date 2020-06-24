@@ -529,11 +529,11 @@ if __name__ == "__main__":
     random_seed = 8
 
     # Total number of images = n_biped_images * n_epochs
-    train_n_biped_imgs = 1000
+    train_n_biped_imgs = 20000
     train_n_epochs = 1
 
     val_n_biped_imgs = 50
-    val_n_epochs = 2
+    val_n_epochs = 20
 
     # Immutable ----------------------
     plt.ion()
