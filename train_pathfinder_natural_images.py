@@ -242,7 +242,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
                 label = label.to(device)
 
                 label_out = model(img)
-                bce_loss = criterion(torch.unsqueeze(label_out, dim=0), label.float())
+
+                bce_loss = criterion(label_out, label.float())
                 reg_loss = 0
 
                 if use_gaussian_reg_on_lateral_kernels:
@@ -261,7 +262,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         e_loss = e_loss / len(val_data_loader)
         e_acc = e_acc / len(val_data_loader)
 
-        # print("Val Loss = {:0.4f}, IoU={}".format(e_loss, e_iou))
+        # print("Val Loss = {:0.4f}, Accuracy={}".format(e_loss, e_acc))
 
         return e_loss, e_acc
 
@@ -429,7 +430,7 @@ if __name__ == '__main__':
     plt.ion()
 
     data_set_parameters = {
-        'data_set_dir': './data/pathfinder_natural_images_2',
+        'data_set_dir': './data/pathfinder_natural_images_3',
     }
 
     train_parameters = {

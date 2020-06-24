@@ -51,7 +51,12 @@ class BinaryClassifier(nn.Module):
 
         x = self.conv_final(x)
         x = self.avg_pool(x)
-        x = torch.squeeze(x)
+
+        # Done per dimension to avoid the problem of zero dimension output
+        # if batch size = 1 (see torch.squeeze docs)
+        x = torch.squeeze(x, 3)
+        x = torch.squeeze(x, 2)
+        x = torch.squeeze(x, 1)
 
         return x
 
