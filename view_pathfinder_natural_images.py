@@ -1,5 +1,9 @@
 # ---------------------------------------------------------------------------------------
-# View an already generated pathfinder dataset
+# Pytorch Dataset for an already generated Pathfinder on Natural Images Dataset.
+# This is the one to use in training models.
+#
+# For the 'online' pathfinder on natural Images Dataset, see
+# generate_pathfinder_dataset.py. Currently this is only used for data generation.
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -14,9 +18,9 @@ from torch.utils.data import DataLoader, Dataset
 
 class PathfinderNaturalImages(Dataset):
 
-    def __init__(self, data_dir, transforms=None):
+    def __init__(self, data_dir, transform=None):
 
-        self.transforms = transforms
+        self.transform = transform
 
         imgs_dir = os.path.join(data_dir, 'images')
         labels_file = os.path.join(data_dir, 'classification_labels.txt')
@@ -64,35 +68,48 @@ class PathfinderNaturalImages(Dataset):
         return len(self.images)
 
     def __getitem__(self, index):
+
         img = Image.open(self.images[index]).convert('RGB')
         img = transform_functional.to_tensor(img)
+        if self.transform is not None:
+            img = self.transform(img)
 
         label = self.labels[index]
         label = torch.tensor(label)
 
-        individual_contours_label = Image.open(self.indv_contours_labels[index]).convert('L')
-        individual_contours_label = transform_functional.to_tensor(individual_contours_label)
+        indv_contours_label = Image.open(self.indv_contours_labels[index]).convert('L')
+        indv_contours_label = transform_functional.to_tensor(indv_contours_label)
 
-        full_label = Image.open(self.full_labels[index]).convert('L')
-        full_label = transform_functional.to_tensor(full_label)
+        f_label = Image.open(self.full_labels[index]).convert('L')
+        f_label = transform_functional.to_tensor(f_label)
 
-        distance = self.distances[index]
-        distance = torch.tensor(distance)
+        d = self.distances[index]
+        d = torch.tensor(d)
 
         org_img_name = self.org_imgs[index]
 
-        return img, label, individual_contours_label, full_label, distance, org_img_name
+        return img, label, indv_contours_label, f_label, d, org_img_name
 
 
 if __name__ == "__main__":
+    # Parse through all the images in the dataset, store a debug image with
+    #      (1) The input image,
+    #      (2) individual contours images,
+    #      (3) full label as well,
+    #      (4) the classification label in the image title
 
     dataset_dir = './data/pathfinder_natural_images_3/train'
     random_seed = 5
+
+    save_dir = './results/sample_images'
 
     # Immutable ----------------------
     plt.ion()
     np.random.seed(random_seed)
     torch.manual_seed(random_seed)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     # -----------------------------------------------------------------------------------
     # Data loader
@@ -106,7 +123,7 @@ if __name__ == "__main__":
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
-    dataset = PathfinderNaturalImages(dataset_dir, transforms=pre_process_transforms)
+    dataset = PathfinderNaturalImages(dataset_dir, transform=pre_process_transforms)
 
     data_loader = DataLoader(
         dataset=dataset,
@@ -126,35 +143,32 @@ if __name__ == "__main__":
 
         idx = 0
 
-        img = imgs[idx, ]
+        image = imgs[idx, ]
         class_label = labels[idx, ]
         single_contour_label = individual_contours_labels[idx, ]
         full_label = full_labels[idx, ]
         distance = distances[idx, ]
-        org_img_name = org_img_names[0]
+        org_image_name = org_img_names[0]
 
-        img = np.transpose(img, axes=(1, 2, 0))
-        display_img = (img - img.min()) / (img.max() - img.min())
+        image = np.transpose(image, axes=(1, 2, 0))
+        display_img = (image - image.min()) / (image.max() - image.min())
 
-        f, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
+        fig, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
+
         ax_arr[0].imshow(display_img)
         ax_arr[1].imshow(np.squeeze(single_contour_label))
         ax_arr[1].set_title("Connected {}.".format(bool(class_label)))
         ax_arr[2].imshow(np.squeeze(full_label))
 
-        save_dir = './results/sample_images'
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
+        fig.suptitle("Distance between points {}\n Original Image {}".format(
+            distance, org_image_name))
 
-        f.suptitle("Distance between points {}\n Original Image {}".format(
-            distance, org_img_name))
-
-        f.savefig(os.path.join(save_dir, 'img_{}.png'.format(iteration)))
+        fig.savefig(os.path.join(save_dir, 'img_{}.png'.format(iteration)))
 
         # import pdb
         # pdb.set_trace()
 
-        plt.close(f)
+        plt.close(fig)
 
     # -----------------------------------------------------------------------------------
     # End

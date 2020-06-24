@@ -106,7 +106,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     train_set = view_pathfinder_natural_images.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'train'),
-        transforms=pre_process_transforms,
+        transform=pre_process_transforms,
     )
 
     train_batch_size = min(train_batch_size, len(train_set))
@@ -121,7 +121,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     val_set = view_pathfinder_natural_images.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'test'),
-        transforms=pre_process_transforms,
+        transform=pre_process_transforms,
     )
 
     test_batch_size = min(test_batch_size, len(val_set))
