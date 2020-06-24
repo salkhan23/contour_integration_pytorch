@@ -165,7 +165,7 @@ def extend(in_img, contour):
 def show_contour(in_img, contour, value=0.5):
     for point in contour:
         in_img[point[0], point[1]] = value
-    plt.imshow(in_img)
+    plt.imshow(in_img, vmax=1, vmin=0)
     # print(contour)
     # plt.show()
 
@@ -332,6 +332,46 @@ def find_all_edge_points_within_distance(in_img, p1, d):
     # pdb.set_trace()
 
     return valid_points
+
+
+def find_all_valid_start_points(in_img, show=False):
+    """ Debug Function.
+    Highlight all points that are valid starting points """
+
+    # Get all Edge Points
+    edges_x, edges_y = np.where(in_img == 1)
+    all_edge_points = np.array([edges_x, edges_y])
+    all_edge_points = all_edge_points.T
+
+    valid_start_points = []
+
+    for point in all_edge_points:
+        n = get_neighbourhood(in_img, point)
+        if has_clean_line(n):
+            valid_start_points.append(point)
+
+    valid_start_points = np.array(valid_start_points)
+
+    if show:
+        show_contour(in_img, [])
+        plt.scatter(valid_start_points[:, 1], valid_start_points[:, 0], marker='+', color='r')
+
+    print("Number of Edge points in the image {}. Number Valid start points {}".format(
+        len(all_edge_points), len(valid_start_points)))
+
+    return valid_start_points
+
+
+def highlight_all_contours(in_img, min_len=20):
+    """ Debug Function
+    Highlight all edge pixels that are part of a contour above the minimum length """
+
+    start_points = find_all_valid_start_points(in_img)
+
+    for point in start_points:
+        c = get_contour_around_point(in_img, point)
+        if len(c) > min_len:
+            show_contour(in_img, c, value=0.5)
 
 
 # ---------------------------------------------------------------------------------------
