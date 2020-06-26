@@ -525,15 +525,15 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_store_dir = './data/pathfinder_natural_images_3'
+    data_store_dir = './data/pathfinder_natural_images'
     random_seed = 8
 
     # Total number of images = n_biped_images * n_epochs
-    train_n_biped_imgs = 20000
+    train_n_biped_imgs = 30000
     train_n_epochs = 1
 
     val_n_biped_imgs = 50
-    val_n_epochs = 20
+    val_n_epochs = 100
 
     # Immutable ----------------------
     plt.ion()
