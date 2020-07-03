@@ -1,5 +1,6 @@
 # ---------------------------------------------------------------------------------------
 # Li 2006 - Contour Gain vs Spacing Experiment
+# with End points
 #
 # Currently IoU is not calculated. Only gain is considered
 #
