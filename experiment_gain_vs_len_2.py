@@ -187,9 +187,14 @@ def find_optimal_stimulus(
                 bg = fields1993_stimuli.get_mean_pixel_value_at_boundary(frag)
 
             test_img = np.ones(img_size, dtype='uint8') * bg
+
+            add_one = 1
+            if frag_size[0] % 2 == 0:
+                add_one = 0
+
             test_img[
-                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
-                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
+                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + add_one,
+                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + add_one,
                 :,
             ] = frag
 
@@ -410,8 +415,9 @@ def get_contour_gain_vs_length(
             start_end_stop = contour_frags_starts[0] - (x, y) + frag_size // 2
             stop_end_stop = contour_frags_starts[-1] + (x, y) + frag_size // 2
 
-            add_end_stop(test_img, start_end_stop, radius=6)
-            add_end_stop(test_img, stop_end_stop, radius=6)
+            # add_end_stop(test_img, start_end_stop, radius=6)
+            # add_end_stop(test_img, stop_end_stop, radius=6)
+            add_end_stop(test_img, img_size[:2] // 2, radius=6)
 
             test_img_label = torch.from_numpy(np.array(test_img_label)).unsqueeze(0)
 
