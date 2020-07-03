@@ -294,7 +294,7 @@ def _add_single_side_of_contour_constant_separation(
         # plt.imshow(img)
         # input("Next?")
 
-    return img, tile_starts
+    return img, tile_starts, acc_angle
 
 
 def add_contour_path_constant_separation(
@@ -364,12 +364,13 @@ def add_contour_path_constant_separation(
     )
     c_tile_starts = [center_frag_start]
 
-    img, tiles = _add_single_side_of_contour_constant_separation(
+    img, tiles, final_acc_angle_end = _add_single_side_of_contour_constant_separation(
         img, center_frag_start, frag, frag_params, c_len, beta, alpha, d, d_delta, frag_size,
         random_beta_rot=rand_inter_frag_direction_change,
         random_alpha_rot=random_alpha_rot,
         use_d_jitter=use_d_jitter
     )
+
     c_tile_starts.extend(tiles)
 
     if base_contour == 'circle':
@@ -377,18 +378,21 @@ def add_contour_path_constant_separation(
     elif base_contour == 'random':
         beta = np.random.choice((-1, 1), size=1) * beta
 
-    img, tiles = _add_single_side_of_contour_constant_separation(
+    img, tiles, final_acc_angle_start = _add_single_side_of_contour_constant_separation(
         img, center_frag_start, frag, frag_params, c_len, beta, alpha, -d, -d_delta, frag_size,
         random_beta_rot=rand_inter_frag_direction_change,
         random_alpha_rot=random_alpha_rot,
         use_d_jitter=use_d_jitter
     )
-    c_tile_starts.extend(tiles)
+
+    # Attach in reverse order  to the top of the list
+    tiles.reverse()
+    c_tile_starts = tiles + c_tile_starts
 
     # ---------------------------
     c_tile_starts = np.array(c_tile_starts)
 
-    return img, c_tile_starts
+    return img, c_tile_starts, final_acc_angle_end, final_acc_angle_start
 
 
 def get_non_overlapping_bg_fragment(
@@ -824,29 +828,32 @@ def generate_contour_image(
     f_tiles_single_dim = np.int(np.sqrt(num_f_tiles))
 
     img = np.ones(img_size, dtype=np.uint8) * bg
+
     label = np.zeros(num_f_tiles, dtype='uint8')
 
     # Image  -------------------------------------
     # Get Contour Fragments
     if (c_len > 1) or (c_len == 1 and beta == 0):
-        img, c_frag_starts = add_contour_path_constant_separation(
-            img, frag, frag_params, c_len, beta, alpha, f_tile_size[0],
-            center_frag_start=center_frag_start,
-            rand_inter_frag_direction_change=rand_inter_frag_direction_change,
-            random_alpha_rot=random_alpha_rot,
-            base_contour=base_contour,
-            use_d_jitter=use_d_jitter,
-        )
+        img, c_frag_starts, final_acc_angle_end, final_acc_angle_start = \
+            add_contour_path_constant_separation(
+                img, frag, frag_params, c_len, beta, alpha, f_tile_size[0],
+                center_frag_start=center_frag_start,
+                rand_inter_frag_direction_change=rand_inter_frag_direction_change,
+                random_alpha_rot=random_alpha_rot,
+                base_contour=base_contour,
+                use_d_jitter=use_d_jitter,
+            )
     else:
         c_frag_starts = []
         # For all other cases, c_len ==1 and beta !=0, just add background tiles.
-        # which move around within the full tile. No contour integration for single contour fragments
+        # which move around within the full tile.
+        # No contour integration for single contour fragments
 
     # print("contour fragment starts:\n{}".format(c_frag_starts))
 
-    # Add background fragments
-    img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
-        img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
+    # # Add background fragments
+    # img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
+    #     img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
 
     # Label -----------------------------------
     if c_len > 1:  # No contour integration for single fragments
@@ -891,7 +898,7 @@ def generate_contour_image(
     # import pdb
     # pdb.set_trace()
 
-    return img, label
+    return img, label, c_frag_starts, final_acc_angle_end, final_acc_angle_start
 
 
 def get_contour_start_ranges(c_len, frag_orient, f_tile_size, img_size, beta=15):
