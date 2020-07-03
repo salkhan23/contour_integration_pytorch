@@ -352,7 +352,7 @@ def get_contour_gain_vs_spacing(
 
     # First Get response to Single Fragment and co-linear distance = 1 (noise pattern)
     for img_idx in range(n_images):
-        test_img, test_img_label = fields1993_stimuli.generate_contour_image(
+        test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
             frag=frag,
             frag_params=g_params,
             c_len=1,
@@ -389,7 +389,7 @@ def get_contour_gain_vs_spacing(
         for img_idx in range(n_images):
 
             # (1) Create Test Image
-            test_img, test_img_label = fields1993_stimuli.generate_contour_image(
+            test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
                 frag=frag,
                 frag_params=g_params,
                 c_len=c_len,

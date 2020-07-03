@@ -143,17 +143,18 @@ if __name__ == "__main__":
             test_image = np.zeros(image_size, dtype=np.uint8)
 
             c_len = 1
-            test_image, path_fragment_starts = fields1993_stimuli.add_contour_path_constant_separation(
-                img=test_image,
-                frag=frag,
-                frag_params=params,
-                c_len=c_len,
-                beta=0,
-                alpha=0,
-                d=full_tile_size[0],
-                rand_inter_frag_direction_change=False,
-                base_contour='sigmoid'
-            )
+            test_image, path_fragment_starts, _, _ = \
+                fields1993_stimuli.add_contour_path_constant_separation(
+                    img=test_image,
+                    frag=frag,
+                    frag_params=params,
+                    c_len=c_len,
+                    beta=0,
+                    alpha=0,
+                    d=full_tile_size[0],
+                    rand_inter_frag_direction_change=False,
+                    base_contour='sigmoid'
+                )
 
             # plt.figure()
             # plt.imshow(test_image)

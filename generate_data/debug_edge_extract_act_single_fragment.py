@@ -131,7 +131,7 @@ if __name__ == "__main__":
     beta_rotation = 0
     alpha_rotation = 0
 
-    image, image_label = fields1993_stimuli.generate_contour_image(
+    image, image_label, _, _, _ = fields1993_stimuli.generate_contour_image(
         frag=fragment,
         frag_params=gabor_params,
         c_len=contour_len,

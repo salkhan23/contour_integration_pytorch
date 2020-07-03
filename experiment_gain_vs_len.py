@@ -374,7 +374,7 @@ def get_contour_gain_vs_length(
         for img_idx in range(n_images):
 
             # (1) Create Test Image
-            test_img, test_img_label = fields1993_stimuli.generate_contour_image(
+            test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
                 frag=frag,
                 frag_params=g_params,
                 c_len=c_len,

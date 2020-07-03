@@ -1079,8 +1079,7 @@ def generate_data_set(
                             middle_frag_start = center_frag_start
 
                         # print("print middle_frag_start {}".format(middle_frag_start))
-
-                        img, img_label = generate_contour_image(
+                        img, img_label, _, _, _ = generate_contour_image(
                             frag=frag,
                             frag_params=frag_params,
                             c_len=c_len,
@@ -1276,9 +1275,9 @@ if __name__ == "__main__":
     # contour_len = 9
     # beta_rotation = 15
     # alpha_rotation = 0
-    #
+
     # #  Add the Contour Path
-    # test_image, path_fragment_starts = add_contour_path_constant_separation(
+    # test_image, path_fragment_starts, _, _ = add_contour_path_constant_separation(
     #     img=test_image,
     #     frag=fragment,
     #     frag_params=gabor_parameters,
@@ -1332,7 +1331,7 @@ if __name__ == "__main__":
     beta_rotation = 15
     alpha_rotation = 0
 
-    image, image_label = generate_contour_image(
+    image, image_label, _, _, _ = generate_contour_image(
         frag=fragment,
         frag_params=gabor_parameters_list,
         c_len=contour_len,
