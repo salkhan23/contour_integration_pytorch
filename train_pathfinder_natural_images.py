@@ -450,9 +450,9 @@ if __name__ == '__main__':
     train_parameters = {
         'train_batch_size': 32,
         'test_batch_size': 1,
-        'learning_rate': 1e-3,
+        'learning_rate': 1e-4,
         'num_epochs': 50,
-        'gaussian_reg_weight': 0.000001,
+        'gaussian_reg_weight': 1e-5,
         'gaussian_reg_sigma': 10,
     }
 
