@@ -415,9 +415,9 @@ def get_contour_gain_vs_length(
             start_end_stop = contour_frags_starts[0] - (x, y) + frag_size // 2
             stop_end_stop = contour_frags_starts[-1] + (x, y) + frag_size // 2
 
-            # add_end_stop(test_img, start_end_stop, radius=6)
-            # add_end_stop(test_img, stop_end_stop, radius=6)
-            add_end_stop(test_img, img_size[:2] // 2, radius=6)
+            add_end_stop(test_img, start_end_stop, radius=6)
+            add_end_stop(test_img, stop_end_stop, radius=6)
+            # add_end_stop(test_img, img_size[:2] // 2, radius=6)
 
             test_img_label = torch.from_numpy(np.array(test_img_label)).unsqueeze(0)
 
@@ -1014,8 +1014,7 @@ if __name__ == "__main__":
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200629_195058' \
-        '_data_train30_test5_lr_00001_reg_1e-5/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200629_195058_lr_1e-4_reg_1e-5/' \
         'best_accuracy.pth'
 
     plt.ion()
