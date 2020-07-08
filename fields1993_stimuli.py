@@ -852,8 +852,8 @@ def generate_contour_image(
     # print("contour fragment starts:\n{}".format(c_frag_starts))
 
     # # Add background fragments
-    # img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
-    #     img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
+    img, bg_frag_starts, removed_tiles, relocated_tiles = add_background_fragments(
+        img, frag, c_frag_starts, f_tile_size, 1, frag_params, bg_frag_relocate)
 
     # Label -----------------------------------
     if c_len > 1:  # No contour integration for single fragments
