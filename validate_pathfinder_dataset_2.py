@@ -234,18 +234,18 @@ if __name__ == "__main__":
             acc2 = binary_acc(label_out_full_labels, label)
             e_acc_full_labels += acc2.item()
 
-            print("[{}]: GT= {}, Raw [{:.2f}, {:.2f}, {:.2f}], Predictions [{}, {}, {}]. "
-                  "Net [{:0.2f}, {:0.2f}, {:0.2f}]".format(
-                    iteration, label.item(),
-                    torch.sigmoid(label_out).item(),
-                    torch.sigmoid(label_out_indv_contours).item(),
-                    torch.sigmoid(label_out_full_labels).item(),
-                    pred.item(),
-                    pred_indv_contours.item(),
-                    pred_full_label.item(),
-                    e_acc / iteration,
-                    e_acc_indv_contours / iteration,
-                    e_acc_full_labels / iteration))
+            # print("[{}]: GT= {}, Raw [{:.2f}, {:.2f}, {:.2f}], Predictions [{}, {}, {}]. "
+            #       "Net [{:0.2f}, {:0.2f}, {:0.2f}]".format(
+            #         iteration, label.item(),
+            #         torch.sigmoid(label_out).item(),
+            #         torch.sigmoid(label_out_indv_contours).item(),
+            #         torch.sigmoid(label_out_full_labels).item(),
+            #         pred.item(),
+            #         pred_indv_contours.item(),
+            #         pred_full_label.item(),
+            #         e_acc / iteration,
+            #         e_acc_indv_contours / iteration,
+            #         e_acc_full_labels / iteration))
 
             # Store the results
             # Store the results
