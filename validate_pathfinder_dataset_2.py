@@ -201,9 +201,10 @@ if __name__ == "__main__":
 
             # Process individual contours image
             # ---------------------------------
+            individual_contours_labels = individual_contours_labels.to(device)
             individual_contours_labels = convert_label_to_input_image(individual_contours_labels)
             # # more natural image like input
-            # individual_contours_labels = individual_contours_labels * img
+            individual_contours_labels = individual_contours_labels * img
 
             # Normalize
             img_mean = individual_contours_labels.mean(dim=(0, 2, 3))
@@ -211,7 +212,6 @@ if __name__ == "__main__":
             transform_functional.normalize(
                 torch.squeeze(individual_contours_labels), ch_mean, ch_std, inplace=True)
 
-            individual_contours_labels = individual_contours_labels.to(device)
             label_out_indv_contours = net(individual_contours_labels)
             pred_indv_contours = torch.round(torch.sigmoid(label_out_indv_contours))
 
@@ -220,35 +220,34 @@ if __name__ == "__main__":
 
             # Process Full labels
             # --------------------------------------------
+            full_labels = full_labels.to(device)
             full_labels = convert_label_to_input_image(full_labels)
             # # more natural image like input
-            # full_labels = full_labels * img
+            full_labels = full_labels * img
 
             # Normalize Input image
             transform_functional.normalize(
                 torch.squeeze(full_labels), ch_mean, ch_std, inplace=True)
 
-            full_labels = full_labels.to(device)
             label_out_full_labels = net(full_labels)
             pred_full_label = torch.round(torch.sigmoid(label_out_full_labels))
 
             acc2 = binary_acc(label_out_full_labels, label)
             e_acc_full_labels += acc2.item()
 
-            # print("[{}]: GT= {}, Raw [{:.2f}, {:.2f}, {:.2f}], Predictions [{}, {}, {}]. "
-            #       "Net [{:0.2f}, {:0.2f}, {:0.2f}]".format(
-            #         iteration, label.item(),
-            #         torch.sigmoid(label_out).item(),
-            #         torch.sigmoid(label_out_indv_contours).item(),
-            #         torch.sigmoid(label_out_full_labels).item(),
-            #         pred.item(),
-            #         pred_indv_contours.item(),
-            #         pred_full_label.item(),
-            #         e_acc / iteration,
-            #         e_acc_indv_contours / iteration,
-            #         e_acc_full_labels / iteration))
+            print("[{}]: GT= {}, Raw [{:.2f}, {:.2f}, {:.2f}], Predictions [{}, {}, {}]. "
+                  "Net [{:0.2f}, {:0.2f}, {:0.2f}]".format(
+                    iteration, label.item(),
+                    torch.sigmoid(label_out).item(),
+                    torch.sigmoid(label_out_indv_contours).item(),
+                    torch.sigmoid(label_out_full_labels).item(),
+                    pred.item(),
+                    pred_indv_contours.item(),
+                    pred_full_label.item(),
+                    e_acc / iteration,
+                    e_acc_indv_contours / iteration,
+                    e_acc_full_labels / iteration))
 
-            # Store the results
             # Store the results
             file_handle.write(
                 "[{:>5}, {}, {:.4f}, {}, {:6.2f}, {:.4f}, {}, {:6.2f}, "
