@@ -302,6 +302,9 @@ if __name__ == "__main__":
     e_acc_full_labels = e_acc_full_labels / len(data_loader)
     e_acc_indv_contours = e_acc_indv_contours / len(data_loader)
 
+    print("Final Accuracies: Images={:.4}, Individual contours labels={:0.4f}, "
+          "full_labels={:0.4f}".format(e_acc, e_acc_indv_contours, e_acc_full_labels))
+
     # -----------------------------------------------------------------------------------
     #  End
     # -----------------------------------------------------------------------------------
