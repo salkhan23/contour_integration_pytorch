@@ -173,15 +173,16 @@ if __name__ == "__main__":
 
             img, label, individual_contours_labels, full_labels, _, _ = data_loader_out
 
-            img = img.to(device)
-            img_mean = img.mean(dim=(0, 2, 3))
-            img_std = img.std(dim=(0, 2, 3))
+            in_img = img.clone()
+            in_img = in_img.to(device)
+            in_img_mean = in_img.mean(dim=(0, 2, 3))
+            in_img_std = in_img.std(dim=(0, 2, 3))
             transform_functional.normalize(
-                torch.squeeze(img), img_mean, img_std, inplace=True)
+                torch.squeeze(in_img), in_img_mean, in_img_std, inplace=True)
 
             label = label.to(device)
 
-            label_out = net(img)
+            label_out = net(in_img)
             pred = torch.round(torch.sigmoid(label_out))
 
             bce_loss = criterion(label_out, label.float())
@@ -210,7 +211,7 @@ if __name__ == "__main__":
             individual_contours_labels = individual_contours_labels.to(device)
             individual_contours_labels = convert_label_to_input_image(individual_contours_labels)
             # # more natural image like input
-            # individual_contours_labels = individual_contours_labels * img
+            individual_contours_labels = individual_contours_labels * img
 
             # Normalize
             img_mean = individual_contours_labels.mean(dim=(0, 2, 3))
@@ -229,7 +230,7 @@ if __name__ == "__main__":
             full_labels = full_labels.to(device)
             full_labels = convert_label_to_input_image(full_labels)
             # # more natural image like input
-            # full_labels = full_labels * img
+            full_labels = full_labels * img
 
             # Normalize Input image
             img_mean = full_labels.mean(dim=(0, 2, 3))
