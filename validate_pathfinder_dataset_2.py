@@ -67,6 +67,7 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
+    net = net.to(device)
 
     results_store_dir = os.path.dirname(saved_model)
     results_store_file = os.path.join(results_store_dir, 'test_data_predictions.txt')
@@ -205,8 +206,8 @@ if __name__ == "__main__":
             # individual_contours_labels = individual_contours_labels * img
 
             # Normalize
-            img_mean = individual_contours_labels.mean(axis=(0, 2, 3))
-            img_std = individual_contours_labels.std(axis=(0, 2, 3))
+            img_mean = individual_contours_labels.mean(dim=(0, 2, 3))
+            img_std = individual_contours_labels.std(dim=(0, 2, 3))
             transform_functional.normalize(
                 torch.squeeze(individual_contours_labels), ch_mean, ch_std, inplace=True)
 
