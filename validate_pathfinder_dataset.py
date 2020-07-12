@@ -15,29 +15,6 @@ import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
 import utils
 
-edge_extract_act = []
-cont_int_in_act = []
-cont_int_out_act = []
-
-
-def edge_extract_cb(self, layer_in, layer_out):
-    """ Attach at Edge Extract layer
-        Callback to retrieve the activations output of Edge Extract layer
-    """
-    global edge_extract_act
-    edge_extract_act = layer_out.cpu().detach().numpy()
-
-
-def contour_integration_cb(self, layer_in, layer_out):
-    """ Attach at Contour Integration layer
-        Callback to retrieve the input & output activations of the contour Integration layer
-    """
-    global cont_int_in_act
-    global cont_int_out_act
-
-    cont_int_in_act = layer_in[0].cpu().detach().numpy()
-    cont_int_out_act = layer_out.cpu().detach().numpy()
-
 
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
@@ -54,8 +31,7 @@ if __name__ == "__main__":
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200629_195058' \
-        '_data_train30_test5_lr_00001_reg_1e-5/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200629_195058_lr_1e-4_reg_1e-5/' \
         'best_accuracy.pth'
 
     # Immutable
@@ -66,10 +42,6 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
-
-    # Register Callbacks
-    net.edge_extract.register_forward_hook(edge_extract_cb)
-    net.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     # -----------------------------------------------------------------------------------
     #  Data loader
@@ -182,8 +154,9 @@ if __name__ == "__main__":
                 label.item(), e_acc/iteration, total_loss
             ))
 
-            # view the predictions
-            fig, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
+            # # DEBUG : view the predictions
+            # # -------------------------------------------------------------------------------
+            # fig, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
 
             # # Image
             # display_img = np.squeeze(img, axis=0)
@@ -208,5 +181,6 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     #  End
     # -----------------------------------------------------------------------------------
+    print("Processing took {}".format(datetime.now() - data_load_start_time))
     import pdb
     pdb.set_trace()
