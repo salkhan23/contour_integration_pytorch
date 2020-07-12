@@ -232,8 +232,8 @@ if __name__ == "__main__":
             # full_labels = full_labels * img
 
             # Normalize Input image
-            img_mean = full_labels.mean(axis=(0, 2, 3))
-            img_std = full_labels.std(axis=(0, 2, 3))
+            img_mean = full_labels.mean(dim=(0, 2, 3))
+            img_std = full_labels.std(dim=(0, 2, 3))
             transform_functional.normalize(
                 torch.squeeze(full_labels), img_mean, img_std, inplace=True)
 
