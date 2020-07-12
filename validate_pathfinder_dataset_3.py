@@ -208,6 +208,7 @@ if __name__ == "__main__":
 
             # Process individual contours image
             # ---------------------------------
+            img = img.to(device)
             individual_contours_labels = individual_contours_labels.to(device)
             individual_contours_labels = convert_label_to_input_image(individual_contours_labels)
             # # more natural image like input
