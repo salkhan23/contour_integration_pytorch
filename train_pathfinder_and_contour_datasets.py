@@ -496,7 +496,7 @@ if __name__ == '__main__':
 
         epoch_start_time_contour = datetime.now()
         contour_train_history.append(train_contour())
-        contour_val_history.append(validate_contour)
+        contour_val_history.append(validate_contour())
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. "
               "Time {}".format(
