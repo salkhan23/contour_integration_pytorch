@@ -711,11 +711,11 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'pathfinder_data_set_dir': './data/pathfinder_natural_images',
-        'pathfinder_train_subset_size': 1000,
-        'pathfinder_test_subset_size': 10,
+        # 'pathfinder_train_subset_size': 1000,
+        # 'pathfinder_test_subset_size': 10,
         'contour_data_set_dir': "./data/channel_wise_optimal_full14_frag7",
-        'contour_train_subset_size': 1000,
-        'contour_test_subset_size': 10,
+        # 'contour_train_subset_size': 1000,
+        # 'contour_test_subset_size': 10,
     }
 
     train_parameters = {
@@ -741,7 +741,7 @@ if __name__ == '__main__':
     net = JointPathfinderContourResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/pathfinder')
+         base_results_store_dir='./results/joint_training')
 
     # -----------------------------------------------------------------------------------
     # End
