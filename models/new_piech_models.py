@@ -30,7 +30,7 @@ class DummyHead(nn.Module):
 
 
 class BinaryClassifier(nn.Module):
-    def __init__(self, n_in_channels):
+    def __init__(self, n_in_channels, final_conv_dim=43):
         super(BinaryClassifier, self).__init__()
         self.n_in_channels = n_in_channels
 
@@ -42,7 +42,7 @@ class BinaryClassifier(nn.Module):
         self.conv_final = nn.Conv2d(
             in_channels=8, out_channels=1, kernel_size=(1, 1), bias=True)
 
-        self.avg_pool = nn.AvgPool2d(43)  # 43=C=R
+        self.avg_pool = nn.AvgPool2d(final_conv_dim)  # 43=C=R
 
     def forward(self, x):
         x = self.conv_first(x)
