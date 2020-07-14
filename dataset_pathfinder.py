@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader, Dataset
 
 class PathfinderNaturalImages(Dataset):
 
-    def __init__(self, data_dir, transform=None):
+    def __init__(self, data_dir, transform=None, subset_size=None):
 
         self.transform = transform
 
@@ -63,6 +63,21 @@ class PathfinderNaturalImages(Dataset):
 
         with open(debug_map_to_org_imgs, "r") as f:
             self.org_imgs = [x.strip() for x in f.readlines()]
+
+        if subset_size is not None:
+            assert subset_size <= len(
+                self.images), 'subset size {} is greater than dataset size {}'.format(
+                subset_size, len(self.images))
+
+            use_idxs = np.random.choice(
+                np.arange(len(self.images)), size=subset_size, replace=False)
+
+            self.images = [self.images[idx] for idx in use_idxs]
+            self.indv_contours_labels = [self.indv_contours_labels[idx] for idx in use_idxs]
+            self.full_labels = [self.full_labels[idx] for idx in use_idxs]
+            self.labels = [self.labels[idx] for idx in use_idxs]
+            self.distances = [self.distances[idx] for idx in use_idxs]
+            self.org_imgs = [self.org_imgs[idx] for idx in use_idxs]
 
     def __len__(self):
         return len(self.images)
@@ -123,7 +138,11 @@ if __name__ == "__main__":
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
-    dataset = PathfinderNaturalImages(dataset_dir, transform=pre_process_transforms)
+    dataset = PathfinderNaturalImages(
+        dataset_dir,
+        transform=pre_process_transforms,
+        subset_size=10
+    )
 
     data_loader = DataLoader(
         dataset=dataset,
@@ -141,13 +160,13 @@ if __name__ == "__main__":
         imgs, labels, individual_contours_labels, full_labels, distances, org_img_names = \
             data_loader_out
 
-        idx = 0
+        index1 = 0
 
-        image = imgs[idx, ]
-        class_label = labels[idx, ]
-        single_contour_label = individual_contours_labels[idx, ]
-        full_label = full_labels[idx, ]
-        distance = distances[idx, ]
+        image = imgs[index1,]
+        class_label = labels[index1,]
+        single_contour_label = individual_contours_labels[index1,]
+        full_label = full_labels[index1,]
+        distance = distances[index1,]
         org_image_name = org_img_names[0]
 
         image = np.transpose(image, axes=(1, 2, 0))
@@ -165,8 +184,8 @@ if __name__ == "__main__":
 
         fig.savefig(os.path.join(save_dir, 'img_{}.png'.format(iteration)))
 
-        # import pdb
-        # pdb.set_trace()
+        import pdb
+        pdb.set_trace()
 
         plt.close(fig)
 
