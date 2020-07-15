@@ -183,9 +183,14 @@ def find_optimal_stimulus(
                 bg = fields1993_stimuli.get_mean_pixel_value_at_boundary(frag)
 
             test_img = np.ones(img_size, dtype='uint8') * bg
+
+            add_one = 1
+            if frag_size[0] % 2 == 0:
+                add_one = 0
+
             test_img[
-                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
-                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + 1,
+                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + add_one,
+                img_center[0] - frag_size[0] // 2: img_center[0] + frag_size[0] // 2 + add_one,
                 :,
             ] = frag
 
