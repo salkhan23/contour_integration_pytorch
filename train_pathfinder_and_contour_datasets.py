@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------------------
-#  Train a model with two heads on the pathfinder and contour dataset jointly
+# Train a model on the pathfinder and contour Dataset jointly
 # ---------------------------------------------------------------------------------------
 from datetime import datetime
 import os
@@ -26,6 +26,9 @@ import experiment_gain_vs_spacing
 
 class JointPathfinderContourResnet50(nn.Module):
     """
+    Model for training on both the contour and pathfinder dataset.
+    The contour integration layer is common, but separate heads for used for
+    contour and pathfinder outputs.
     """
     def __init__(self, contour_integration_layer, pre_trained_edge_extract=True):
         super(JointPathfinderContourResnet50, self).__init__()
@@ -42,15 +45,17 @@ class JointPathfinderContourResnet50(nn.Module):
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
 
+        # maxpool layer is directly from Resnet50. Attaching the contour integration
+        # layer here (as opposed to after the conv layer) since this has the same dimensions as
+        # alexnet edge extract. Allows to use the same classification head (Contour task)
+        # NOTE that this max pooling layer was not originally included in the pathfinder model
+        self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
         self.contour_integration_layer = contour_integration_layer
 
         self.pathfinder_classifier = \
             new_piech_models.BinaryClassifier(
-                n_in_channels=self.num_edge_extract_chan,
-                final_conv_dim=22
-            )
-
-        self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+                n_in_channels=self.num_edge_extract_chan, final_conv_dim=22)
 
         self.contour_classifier = new_piech_models.ClassifierHead(
             num_channels=self.num_edge_extract_chan)
@@ -61,12 +66,7 @@ class JointPathfinderContourResnet50(nn.Module):
         x = self.edge_extract(in_img)
         x = self.bn1(x)
         x = nn.functional.relu(x)
-
         x = self.max_pool1(x)
-        # The above maxpool layer is directly from Resnet50. Attaching the contour integration
-        # layer here (as opposed to after the conv layer) since this has the same dimensions as
-        # alexnet edge extract. Allows to use the same classification head (Contour task)
-        # NOTE that this max pooling layer was not originally included in the pathfinder model
 
         x = self.contour_integration_layer(x)
 
@@ -91,35 +91,115 @@ def get_lr(opt):
         return param_group['lr']
 
 
-if __name__ == '__main__':
+def plot_pathfinder_results(train_history, val_history, result_dir):
+    train_history = np.array(train_history)
+    val_history = np.array(val_history)
 
+    f, ax_arr = plt.subplots(1, 2)
+
+    n_epochs = train_history[-1, 0]
+
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 0], label='train')
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 0], label='val')
+    ax_arr[0].set_xlabel('Epoch')
+    ax_arr[0].set_title("Loss Vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), train_history[:, 1], label='train')
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), val_history[:, 1], label='val')
+    ax_arr[1].set_xlabel('Epoch')
+    ax_arr[1].set_title("Accuracy Vs Time")
+    ax_arr[1].grid(True)
+    ax_arr[1].legend()
+
+    f.suptitle('Pathfinder Task')
+    f.savefig(os.path.join(result_dir, 'pathfinder_loss_and accuracy.jpg'), format='jpg')
+
+
+def plot_contour_results(train_history, val_history, results_dir):
+
+    train_history = np.array(train_history)
+    val_history = np.array(val_history)
+
+    f, ax_arr = plt.subplots(1, 2)
+
+    ax_arr[0].plot(train_history[:, 0], label='train')
+    ax_arr[0].plot(val_history[:, 0], label='validation')
+    ax_arr[0].set_xlabel("Epoch")
+    ax_arr[0].set_title("Loss vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    ax_arr[0].plot(train_history[:, 1], label='train')
+    ax_arr[0].plot(val_history[:, 1], label='validation')
+    ax_arr[0].set_xlabel('Epoch')
+    ax_arr[0].set_title("IoU vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    f.suptitle("Contour Detection Task")
+    f.savefig(os.path.join(results_dir, 'contour_loss_and_iou.jpg'), format='jpg')
+
+
+def main(model, train_params, data_set_params, base_results_store_dir='./results'):
     # -----------------------------------------------------------------------------------
-    # Initialization
+    # Validate Parameters
     # -----------------------------------------------------------------------------------
-    random_seed = 7
-    base_results_store_dir = './results'
+    print("====> Validating Parameters ")
+    # Pathfinder Dataset
+    # ------------------
+    pathfinder_required_data_set_params = ['pathfinder_data_set_dir']
+    for key in pathfinder_required_data_set_params:
+        assert key in data_set_params, 'data_set_params does not have required key {}'.format(key)
+    pathfinder_data_set_dir = data_set_params['pathfinder_data_set_dir']
 
-    # Immutable
-    # ---------
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-    plt.ion()
-    start_time = datetime.now()
+    # Optional
+    pathfinder_train_subset_size = data_set_params.get('pathfinder_train_subset_size', None)
+    pathfinder_test_subset_size = data_set_params.get('pathfinder_test_subset_size', None)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Contour Dataset
+    # ---------------
+    contour_required_data_set_params = ['contour_data_set_dir']
+    for key in contour_required_data_set_params:
+        assert key in data_set_params, 'data_set_params does not have required key {}'.format(key)
+    contour_data_set_dir = data_set_params['contour_data_set_dir']
+
+    # Optional
+    contour_train_subset_size = data_set_params.get('contour_train_subset_size', None)
+    contour_test_subset_size = data_set_params.get('contour_test_subset_size', None)
+    c_len_arr = data_set_params.get('c_len_arr', None)
+    beta_arr = data_set_params.get('beta_arr', None)
+    alpha_arr = data_set_params.get('alpha_arr', None)
+    gabor_set_arr = data_set_params.get('gabor_set_arr', None)
+
+    # Training
+    # --------
+    required_training_params = \
+        ['train_batch_size', 'test_batch_size', 'learning_rate', 'num_epochs']
+    for key in required_training_params:
+        assert key in train_params, 'training_params does not have required key {}'.format(key)
+    train_batch_size = train_params['train_batch_size']
+    test_batch_size = train_params['test_batch_size']
+    learning_rate = train_params['learning_rate']
+    num_epochs = train_params['num_epochs']
+
+    # Optional
+    lambda1 = train_params.get('gaussian_reg_weight', 0)
+    gaussian_kernel_sigma = train_params.get('gaussian_reg_sigma', 0)
+    use_gaussian_reg_on_lateral_kernels = False
+    if lambda1 is not 0 and gaussian_kernel_sigma is not 0:
+        use_gaussian_reg_on_lateral_kernels = True
 
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
     print("====> Loading Model ")
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    model = JointPathfinderContourResnet50(cont_int_layer)
-
-    model = model.to(device)
-
     print("Name: {}".format(model.__class__.__name__))
     print(model)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
 
     # Get name of contour integration layer
     temp = vars(model)  # Returns a dictionary.
@@ -128,6 +208,7 @@ if __name__ == '__main__':
     if 'contour_integration_layer' in layers:
         cont_int_layer_type = model.contour_integration_layer.__class__.__name__
 
+    # Actual Results store directory
     results_store_dir = os.path.join(
         base_results_store_dir,
         model.__class__.__name__ + '_' + cont_int_layer_type +
@@ -136,34 +217,22 @@ if __name__ == '__main__':
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
 
-    # -------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------
     # Data Loaders
-    # -------------------------------------------------------------------------------
-    print("====> Setting up Data loaders ")
-    pathfinder_data_set_dir = './data/pathfinder_natural_images'
-
-    contour_data_set_dir = './data/channel_wise_optimal_full14_frag7'
-    c_len_arr = None
-    beta_arr = None
-    alpha_arr = None
-    gabor_set_arr = None
-    contour_data_set_train_subset_size = None
-    contour_data_set_test_subset_size = None
-
-    train_batch_size = 32
-    test_batch_size = 1
+    # -----------------------------------------------------------------------------------
+    print("====> Setting up data loaders ")
+    data_load_start_time = datetime.now()
 
     # Pathfinder
-    # -----------------------------------------------------------------------------------
+    # --------------------------------------
     print("Setting up Pathfinder Data loaders... ")
-    data_load_start_time = datetime.now()
     print("Data Source: {}".format(pathfinder_data_set_dir))
 
+    # Pre-processing
     # Imagenet Mean and STD
     ch_mean = [0.485, 0.456, 0.406]
     ch_std = [0.229, 0.224, 0.225]
 
-    # Pre-processing
     pathfinder_transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
         # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
@@ -173,6 +242,7 @@ if __name__ == '__main__':
     pathfinder_train_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(pathfinder_data_set_dir, 'train'),
         transform=pathfinder_pre_process_transforms,
+        subset_size=pathfinder_train_subset_size,
     )
 
     pathfinder_train_data_loader = DataLoader(
@@ -186,6 +256,7 @@ if __name__ == '__main__':
     pathfinder_val_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(pathfinder_data_set_dir, 'test'),
         transform=pathfinder_pre_process_transforms,
+        subset_size=pathfinder_test_subset_size
     )
 
     pathfinder_val_data_loader = DataLoader(
@@ -202,15 +273,16 @@ if __name__ == '__main__':
     ))
 
     # Contour Dataset
-    # -----------------------------------------------------------------------------------
+    # ---------------
     print("Setting up Contour Data loaders... ")
     data_load_start_time = datetime.now()
     print("Data Source: {}".format(contour_data_set_dir))
-    print("Restrictions:\n clen={},\n beta={},\n alpha={},\n gabor_sets={},\n "
-          "train_subset={},\ntest subset={}\n".format(
-            c_len_arr, beta_arr, alpha_arr, gabor_set_arr, contour_data_set_train_subset_size, contour_data_set_test_subset_size))
+    print("\tRestrictions:\n\t clen={},\n\t beta={},\n\t alpha={},\n\t gabor_sets={},\n\t "
+          "train_subset={},\n\ttest subset={}\n".format(
+            c_len_arr, beta_arr, alpha_arr, gabor_set_arr, contour_train_subset_size,
+            contour_test_subset_size))
 
-    # get mean/std of dataset
+    # Get mean/std of dataset
     meta_data_file = os.path.join(contour_data_set_dir, 'dataset_metadata.pickle')
     with open(meta_data_file, 'rb') as file_handle:
         meta_data = pickle.load(file_handle)
@@ -220,13 +292,14 @@ if __name__ == '__main__':
         transforms.Normalize(mean=meta_data['channel_mean'], std=meta_data['channel_std']),
         # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
     ]
+
     contour_pre_process_transforms = transforms.Compose(contour_transforms_list)
 
     contour_train_set = dataset_contour.Fields1993(
         data_dir=os.path.join(contour_data_set_dir, 'train'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=contour_pre_process_transforms,
-        subset_size=contour_data_set_train_subset_size,
+        subset_size=contour_train_subset_size,
         c_len_arr=c_len_arr,
         beta_arr=beta_arr,
         alpha_arr=alpha_arr,
@@ -245,7 +318,7 @@ if __name__ == '__main__':
         data_dir=os.path.join(contour_data_set_dir, 'val'),
         bg_tile_size=meta_data["full_tile_size"],
         transform=contour_pre_process_transforms,
-        subset_size=contour_data_set_test_subset_size,
+        subset_size=contour_test_subset_size,
         c_len_arr=c_len_arr,
         beta_arr=beta_arr,
         alpha_arr=alpha_arr,
@@ -269,16 +342,10 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Loss / optimizer
     # -----------------------------------------------------------------------------------
-    learning_rate = 1e-4
-    use_gaussian_reg_on_lateral_kernels = True
-    gaussian_kernel_sigma = 10
-    gaussian_reg_weight = 1e-5
-    gaussian_reg_sigma = 10
-    lambda1 = gaussian_reg_weight
     detect_thres = 0.5
 
     optimizer = optim.Adam(
-        filter(lambda p: p.requires_grad, model.parameters()),
+        filter(lambda p1: p1.requires_grad, model.parameters()),
         lr=learning_rate
     )
 
@@ -296,7 +363,6 @@ if __name__ == '__main__':
 
         gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(device)
         gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(device)
-
 
         def inverse_gaussian_regularization(weight_e, weight_i):
             loss1 = (gaussian_mask_e * weight_e).abs().sum() + \
@@ -479,38 +545,117 @@ if __name__ == '__main__':
     print("====> Starting Training ")
     training_start_time = datetime.now()
 
-    num_epochs = 10
-    best_acc = 0
-
     pathfinder_train_history = []
     pathfinder_val_history = []
     contour_train_history = []
     contour_val_history = []
-
     lr_history = []
+
+    # Summary File
+    # --------------------------------------
+    summary_file = os.path.join(results_store_dir, 'summary.txt')
+    file_handle = open(summary_file, 'w+')
+
+    # Dataset Parameters:
+    file_handle.write("Data Set Parameters {}\n".format('-' * 60))
+    file_handle.write("CONTOUR DATASET \n")
+    file_handle.write("Source                   : {}\n".format(contour_data_set_dir))
+    file_handle.write("Restrictions             :\n")
+    file_handle.write("  Lengths                : {}\n".format(c_len_arr))
+    file_handle.write("  Beta                   : {}\n".format(beta_arr))
+    file_handle.write("  Alpha                  : {}\n".format(alpha_arr))
+    file_handle.write("  Gabor Sets             : {}\n".format(gabor_set_arr))
+    file_handle.write("  Train subset size      : {}\n".format(contour_train_subset_size))
+    file_handle.write("  Test subset size       : {}\n".format(contour_test_subset_size))
+    file_handle.write("Number of Images         : Train {}, Test {}".format(
+        len(contour_train_set.images), len(contour_val_set.images)))
+    file_handle.write("Train Set Mean {}, std {}\n".format(
+        contour_train_set.data_set_mean, contour_train_set.data_set_std))
+    file_handle.write("Val   Set Mean {}, std {}\n".format(
+        contour_val_set.data_set_mean, contour_val_set.data_set_std))
+
+    file_handle.write("PATHFINDER  DATASET\n")
+    file_handle.write("Source                   : {}\n".format(pathfinder_data_set_dir))
+    file_handle.write("Restrictions             :\n")
+    file_handle.write("  Train subset size      : {}\n".format(pathfinder_train_subset_size))
+    file_handle.write("  Test subset size       : {}\n".format(pathfinder_test_subset_size))
+    file_handle.write("Number of Images         : Train {}, Test {}".format(
+        len(pathfinder_train_set.images), len(pathfinder_val_set.images)))
+
+    # Training Parameters:
+    file_handle.write("Training Parameters {}\n".format('-' * 60))
+    file_handle.write("Train batch size         : {}\n".format(train_batch_size))
+    file_handle.write("Val batch size           : {}\n".format(test_batch_size))
+    file_handle.write("Epochs                   : {}\n".format(num_epochs))
+    file_handle.write("Optimizer                : {}\n".format(optimizer.__class__.__name__))
+    file_handle.write("learning rate            : {}\n".format(learning_rate))
+    file_handle.write("Loss Fcn                 : {}\n".format(criterion.__class__.__name__))
+    file_handle.write("Gaussian Regularization on lateral kernels: {}\n".format(
+        use_gaussian_reg_on_lateral_kernels))
+    if use_gaussian_reg_on_lateral_kernels:
+        file_handle.write("  Gaussian Reg. sigma    : {}\n".format(
+            gaussian_kernel_sigma))
+        file_handle.write("  Gaussian Reg. weight   : {}\n".format(lambda1))
+    file_handle.write("IoU Detection Threshold  : {}\n".format(detect_thres))
+
+    file_handle.write("Image pre-processing :\n")
+    file_handle.write("Contour Dataset:\n")
+    print(contour_pre_process_transforms, file=file_handle)
+    file_handle.write("Pathfinder Dataset:\n")
+    print(pathfinder_pre_process_transforms, file=file_handle)
+
+    # Model Details
+    file_handle.write("Model Parameters {}\n".format('-' * 63))
+    file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+    file_handle.write("\n")
+    print(model, file=file_handle)
+
+    temp = vars(model)  # Returns a dictionary.
+    p = [item for item in temp if not item.startswith('_')]
+    for var in sorted(p):
+        file_handle.write("{}: {}\n".format(var, getattr(model, var)))
+
+    layers = temp['_modules']  # Returns all top level modules (layers)
+    if 'contour_integration_layer' in layers:
+
+        file_handle.write("Contour Integration Layer: {}\n".format(
+            model.contour_integration_layer.__class__.__name__))
+
+        # print fixed hyper parameters
+        file_handle.write("Hyper parameters\n")
+
+        cont_int_layer_vars = \
+            [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+        for var in sorted(cont_int_layer_vars):
+            file_handle.write("\t{}: {}\n".format(
+                var, getattr(model.contour_integration_layer, var)))
+
+        # print parameter names and whether they are trainable
+        file_handle.write("Contour Integration Layer Parameters\n")
+        layer_params = vars(model.contour_integration_layer)['_parameters']
+        for k, v in sorted(layer_params.items()):
+            file_handle.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
+
+    # Headers for the columns
+    file_handle.write("{}\n".format('-' * 80))
+    file_handle.write("Training details\n")
+    file_handle.write("[Epoch,\ncontour train_loss, train_iou, val_loss, val_iou\n")
+    file_handle.write("pathfinder train_loss, train_acc, val_loss, val_acc]\n")
+
+    # Actual main loop start
+    # --------------------------------------
+    print("train_batch_size={}, test_batch_size= {}, lr={}, epochs={}".format(
+        train_batch_size, test_batch_size, learning_rate, num_epochs))
 
     for epoch in range(0, num_epochs):
 
+        # Contour Dataset First
         epoch_start_time = datetime.now()
-
-        pathfinder_train_history.append(train_pathfinder())
-        pathfinder_val_history.append(validate_pathfinder())
-
-        print("Epoch [{}/{}], Train: loss={:0.4f}, Acc={:0.2f}. Val: loss={:0.4f}, Acc={:0.2f}."
-              " Time {}".format(
-                epoch + 1, num_epochs,
-                pathfinder_train_history[epoch][0],
-                pathfinder_train_history[epoch][1],
-                pathfinder_val_history[epoch][0],
-                pathfinder_val_history[epoch][1],
-                datetime.now() - epoch_start_time))
-
-        epoch_start_time_contour = datetime.now()
         contour_train_history.append(train_contour())
         contour_val_history.append(validate_contour())
 
-        print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. "
-              "Time {}".format(
+        print("Epoch [{}/{}], Contour    Train: loss={:0.4f}, IoU={:0.4f}. Val: "
+              "loss={:0.4f}, IoU={:0.4f}. Time {}".format(
                 epoch + 1, num_epochs,
                 contour_train_history[epoch][0],
                 contour_train_history[epoch][1],
@@ -518,11 +663,95 @@ if __name__ == '__main__':
                 contour_val_history[epoch][1],
                 datetime.now() - epoch_start_time))
 
+        # Pathfinder Dataset
+        epoch_start_time = datetime.now()
+        pathfinder_train_history.append(train_pathfinder())
+        pathfinder_val_history.append(validate_pathfinder())
+
+        print("Epoch [{}/{}], Pathfinder Train: loss={:0.4f}, Acc={:0.3f}. Val: "
+              "loss={:0.4f}, Acc={:0.3f}. Time {}".format(
+                epoch + 1, num_epochs,
+                pathfinder_train_history[epoch][0],
+                pathfinder_train_history[epoch][1],
+                pathfinder_val_history[epoch][0],
+                pathfinder_val_history[epoch][1],
+                datetime.now() - epoch_start_time))
+
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
+        # Save Last epoch weights
+        torch.save(
+            model.state_dict(),
+            os.path.join(results_store_dir, 'last_epoch.pth')
+        )
+
+        file_handle.write(
+            "[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, "
+            "{:0.4f}, {:0.2f}, {:0.4f}, {:0.2f}],\n".format(
+                epoch + 1,
+                contour_train_history[epoch][0],
+                contour_train_history[epoch][1],
+                contour_val_history[epoch][0],
+                contour_val_history[epoch][1],
+                pathfinder_train_history[epoch][0],
+                pathfinder_train_history[epoch][1],
+                pathfinder_val_history[epoch][0],
+                pathfinder_val_history[epoch][1]))
+
     training_time = datetime.now() - training_start_time
     print('Finished Training. Training took {}'.format(training_time))
+
+    file_handle.write("{}\n".format('-' * 80))
+    file_handle.write("Train Duration       : {}\n".format(training_time))
+    file_handle.close()
+
+    # -----------------------------------------------------------------------------------
+    # Plots
+    # -----------------------------------------------------------------------------------
+    plot_pathfinder_results(pathfinder_train_history, pathfinder_val_history, results_store_dir)
+    plot_contour_results(contour_train_history, contour_val_history, results_store_dir)
+
+
+if __name__ == '__main__':
+    # -----------------------------------------------------------------------------------
+    # Initialization
+    # -----------------------------------------------------------------------------------
+    random_seed = 7
+
+    data_set_parameters = {
+        'pathfinder_data_set_dir': './data/pathfinder_natural_images',
+        # 'pathfinder_train_subset_size': 1000,
+        # 'pathfinder_test_subset_size': 10,
+        'contour_data_set_dir': "./data/channel_wise_optimal_full14_frag7",
+        # 'contour_train_subset_size': 1000,
+        # 'contour_test_subset_size': 10,
+    }
+
+    train_parameters = {
+        'train_batch_size': 16,
+        'test_batch_size': 1,
+        'learning_rate': 1e-4,
+        'num_epochs': 50,
+        'gaussian_reg_weight': 1e-5,
+        'gaussian_reg_sigma': 10,
+    }
+
+    # Immutable
+    # ---------
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
+    plt.ion()
+    start_time = datetime.now()
+
+    # Model
+    # -----------------------------------------------------------------------------------
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = JointPathfinderContourResnet50(cont_int_layer)
+
+    main(net, train_params=train_parameters, data_set_params=data_set_parameters,
+         base_results_store_dir='./results/joint_training')
 
     # -----------------------------------------------------------------------------------
     # End
