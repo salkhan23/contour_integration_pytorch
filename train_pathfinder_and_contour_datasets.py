@@ -24,58 +24,6 @@ import experiment_gain_vs_len
 import experiment_gain_vs_spacing
 
 
-class JointPathfinderContourResnet50(nn.Module):
-    """
-    Model for training on both the contour and pathfinder dataset.
-    The contour integration layer is common, but separate heads for used for
-    contour and pathfinder outputs.
-    """
-    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True):
-        super(JointPathfinderContourResnet50, self).__init__()
-
-        self.pre_trained_edge_extract = pre_trained_edge_extract
-
-        self.edge_extract = torchvision.models.resnet50(
-            pretrained=self.pre_trained_edge_extract).conv1
-        if self.pre_trained_edge_extract:
-            self.edge_extract.weight.requires_grad = False
-        else:
-            torch.nn.init.xavier_normal_(self.edge_extract.weight)
-
-        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
-        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
-
-        # maxpool layer is directly from Resnet50. Attaching the contour integration
-        # layer here (as opposed to after the conv layer) since this has the same dimensions as
-        # alexnet edge extract. Allows to use the same classification head (Contour task)
-        # NOTE that this max pooling layer was not originally included in the pathfinder model
-        self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-
-        self.contour_integration_layer = contour_integration_layer
-
-        self.pathfinder_classifier = \
-            new_piech_models.BinaryClassifier(
-                n_in_channels=self.num_edge_extract_chan, final_conv_dim=22)
-
-        self.contour_classifier = new_piech_models.ClassifierHead(
-            num_channels=self.num_edge_extract_chan)
-
-    def forward(self, in_img):
-
-        # Edge Extraction
-        x = self.edge_extract(in_img)
-        x = self.bn1(x)
-        x = nn.functional.relu(x)
-        x = self.max_pool1(x)
-
-        x = self.contour_integration_layer(x)
-
-        out_contour = self.contour_classifier(x)
-        out_pathfinder = self.pathfinder_classifier(x)
-
-        return out_contour, out_pathfinder
-
-
 def binary_acc(y_pred, y_target):
     y_pred_tag = torch.round(torch.sigmoid(y_pred))
 
@@ -539,6 +487,93 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
         return e_loss, e_iou
 
+    def write_training_and_model_details(f_handle):
+        # Dataset Parameters:
+        f_handle.write("Data Set Parameters {}\n".format('-' * 60))
+        f_handle.write("CONTOUR DATASET \n")
+        f_handle.write("Source                   : {}\n".format(contour_data_set_dir))
+        f_handle.write("Restrictions             :\n")
+        f_handle.write("  Lengths                : {}\n".format(c_len_arr))
+        f_handle.write("  Beta                   : {}\n".format(beta_arr))
+        f_handle.write("  Alpha                  : {}\n".format(alpha_arr))
+        f_handle.write("  Gabor Sets             : {}\n".format(gabor_set_arr))
+        f_handle.write("  Train subset size      : {}\n".format(contour_train_subset_size))
+        f_handle.write("  Test subset size       : {}\n".format(contour_test_subset_size))
+        f_handle.write("Number of Images         : Train {}, Test {}".format(
+            len(contour_train_set.images), len(contour_val_set.images)))
+        f_handle.write("Train Set Mean {}, std {}\n".format(
+            contour_train_set.data_set_mean, contour_train_set.data_set_std))
+        f_handle.write("Val   Set Mean {}, std {}\n".format(
+            contour_val_set.data_set_mean, contour_val_set.data_set_std))
+
+        f_handle.write("PATHFINDER  DATASET\n")
+        f_handle.write("Source                   : {}\n".format(pathfinder_data_set_dir))
+        f_handle.write("Restrictions             :\n")
+        f_handle.write("  Train subset size      : {}\n".format(pathfinder_train_subset_size))
+        f_handle.write("  Test subset size       : {}\n".format(pathfinder_test_subset_size))
+        f_handle.write("Number of Images         : Train {}, Test {}".format(
+            len(pathfinder_train_set.images), len(pathfinder_val_set.images)))
+
+        # Training Parameters:
+        f_handle.write("Training Parameters {}\n".format('-' * 60))
+        f_handle.write("Train batch size         : {}\n".format(train_batch_size))
+        f_handle.write("Val batch size           : {}\n".format(test_batch_size))
+        f_handle.write("Epochs                   : {}\n".format(num_epochs))
+        f_handle.write("Optimizer                : {}\n".format(optimizer.__class__.__name__))
+        f_handle.write("learning rate            : {}\n".format(learning_rate))
+        f_handle.write("Loss Fcn                 : {}\n".format(criterion.__class__.__name__))
+        f_handle.write("Gaussian Regularization on lateral kernels: {}\n".format(
+            use_gaussian_reg_on_lateral_kernels))
+        if use_gaussian_reg_on_lateral_kernels:
+            f_handle.write("  Gaussian Reg. sigma    : {}\n".format(
+                gaussian_kernel_sigma))
+            f_handle.write("  Gaussian Reg. weight   : {}\n".format(lambda1))
+        f_handle.write("IoU Detection Threshold  : {}\n".format(detect_thres))
+
+        f_handle.write("Image pre-processing :\n")
+        f_handle.write("Contour Dataset:\n")
+        print(contour_pre_process_transforms, file=f_handle)
+        f_handle.write("Pathfinder Dataset:\n")
+        print(pathfinder_pre_process_transforms, file=f_handle)
+
+        # Model Details
+        f_handle.write("Model Parameters {}\n".format('-' * 63))
+        f_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
+        f_handle.write("\n")
+        print(model, file=file_handle)
+
+        tmp = vars(model)  # Returns a dictionary.
+        p = [item for item in tmp if not item.startswith('_')]
+        for var in sorted(p):
+            f_handle.write("{}: {}\n".format(var, getattr(model, var)))
+
+        layers1 = tmp['_modules']  # Returns all top level modules (layers)
+        if 'contour_integration_layer' in layers1:
+
+            f_handle.write("Contour Integration Layer: {}\n".format(
+                model.contour_integration_layer.__class__.__name__))
+
+            # print fixed hyper parameters
+            f_handle.write("Hyper parameters\n")
+
+            cont_int_layer_vars = \
+                [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
+            for var in sorted(cont_int_layer_vars):
+                f_handle.write("\t{}: {}\n".format(
+                    var, getattr(model.contour_integration_layer, var)))
+
+            # print parameter names and whether they are trainable
+            f_handle.write("Contour Integration Layer Parameters\n")
+            layer_params = vars(model.contour_integration_layer)['_parameters']
+            for k, v in sorted(layer_params.items()):
+                f_handle.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
+
+        # Headers for columns in training details in summary file
+        f_handle.write("{}\n".format('-' * 80))
+        f_handle.write("Training details\n")
+        f_handle.write("[Epoch,\ncontour train_loss, train_iou, val_loss, val_iou\n")
+        f_handle.write("pathfinder train_loss, train_acc, val_loss, val_acc]\n")
+
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
@@ -552,98 +587,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     lr_history = []
 
     # Summary File
-    # --------------------------------------
+    # ------------
     summary_file = os.path.join(results_store_dir, 'summary.txt')
     file_handle = open(summary_file, 'w+')
 
-    # Dataset Parameters:
-    file_handle.write("Data Set Parameters {}\n".format('-' * 60))
-    file_handle.write("CONTOUR DATASET \n")
-    file_handle.write("Source                   : {}\n".format(contour_data_set_dir))
-    file_handle.write("Restrictions             :\n")
-    file_handle.write("  Lengths                : {}\n".format(c_len_arr))
-    file_handle.write("  Beta                   : {}\n".format(beta_arr))
-    file_handle.write("  Alpha                  : {}\n".format(alpha_arr))
-    file_handle.write("  Gabor Sets             : {}\n".format(gabor_set_arr))
-    file_handle.write("  Train subset size      : {}\n".format(contour_train_subset_size))
-    file_handle.write("  Test subset size       : {}\n".format(contour_test_subset_size))
-    file_handle.write("Number of Images         : Train {}, Test {}".format(
-        len(contour_train_set.images), len(contour_val_set.images)))
-    file_handle.write("Train Set Mean {}, std {}\n".format(
-        contour_train_set.data_set_mean, contour_train_set.data_set_std))
-    file_handle.write("Val   Set Mean {}, std {}\n".format(
-        contour_val_set.data_set_mean, contour_val_set.data_set_std))
-
-    file_handle.write("PATHFINDER  DATASET\n")
-    file_handle.write("Source                   : {}\n".format(pathfinder_data_set_dir))
-    file_handle.write("Restrictions             :\n")
-    file_handle.write("  Train subset size      : {}\n".format(pathfinder_train_subset_size))
-    file_handle.write("  Test subset size       : {}\n".format(pathfinder_test_subset_size))
-    file_handle.write("Number of Images         : Train {}, Test {}".format(
-        len(pathfinder_train_set.images), len(pathfinder_val_set.images)))
-
-    # Training Parameters:
-    file_handle.write("Training Parameters {}\n".format('-' * 60))
-    file_handle.write("Train batch size         : {}\n".format(train_batch_size))
-    file_handle.write("Val batch size           : {}\n".format(test_batch_size))
-    file_handle.write("Epochs                   : {}\n".format(num_epochs))
-    file_handle.write("Optimizer                : {}\n".format(optimizer.__class__.__name__))
-    file_handle.write("learning rate            : {}\n".format(learning_rate))
-    file_handle.write("Loss Fcn                 : {}\n".format(criterion.__class__.__name__))
-    file_handle.write("Gaussian Regularization on lateral kernels: {}\n".format(
-        use_gaussian_reg_on_lateral_kernels))
-    if use_gaussian_reg_on_lateral_kernels:
-        file_handle.write("  Gaussian Reg. sigma    : {}\n".format(
-            gaussian_kernel_sigma))
-        file_handle.write("  Gaussian Reg. weight   : {}\n".format(lambda1))
-    file_handle.write("IoU Detection Threshold  : {}\n".format(detect_thres))
-
-    file_handle.write("Image pre-processing :\n")
-    file_handle.write("Contour Dataset:\n")
-    print(contour_pre_process_transforms, file=file_handle)
-    file_handle.write("Pathfinder Dataset:\n")
-    print(pathfinder_pre_process_transforms, file=file_handle)
-
-    # Model Details
-    file_handle.write("Model Parameters {}\n".format('-' * 63))
-    file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
-    file_handle.write("\n")
-    print(model, file=file_handle)
-
-    temp = vars(model)  # Returns a dictionary.
-    p = [item for item in temp if not item.startswith('_')]
-    for var in sorted(p):
-        file_handle.write("{}: {}\n".format(var, getattr(model, var)))
-
-    layers = temp['_modules']  # Returns all top level modules (layers)
-    if 'contour_integration_layer' in layers:
-
-        file_handle.write("Contour Integration Layer: {}\n".format(
-            model.contour_integration_layer.__class__.__name__))
-
-        # print fixed hyper parameters
-        file_handle.write("Hyper parameters\n")
-
-        cont_int_layer_vars = \
-            [item for item in vars(model.contour_integration_layer) if not item.startswith('_')]
-        for var in sorted(cont_int_layer_vars):
-            file_handle.write("\t{}: {}\n".format(
-                var, getattr(model.contour_integration_layer, var)))
-
-        # print parameter names and whether they are trainable
-        file_handle.write("Contour Integration Layer Parameters\n")
-        layer_params = vars(model.contour_integration_layer)['_parameters']
-        for k, v in sorted(layer_params.items()):
-            file_handle.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
-
-    # Headers for the columns
-    file_handle.write("{}\n".format('-' * 80))
-    file_handle.write("Training details\n")
-    file_handle.write("[Epoch,\ncontour train_loss, train_iou, val_loss, val_iou\n")
-    file_handle.write("pathfinder train_loss, train_acc, val_loss, val_acc]\n")
+    write_training_and_model_details(file_handle)
 
     # Actual main loop start
-    # --------------------------------------
+    # ----------------------
     print("train_batch_size={}, test_batch_size= {}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
@@ -748,7 +699,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = JointPathfinderContourResnet50(cont_int_layer)
+    net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/joint_training')

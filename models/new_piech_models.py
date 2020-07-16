@@ -668,3 +668,53 @@ class BinaryClassifierResnet50(nn.Module):
         x = self.classifier(x)
 
         return x
+
+
+class JointPathfinderContourResnet50(nn.Module):
+    """
+    Model for training on both the contour and pathfinder dataset.
+    The contour integration layer is common, but separate heads for used for
+    contour and pathfinder outputs.
+    """
+    def __init__(self, contour_integration_layer, pre_trained_edge_extract=True):
+        super(JointPathfinderContourResnet50, self).__init__()
+
+        self.pre_trained_edge_extract = pre_trained_edge_extract
+
+        self.edge_extract = torchvision.models.resnet50(
+            pretrained=self.pre_trained_edge_extract).conv1
+        if self.pre_trained_edge_extract:
+            self.edge_extract.weight.requires_grad = False
+        else:
+            torch.nn.init.xavier_normal_(self.edge_extract.weight)
+
+        self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
+        self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
+
+        # maxpool layer is directly from Resnet50. Attaching the contour integration
+        # layer here (as opposed to after the conv layer) since this has the same dimensions as
+        # alexnet edge extract. Allows to use the same classification head (Contour task)
+        # NOTE that this max pooling layer was not originally included in the pathfinder model
+        self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+
+        self.contour_integration_layer = contour_integration_layer
+
+        self.pathfinder_classifier = BinaryClassifier(
+                n_in_channels=self.num_edge_extract_chan, final_conv_dim=22)
+
+        self.contour_classifier = ClassifierHead(num_channels=self.num_edge_extract_chan)
+
+    def forward(self, in_img):
+
+        # Edge Extraction
+        x = self.edge_extract(in_img)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+        x = self.max_pool1(x)
+
+        x = self.contour_integration_layer(x)
+
+        out_contour = self.contour_classifier(x)
+        out_pathfinder = self.pathfinder_classifier(x)
+
+        return out_contour, out_pathfinder
