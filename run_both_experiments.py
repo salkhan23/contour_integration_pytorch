@@ -22,18 +22,18 @@ if __name__ == "__main__":
     # Loading Saved Model
     print("===> Loading Model ...")
 
-    # Contour Dataset
-    # ----------------
-    contour_integration_layer = \
-        new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
-    saved_model = \
-        './results/new_model_resnet_based/' \
-        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200313_184604' \
-        '/best_accuracy.pth'
-    replacement_layer = None
-    net.load_state_dict(torch.load(saved_model))
-    get_iou_results = True
+    # # Contour Dataset
+    # # ----------------
+    # contour_integration_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
+    # saved_model = \
+    #     './results/new_model_resnet_based/' \
+    #     'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200313_184604' \
+    #     '/best_accuracy.pth'
+    # replacement_layer = None
+    # net.load_state_dict(torch.load(saved_model))
+    # get_iou_results = True
 
     # # Imagenet
     # # ----------------------
@@ -50,7 +50,8 @@ if __name__ == "__main__":
     # # Edge Dataset Trained Model
     # # ----------------------------
     # contour_integration_layer = \
-    #     new_piech_models.CurrentSubtractInhibitLayer(lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    #     new_piech_models.CurrentSubtractInhibitLayer(
+    #         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     #
     # net = new_piech_models.EdgeDetectionResnet50(contour_integration_layer)
     # saved_model = \
@@ -60,6 +61,24 @@ if __name__ == "__main__":
     # net.load_state_dict(torch.load(saved_model))
     # replacement_layer = None
     # get_iou_results = False
+
+    # Model jointly trained on contour and pathfinder data sets
+    # ---------------------------------------------------------
+    contour_integration_layer = \
+        new_piech_models.CurrentSubtractInhibitLayer(
+            lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    net = new_piech_models.JointPathfinderContourResnet50(
+        contour_integration_layer)
+    saved_model = \
+        'results/joint_training/' \
+        'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200713_230237_first_run/' \
+        'last_epoch.pth'
+
+    replacement_layer = None
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.load_state_dict(torch.load(saved_model, map_location=dev))
+    get_iou_results = True
 
     # ------------------------------------
     plt.ion()
@@ -80,7 +99,10 @@ if __name__ == "__main__":
         frag_size = np.array(frag_size)
 
         experiment_gain_vs_len.main(
-            net, results_dir, iou_results=get_iou_results, embedded_layer_identifier=replacement_layer,
+            net,
+            results_dir,
+            iou_results=get_iou_results,
+            embedded_layer_identifier=replacement_layer,
             frag_size=frag_size)
 
         experiment_gain_vs_spacing.main(

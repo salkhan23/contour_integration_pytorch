@@ -137,7 +137,12 @@ def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=
 
     # Pass the image through the model
     model.eval()
-    label_out = model(model_in_img)
+
+    if isinstance(model, new_piech_models.JointPathfinderContourResnet50):
+        # Output is contour_dataset_out, pathfinder_out
+        label_out, _ = model(model_in_img)
+    else:
+        label_out = model(model_in_img)
 
     iou = None
     if in_img_label is not None:
