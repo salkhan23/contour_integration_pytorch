@@ -91,6 +91,57 @@ def get_lr(opt):
         return param_group['lr']
 
 
+def plot_pathfinder_results(train_history, val_history, result_dir):
+    train_history = np.array(train_history)
+    val_history = np.array(val_history)
+
+    f, ax_arr = plt.subplots(1, 2)
+
+    n_epochs = train_history[-1, 0]
+
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 0], label='train')
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 0], label='val')
+    ax_arr[0].set_xlabel('Epoch')
+    ax_arr[0].set_title("Loss Vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), train_history[:, 1], label='train')
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), val_history[:, 1], label='val')
+    ax_arr[1].set_xlabel('Epoch')
+    ax_arr[1].set_title("Accuracy Vs Time")
+    ax_arr[1].grid(True)
+    ax_arr[1].legend()
+
+    f.suptitle('Pathfinder Task')
+    f.savefig(os.path.join(result_dir, 'pathfinder_loss_and accuracy.jpg'), format='jpg')
+
+
+def plot_contour_results(train_history, val_history, results_dir):
+
+    train_history = np.array(train_history)
+    val_history = np.array(val_history)
+
+    f, ax_arr = plt.subplots(1, 2)
+
+    ax_arr[0].plot(train_history[:, 0], label='train')
+    ax_arr[0].plot(val_history[:, 0], label='validation')
+    ax_arr[0].set_xlabel("Epoch")
+    ax_arr[0].set_title("Loss vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    ax_arr[0].plot(train_history[:, 1], label='train')
+    ax_arr[0].plot(val_history[:, 1], label='validation')
+    ax_arr[0].set_xlabel('Epoch')
+    ax_arr[0].set_title("IoU vs Time")
+    ax_arr[0].grid(True)
+    ax_arr[0].legend()
+
+    f.suptitle("Contour Detection Task")
+    f.savefig(os.path.join(results_dir, 'contour_loss_and_iou.jpg'), format='jpg')
+
+
 def main(model, train_params, data_set_params, base_results_store_dir='./results'):
     # -----------------------------------------------------------------------------------
     # Validate Parameters
@@ -507,7 +558,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     # Dataset Parameters:
     file_handle.write("Data Set Parameters {}\n".format('-' * 60))
-    file_handle.write("Contour Dataset \n")
+    file_handle.write("CONTOUR DATASET \n")
     file_handle.write("Source                   : {}\n".format(contour_data_set_dir))
     file_handle.write("Restrictions             :\n")
     file_handle.write("  Lengths                : {}\n".format(c_len_arr))
@@ -516,16 +567,20 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("  Gabor Sets             : {}\n".format(gabor_set_arr))
     file_handle.write("  Train subset size      : {}\n".format(contour_train_subset_size))
     file_handle.write("  Test subset size       : {}\n".format(contour_test_subset_size))
+    file_handle.write("Number of Images         : Train {}, Test {}".format(
+        len(contour_train_set.images), len(contour_val_set.images)))
     file_handle.write("Train Set Mean {}, std {}\n".format(
         contour_train_set.data_set_mean, contour_train_set.data_set_std))
     file_handle.write("Val   Set Mean {}, std {}\n".format(
         contour_val_set.data_set_mean, contour_val_set.data_set_std))
 
-    file_handle.write("Pathfinder Dataset \n")
+    file_handle.write("PATHFINDER  DATASET\n")
     file_handle.write("Source                   : {}\n".format(pathfinder_data_set_dir))
     file_handle.write("Restrictions             :\n")
     file_handle.write("  Train subset size      : {}\n".format(pathfinder_train_subset_size))
     file_handle.write("  Test subset size       : {}\n".format(pathfinder_test_subset_size))
+    file_handle.write("Number of Images         : Train {}, Test {}".format(
+        len(pathfinder_train_set.images), len(pathfinder_val_set.images)))
 
     # Training Parameters:
     file_handle.write("Training Parameters {}\n".format('-' * 60))
@@ -535,18 +590,18 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Optimizer                : {}\n".format(optimizer.__class__.__name__))
     file_handle.write("learning rate            : {}\n".format(learning_rate))
     file_handle.write("Loss Fcn                 : {}\n".format(criterion.__class__.__name__))
-    file_handle.write("Use Gaussian Regularization on lateral kernels: {}\n".format(
+    file_handle.write("Gaussian Regularization on lateral kernels: {}\n".format(
         use_gaussian_reg_on_lateral_kernels))
     if use_gaussian_reg_on_lateral_kernels:
-        file_handle.write("Gaussian Reg. sigma      : {}\n".format(
+        file_handle.write("  Gaussian Reg. sigma    : {}\n".format(
             gaussian_kernel_sigma))
-        file_handle.write("Gaussian Reg. weight     : {}\n".format(lambda1))
-    file_handle.write("IoU Detection Threshold      : {}\n".format(detect_thres))
+        file_handle.write("  Gaussian Reg. weight   : {}\n".format(lambda1))
+    file_handle.write("IoU Detection Threshold  : {}\n".format(detect_thres))
 
     file_handle.write("Image pre-processing :\n")
-    print("Contour Dataset:\n")
+    file_handle.write("Contour Dataset:\n")
     print(contour_pre_process_transforms, file=file_handle)
-    print("Pathfinder Dataset:\n")
+    file_handle.write("Pathfinder Dataset:\n")
     print(pathfinder_pre_process_transforms, file=file_handle)
 
     # Model Details
@@ -556,7 +611,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print(model, file=file_handle)
 
     temp = vars(model)  # Returns a dictionary.
-    file_handle.write("Model Parameters:\n")
     p = [item for item in temp if not item.startswith('_')]
     for var in sorted(p):
         file_handle.write("{}: {}\n".format(var, getattr(model, var)))
@@ -600,8 +654,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         contour_train_history.append(train_contour())
         contour_val_history.append(validate_contour())
 
-        print("Epoch [{}/{}], Contour Dataset Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, "
-              "IoU={:0.4f}. Time {}".format(
+        print("Epoch [{}/{}], Contour    Train: loss={:0.4f}, IoU={:0.4f}. Val: "
+              "loss={:0.4f}, IoU={:0.4f}. Time {}".format(
                 epoch + 1, num_epochs,
                 contour_train_history[epoch][0],
                 contour_train_history[epoch][1],
@@ -614,7 +668,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         pathfinder_train_history.append(train_pathfinder())
         pathfinder_val_history.append(validate_pathfinder())
 
-        print("Epoch [{}/{}], Pathfinder Dataset Train: loss={:0.4f}, Acc={:0.3f}. Val: "
+        print("Epoch [{}/{}], Pathfinder Train: loss={:0.4f}, Acc={:0.3f}. Val: "
               "loss={:0.4f}, Acc={:0.3f}. Time {}".format(
                 epoch + 1, num_epochs,
                 pathfinder_train_history[epoch][0],
@@ -655,52 +709,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # -----------------------------------------------------------------------------------
     # Plots
     # -----------------------------------------------------------------------------------
-    # Pathfinder
-    pathfinder_train_history = np.array(pathfinder_train_history)
-    pathfinder_val_history = np.array(pathfinder_val_history)
-
-    f, ax_arr = plt.subplots(1, 2)
-
-    ax_arr[0].plot(np.arange(1, num_epochs + 1), pathfinder_train_history[:, 0], label='train')
-    ax_arr[0].plot(np.arange(1, num_epochs + 1), pathfinder_val_history[:, 0], label='val')
-    ax_arr[0].set_xlabel('Epoch')
-    ax_arr[0].set_title("Loss Vs Time")
-    ax_arr[0].grid(True)
-    ax_arr[0].legend()
-
-    ax_arr[1].plot(np.arange(1, num_epochs + 1), pathfinder_train_history[:, 1], label='train')
-    ax_arr[1].plot(np.arange(1, num_epochs + 1), pathfinder_val_history[:, 1], label='val')
-    ax_arr[1].set_xlabel('Epoch')
-    ax_arr[1].set_title("Accuracy Vs Time")
-    ax_arr[1].grid(True)
-    ax_arr[1].legend()
-
-    f.suptitle('Pathfinder Task')
-    f.savefig(os.path.join(results_store_dir, 'pathfinder_loss_and accuracy.jpg'), format='jpg')
-
-    # Contour Dataset
-    contour_train_history = np.array(contour_train_history)
-    contour_val_history = np.array(contour_val_history)
-
-    f = plt.figure()
-    plt.title("Loss")
-    plt.plot(contour_train_history[:, 0], label='train')
-    plt.plot(contour_val_history[:, 0], label='validation')
-    plt.xlabel('Epoch')
-    plt.grid(True)
-    plt.legend()
-    f.savefig(os.path.join(results_store_dir, 'loss.jpg'), format='jpg')
-
-    f = plt.figure()
-    plt.title("IoU")
-    plt.plot(contour_train_history[:, 1], label='train')
-    plt.plot(contour_val_history[:, 1], label='validation')
-    plt.xlabel('Epoch')
-    plt.legend()
-    plt.grid(True)
-
-    f.suptitle("Contour Detection Task")
-    f.savefig(os.path.join(results_store_dir, 'iou.jpg'), format='jpg')
+    plot_pathfinder_results(pathfinder_train_history, pathfinder_val_history, results_store_dir)
+    plot_contour_results(contour_train_history, contour_val_history, results_store_dir)
 
 
 if __name__ == '__main__':
@@ -722,7 +732,7 @@ if __name__ == '__main__':
         'train_batch_size': 16,
         'test_batch_size': 1,
         'learning_rate': 3e-5,
-        'num_epochs': 10,
+        'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
