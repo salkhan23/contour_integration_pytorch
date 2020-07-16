@@ -639,7 +639,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
         file_handle.write(
             "[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, "
-            "{:0.4f}, {:0.2f}, {:0.4f}, {:0.2f}],\n".format(
+            "{:0.4f}, {:0.3f}, {:0.4f}, {:0.3f}],\n".format(
                 epoch + 1,
                 contour_train_history[epoch][0],
                 contour_train_history[epoch][1],
