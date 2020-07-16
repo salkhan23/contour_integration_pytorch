@@ -663,6 +663,17 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     plot_pathfinder_results(pathfinder_train_history, pathfinder_val_history, results_store_dir)
     plot_contour_results(contour_train_history, contour_val_history, results_store_dir)
 
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
+    experiment_gain_vs_len.main(
+        model, results_store_dir, iou_results=False, frag_size=np.array([14, 14]))
+
+    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    experiment_gain_vs_spacing.main(model, results_store_dir, frag_size=np.array([14, 14]))
+
 
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
