@@ -45,7 +45,7 @@ def plot_pathfinder_results(train_history, val_history, result_dir):
 
     f, ax_arr = plt.subplots(1, 2)
 
-    n_epochs = train_history[-1, 0]
+    n_epochs = train_history.shape[0]
 
     ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 0], label='train')
     ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 0], label='val')
@@ -72,15 +72,17 @@ def plot_contour_results(train_history, val_history, results_dir):
 
     f, ax_arr = plt.subplots(1, 2)
 
-    ax_arr[0].plot(train_history[:, 0], label='train')
-    ax_arr[0].plot(val_history[:, 0], label='validation')
+    n_epochs = train_history.shape[0]
+
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 0], label='train')
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 0], label='validation')
     ax_arr[0].set_xlabel("Epoch")
     ax_arr[0].set_title("Loss vs Time")
     ax_arr[0].grid(True)
     ax_arr[0].legend()
 
-    ax_arr[0].plot(train_history[:, 1], label='train')
-    ax_arr[0].plot(val_history[:, 1], label='validation')
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 1], label='train')
+    ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 1], label='validation')
     ax_arr[0].set_xlabel('Epoch')
     ax_arr[0].set_title("IoU vs Time")
     ax_arr[0].grid(True)
