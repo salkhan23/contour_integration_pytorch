@@ -81,12 +81,12 @@ def plot_contour_results(train_history, val_history, results_dir):
     ax_arr[0].grid(True)
     ax_arr[0].legend()
 
-    ax_arr[0].plot(np.arange(1, n_epochs + 1), train_history[:, 1], label='train')
-    ax_arr[0].plot(np.arange(1, n_epochs + 1), val_history[:, 1], label='validation')
-    ax_arr[0].set_xlabel('Epoch')
-    ax_arr[0].set_title("IoU vs Time")
-    ax_arr[0].grid(True)
-    ax_arr[0].legend()
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), train_history[:, 1], label='train')
+    ax_arr[1].plot(np.arange(1, n_epochs + 1), val_history[:, 1], label='validation')
+    ax_arr[1].set_xlabel('Epoch')
+    ax_arr[1].set_title("IoU vs Time")
+    ax_arr[1].grid(True)
+    ax_arr[1].legend()
 
     f.suptitle("Contour Detection Task")
     f.savefig(os.path.join(results_dir, 'contour_loss_and_iou.jpg'), format='jpg')
