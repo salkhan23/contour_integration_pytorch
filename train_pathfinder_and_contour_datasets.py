@@ -501,7 +501,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         f_handle.write("  Gabor Sets             : {}\n".format(gabor_set_arr))
         f_handle.write("  Train subset size      : {}\n".format(contour_train_subset_size))
         f_handle.write("  Test subset size       : {}\n".format(contour_test_subset_size))
-        f_handle.write("Number of Images         : Train {}, Test {}".format(
+        f_handle.write("Number of Images         : Train {}, Test {}\n".format(
             len(contour_train_set.images), len(contour_val_set.images)))
         f_handle.write("Train Set Mean {}, std {}\n".format(
             contour_train_set.data_set_mean, contour_train_set.data_set_std))
@@ -513,7 +513,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         f_handle.write("Restrictions             :\n")
         f_handle.write("  Train subset size      : {}\n".format(pathfinder_train_subset_size))
         f_handle.write("  Test subset size       : {}\n".format(pathfinder_test_subset_size))
-        f_handle.write("Number of Images         : Train {}, Test {}".format(
+        f_handle.write("Number of Images         : Train {}, Test {}\n".format(
             len(pathfinder_train_set.images), len(pathfinder_val_set.images)))
 
         # Training Parameters:
