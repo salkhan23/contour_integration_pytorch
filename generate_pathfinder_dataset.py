@@ -56,6 +56,23 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         super(OnlineNaturalImagesPathfinder, self).__init__(
             calculate_stats=False, *args, **kwargs)
 
+    def get_img_by_index(self, index, start_point=None, end_point=None):
+
+        img = Image.open(self.images[index]).convert('RGB')
+        if self.resize is not None:
+            # Resize uses interpolation
+            img = self.resize(img)
+        img = transform_functional.to_tensor(img)
+
+        if start_point is not None:
+            self.add_end_stop(
+                img, (start_point[0], start_point[1]), radius=self.end_stop_radius)
+
+        if end_point is not None:
+            self.add_end_stop(img, (end_point[0], end_point[1]), radius=self.end_stop_radius)
+
+        return img
+
     def __getitem__(self, index):
         """
         Override the get item routine
@@ -294,7 +311,8 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         #
         # plt.close(f)
 
-        return img, connected, single_contours_label, full_label, dist_between_points, index
+        return img, connected, single_contours_label, full_label, dist_between_points, index,\
+            torch.tensor(c1), torch.tensor(c2), torch.tensor(start_point), torch.tensor(end_point)
 
     @staticmethod
     def _get_threshold_label(label, th):
@@ -450,8 +468,8 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
 
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
-            imgs, class_labels, indv_contours_label, full_labels, distances, org_img_idxs = \
-                data_loader_out
+            imgs, class_labels, indv_contours_label, full_labels, distances, \
+                org_img_idxs, _, _, _, _ = data_loader_out
 
             img = np.transpose(imgs[0, ], axes=(1, 2, 0))
             img_file_name = 'img_{}.png'.format(n_imgs_created)
