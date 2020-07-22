@@ -152,11 +152,14 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(torch.load(saved_model, map_location=dev))
+    model = model.to(dev)
 
     model.edge_extract.register_forward_hook(edge_extract_cb)
     model.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     n_channels = 64
+
+    top_n = 10
 
     # Imagenet Mean and STD
     ch_mean = [0.485, 0.456, 0.406]
@@ -190,7 +193,6 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
 
     for ch_idx in np.arange(n_channels):
-        top_n = 10
         top_act_tracker = TopNTracker(top_n)
 
         ch_store_dir = os.path.join(results_dir, 'channel_{}'.format(ch_idx))
@@ -211,7 +213,8 @@ def main(model, results_dir):
             curr_max_act = np.max(curr_tgt_ch_acts)
 
             curr_max_act_idx = np.argmax(curr_tgt_ch_acts)  # 1d index
-            curr_max_act_idx = np.unravel_index(curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
+            curr_max_act_idx = np.unravel_index(
+                curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
 
             node = MaxActiveElement(
                 activation=curr_max_act,
