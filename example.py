@@ -208,6 +208,17 @@ def main(model, results_dir):
 
             label_out = process_image(model, dev, ch_mean, ch_std, imgs)
 
+            # remove batch dimension
+            labels = np.squeeze(labels)
+            # sep_c_label = np.squeeze(sep_c_label)
+            # full_label = np.squeeze(full_label)
+            # d = np.squeeze(d)
+            org_img_idx = np.squeeze(org_img_idx)
+            c1 = np.squeeze(c1)
+            c2 = np.squeeze(c2)
+            start_point = np.squeeze(start_point)
+            end_point = np.squeeze(end_point)
+
             # Target channel activation
             curr_tgt_ch_acts = cont_int_out_act[0, ch_idx, :, :]
             curr_max_act = np.max(curr_tgt_ch_acts)
@@ -216,23 +227,37 @@ def main(model, results_dir):
             curr_max_act_idx = np.unravel_index(
                 curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
 
-            node = MaxActiveElement(
-                activation=curr_max_act,
-                position=curr_max_act_idx,
-                index=org_img_idx,
-                c1=c1.squeeze(),
-                c2=c2.squeeze(),
-                ep1=start_point.squeeze(),  # get rid of batch dim
-                ep2=end_point.squeeze(),
-                prediction=label_out.item(),
-                gt=labels.squeeze()
-            )
+            # Check for valid sample:
+            # 1. Endpoints should be connected
+            # 2. max_active should be at most one pixel away from the contour
 
-            top_act_tracker.push(curr_max_act, node)
+            if labels:  # points are connected
+
+                # The max active neuron is on the contour (or very close by)
+                # the / 4 is to get the position of the contour @ the scale of the
+                # contour integration activation
+                d_to_contour = np.min(
+                    data_set.get_distance_point_and_contour(curr_max_act_idx, c1 // 4))
+
+                if d_to_contour < 1.5:
+                    node = MaxActiveElement(
+                        activation=curr_max_act,
+                        position=curr_max_act_idx,
+                        index=org_img_idx,
+                        c1=c1,
+                        c2=c2,
+                        ep1=start_point,  # get rid of batch dim
+                        ep2=end_point,
+                        prediction=label_out.item(),
+                        gt=labels
+                    )
+
+                    top_act_tracker.push(curr_max_act, node)
 
             print("Iteration {}. Target Channel Max Act {:0.4f}".format(iteration, curr_max_act))
 
         max_active_nodes, values = top_act_tracker.get_stored_values()
+        print("Number of Good images found {}".format(len(max_active_nodes)))
 
         # -----------------------------------------------------------------------------------
         # Plot Stored Results
@@ -241,42 +266,28 @@ def main(model, results_dir):
 
             new_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
 
-            # process the image
+            # Process the image
             new_img = torch.unsqueeze(new_img, dim=0)
             label_out = process_image(model, dev, ch_mean, ch_std, new_img)
 
-            # display the image
+            # Display the image
+            # -----------------
+            f, ax_arr = plt.subplots(1, 2, figsize=(14, 7))
+
             new_img = np.transpose(new_img.squeeze(), axes=(1, 2, 0))
+            ax_arr[0].imshow(new_img)
 
             tgt_ch_acts = cont_int_out_act[0, ch_idx, :, :]
             max_act_idx = np.argmax(tgt_ch_acts)  # 1d index
             max_act_idx = np.unravel_index(max_act_idx, tgt_ch_acts.shape)  # 2d i
-
-            f, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
-            ax_arr[0].imshow(new_img)
-
             ax_arr[1].imshow(tgt_ch_acts)
             ax_arr[1].set_title("Target channel: Max {:0.2f} @ {}".format(
                 np.max(tgt_ch_acts), max_act_idx))
             # flip x and y when plotting
-            ax_arr[1].scatter(max_act_idx[1], max_act_idx[0], marker='+', color='red', s=60)
+            ax_arr[1].scatter(max_act_idx[1], max_act_idx[0], marker='+', color='red', s=120)
             ax_arr[1].scatter(item.ep1[1] // 4, item.ep1[0] // 4, marker='o', color='magenta', s=60)
             ax_arr[1].scatter(item.ep2[1] // 4, item.ep2[0] // 4, marker='o', color='magenta', s=60)
             ax_arr[1].scatter(item.c1[:, 1] // 4, item.c1[:, 0] // 4, marker='.', color='magenta')
-
-            max_act_all_ch = np.max(np.squeeze(cont_int_out_act), axis=0)
-            max_act_all_ch_idx = np.argmax(max_act_all_ch)  # 1d index
-            max_act_all_ch_idx = np.unravel_index(
-                max_act_all_ch_idx, max_act_all_ch.shape)  # 2d idx
-
-            ax_arr[2].imshow(np.max(np.squeeze(cont_int_out_act), axis=0))
-            ax_arr[2].set_title("Max All channels: Max{:0.2f} @ {}".format(
-                np.max(max_act_all_ch), max_act_all_ch_idx))
-            ax_arr[2].scatter(
-                max_act_all_ch_idx[1], max_act_all_ch_idx[0], marker='+', color='red', s=60)
-            ax_arr[2].scatter(item.ep1[1] // 4, item.ep1[0] // 4, marker='o', color='magenta', s=60)
-            ax_arr[2].scatter(item.ep2[1] // 4, item.ep2[0] // 4, marker='o', color='magenta', s=60)
-            ax_arr[2].scatter(item.c1[:, 1] // 4, item.c1[:, 0] // 4, marker='.', color='magenta')
 
             f.suptitle("GT = {}, prediction {:0.4f}, C1 len={}, C2 len={}".format(
                 item.gt, label_out.item(), len(item.c1), len(item.c2)))
