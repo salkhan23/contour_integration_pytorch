@@ -269,7 +269,7 @@ if __name__ == '__main__':
     net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
     saved_model = \
         'results/joint_training/' \
-        'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200713_230237_first_run/' \
+        'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
         'last_epoch.pth'
 
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
