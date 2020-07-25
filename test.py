@@ -15,6 +15,7 @@ from generate_pathfinder_dataset import OnlineNaturalImagesPathfinder
 from torch.utils.data import DataLoader
 import utils
 
+
 edge_extract_act = []
 cont_int_in_act = []
 cont_int_out_act = []
@@ -39,7 +40,17 @@ def contour_integration_cb(self, layer_in, layer_out):
     cont_int_out_act = layer_out.cpu().detach().numpy()
 
 
-def process_images(model, device_to_use, ch_mus, ch_sigmas, in_imgs):
+def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img):
+    """
+    Pass image through model and get iou score of the prediction if in_img_label is not None
+
+    :param model:
+    :param devise_to_use:
+    :param in_img:
+    :param ch_mus:
+    :param ch_sigmas:
+    :return:
+    """
     # Zero all collected variables
     global edge_extract_act
     global cont_int_in_act
@@ -50,10 +61,10 @@ def process_images(model, device_to_use, ch_mus, ch_sigmas, in_imgs):
     cont_int_out_act = 0
 
     normalize = transforms.Normalize(mean=ch_mus, std=ch_sigmas)
-    model_in_img = normalize(in_imgs.squeeze())
-    model_in_img = model_in_img.to(device_to_use).unsqueeze(0)
+    model_in_img = normalize(in_img.squeeze())
+    model_in_img = model_in_img.to(devise_to_use).unsqueeze(0)
 
-    # Pass the images through the model
+    # Pass the image through the model
     model.eval()
     if isinstance(model, new_piech_models.JointPathfinderContourResnet50):
         # Output is contour_dataset_out, pathfinder_out
@@ -61,16 +72,12 @@ def process_images(model, device_to_use, ch_mus, ch_sigmas, in_imgs):
     else:
         label_out = model(model_in_img)
 
-    labels_out = torch.sigmoid(label_out)
-
+    label_out = torch.sigmoid(label_out)
     return label_out
 
 
 class MaxActiveElement:
-    """ An element in the Top-n max Active Dictionary.
-        Defines what is stored about an image
-    """
-
+    """ An element in the Top-n max Active Dictionary """
     def __init__(self, activation, position, index, c1, c2, ep1, ep2, prediction, gt):
         self.activation = activation
         self.position = position
@@ -120,16 +127,18 @@ class TopNTracker(object):
         lst_values = []
 
         while len(self._heap) > 0:
+
             v, item = self.pop()
             lst_items.append(item)
             lst_values.append(v)
 
-        # reverse the order, max activation out first
-        zipped_object = zip(lst_values, lst_items)
-        zipped_object = sorted(zipped_object, reverse=True)
+        if len(lst_items):
+            # reverse the order, max first.
+            zipped_object = zip(lst_values, lst_items)
+            zipped_object = sorted(zipped_object, reverse=True)
 
-        unzipped_object = zip(*zipped_object)
-        lst_values, lst_items = list(unzipped_object)
+            unzipped_object = zip(*zipped_object)
+            lst_values, lst_items = list(unzipped_object)
 
         return lst_items, lst_values
 
@@ -151,14 +160,12 @@ def main(model, results_dir):
     ch_mean = [0.485, 0.456, 0.406]
     ch_std = [0.229, 0.224, 0.225]
 
-    batch_size = 32
-
     # -----------------------------------------------------------------------------------
     # Data Loader
     # -----------------------------------------------------------------------------------
     biped_dataset_dir = './data/BIPED/edges'
     biped_dataset_type = 'train'
-    n_biped_imgs = 100
+    n_biped_imgs = 200
 
     data_set = OnlineNaturalImagesPathfinder(
         data_dir=biped_dataset_dir,
@@ -171,7 +178,7 @@ def main(model, results_dir):
     data_loader = DataLoader(
         dataset=data_set,
         num_workers=0,
-        batch_size=batch_size,
+        batch_size=1,  # Has to be 1, returned contours are of different sizes
         shuffle=False,
         pin_memory=True
     )
@@ -179,74 +186,133 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     # Main
     # -----------------------------------------------------------------------------------
-    for ch_idx in np.arange(n_channels):
 
-        top_act_tracker = TopNTracker(top_n)
-        valid_img_count = 0
+    # --------------------------------------------------
+    # Find top n max responsive images for this channel
+    # --------------------------------------------------
+    top_n_per_channel_trackers = [TopNTracker(top_n) for _ in range(n_channels)]
 
-        ch_store_dir = os.path.join(results_dir, 'channel_{}'.format(ch_idx))
-        if not os.path.exists(ch_store_dir):
-            os.makedirs(ch_store_dir)
+    for iteration, data_loader_out in enumerate(data_loader, 1):
 
-        for iteration, data_loader_out in enumerate(data_loader, 1):
+        img, label, sep_c_label, full_label, d, org_img_idx, \
+            c1, c2, start_point, end_point = data_loader_out
 
-            # Find the top n max responsive images for target channel
-            imgs, labels, sep_c_labels, full_labels, dist_arr, org_img_idx_arr, \
-                c1_arr, c2_arr, start_point_arr, end_point_arr = data_loader_out
+        label_out = process_image(model, dev, ch_mean, ch_std, img)
 
-            labels_out = process_images(model, dev, ch_mean, ch_std, imgs)
+        # Remove batch dimension
+        label = np.squeeze(label)
+        # sep_c_label = np.squeeze(sep_c_label)
+        # full_label = np.squeeze(full_label)
+        # d = np.squeeze(d)
+        org_img_idx = np.squeeze(org_img_idx)
+        c1 = np.squeeze(c1)
+        c2 = np.squeeze(c2)
+        start_point = np.squeeze(start_point)
+        end_point = np.squeeze(end_point)
 
-            for img_idx in range(labels_out.shape[0]):
+        if label:  # only consider connected samples
 
-                # Get the target img and labels
-                img = imgs[img_idx, ]
-                label = labels[img_idx, ]
-                sep_c_label = sep_c_labels[img_idx, ]
-                full_label = full_labels[img_idx, ]
-                d = dist_arr[img_idx, ]
-                biped_img_idx = org_img_idx_arr[img_idx, ]
-                c1 = c1_arr[img_idx, ]
-                c2 = c2_arr[img_idx, ]
-                start_point = start_point_arr[img_idx, ]
-                end_point = end_point_arr[img_idx, ]
+            for ch_idx in range(n_channels):
 
-                curr_tgt_ch_acts = cont_int_out_act[img_idx, ch_idx, :, :]
+                # Target channel activation
+                curr_tgt_ch_acts = cont_int_out_act[0, ch_idx, :, :]
                 curr_max_act = np.max(curr_tgt_ch_acts)
-                curr_max_act_idx = np.argmax(curr_tgt_ch_acts)  # 1d index
-                curr_max_act_idx = \
-                    np.unravel_index(curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
 
-                # Check for valid input images
+                curr_max_act_idx = np.argmax(curr_tgt_ch_acts)  # 1d index
+                curr_max_act_idx = np.unravel_index(
+                    curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
+
+                # Check for valid sample:
                 # 1. Endpoints should be connected
                 # 2. max_active should be at most one pixel away from the contour
+                min_d_to_contour = np.min(
+                    data_set.get_distance_point_and_contour(curr_max_act_idx, c1 // 4))
 
-                if label:
-                    # The max active neuron is on the contour (or very close by)
-                    # the / 4 is to get the position of the contour @ the scale of the
-                    # contour integration activation
-                    min_d_to_contour = np.min(
-                        data_set.get_distance_point_and_contour(curr_max_act_idx, c1 // 4))
+                if min_d_to_contour < 1.5:
+                    node = MaxActiveElement(
+                        activation=curr_max_act,
+                        position=curr_max_act_idx,
+                        index=org_img_idx,
+                        c1=c1,
+                        c2=c2,
+                        ep1=start_point,  # get rid of batch dim
+                        ep2=end_point,
+                        prediction=label_out.item(),
+                        gt=label
+                    )
 
-                    if min_d_to_contour < 1.5:
-                        node = MaxActiveElement(
-                            activation=curr_max_act,
-                            position=curr_max_act_idx,
-                            index=biped_img_idx,
-                            c1=c1,
-                            c2=c2,
-                            ep1=start_point,  # get rid of batch dim
-                            ep2=end_point,
-                            prediction=labels_out[img_idx].item(),
-                            gt=label
-                        )
+                    top_n_per_channel_trackers[ch_idx].push(curr_max_act, node)
 
-                        top_act_tracker.push(curr_max_act, node)
-                        valid_img_count += 1
-                        print("Adding image to stored images")
+    # -------------------------------------------------------------------------------
+    # Effect of fragment spacing
+    # -------------------------------------------------------------------------------
+    frag_tile_size = np.array([7, 7])
+    bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15]])
 
-        max_active_nodes, values = top_act_tracker.get_stored_values()
-        print("Number of Good images found {}. Stored top {}".format(
-            valid_img_count, len(max_active_nodes)))
+    for ch_idx in range(n_channels):
+
+        print("Channel {}. Number of Stored images = {}".format(
+            ch_idx, len(top_n_per_channel_trackers[ch_idx])))
+
+        max_active_nodes, _ = top_n_per_channel_trackers[ch_idx].get_stored_values()
+
+        # process each image
+        for item_idx, item in enumerate(max_active_nodes):
+
+            # First find the closest point on contour to max active point
+            d_to_contour = data_set.get_distance_point_and_contour(item.position, item.c1 // 4)
+            closest_contour_point_idx = np.argmin(d_to_contour)
+            closest_contour_point = item.c1[closest_contour_point_idx]
+
+            for bubble_tile_size in bubble_tile_sizes:
+
+                # Get the location of bubbles
+                lhs_bubbles_idx = np.arange(
+                    closest_contour_point_idx + frag_tile_size[0] // 2 + bubble_tile_size[0] // 2,
+                    len(item.c1),
+                    (bubble_tile_size[0] + frag_tile_size[0]))
+
+                rhs_bubbles_idx = np.arange(
+                    closest_contour_point_idx - frag_tile_size[0] // 2 - bubble_tile_size[0] // 2,
+                    0,
+                    -(bubble_tile_size[0] + frag_tile_size[0]))
+
+                bubble_insert_locations = []
+                for idx in lhs_bubbles_idx:
+                    bubble_insert_locations.append(item.c1[idx])
+                for idx in rhs_bubbles_idx:
+                    bubble_insert_locations.append(item.c1[idx])
+                bubble_insert_locations = torch.stack(bubble_insert_locations)
+
+                # Bubbles are inserted using the position of the top left corner of the tile
+                # Note: - bubble_tile_size = full tile_size //2
+                bubble_insert_locations = \
+                    bubble_insert_locations - bubble_tile_size
+
+                # Create punctured image
+                puncture = utils.PunctureImage(
+                    n_bubbles=1, fwhm=bubble_tile_size[0], tile_size=bubble_tile_size*2)
+
+                new_img = data_set.get_img_by_index(item.index)
+                punctured_img = puncture(new_img, start_loc_arr=bubble_insert_locations)
+
+                data_set.add_end_stop(punctured_img, item.ep1)
+                data_set.add_end_stop(punctured_img, item.ep2)
+
+                # Display the Image
+                org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
+                f, ax_arr = plt.subplots(1, 2)
+
+                ax_arr[0].imshow(np.transpose(org_img, axes=(1, 2, 0)))
+                ax_arr[1].imshow(np.transpose(punctured_img, axes=(1, 2, 0)))
+                ax_arr[1].scatter(
+                    closest_contour_point[1], closest_contour_point[0], marker='+',
+                    color='red', s=120)
+                f.suptitle("Bubble_size {}".format(bubble_tile_size))
+
+            import pdb
+            pdb.set_trace()
+            plt.close('all')
 
 
 if __name__ == '__main__':
