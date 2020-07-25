@@ -213,10 +213,13 @@ class PunctureImage(object):
         else:
             self.tile_size = tile_size
 
-    def __call__(self, img):
+    def __call__(self, img, start_loc_arr=None):
         """
         Args:
-            img (Tensor): Tensor image of size (C, H, W) to be normalized.
+            img (Tensor) : Tensor image of size (C, H, W) to be normalized.
+            start_loc_arr: Starting location of the full tile. If star location
+            is specified it will only add as many bubbles as the length of the
+            start_location array.
 
         Returns:
             Tensor: Normalized Tensor image.
@@ -230,10 +233,11 @@ class PunctureImage(object):
         bubble_frag = bubble_frag.float().unsqueeze(-1)
         bubble_frag = 1 - bubble_frag
 
-        start_loc_arr = np.array([
-            np.random.randint(h - self.tile_size[0], size=self.n_bubbles),
-            np.random.randint(w - self.tile_size[1], size=self.n_bubbles),
-        ]).T
+        if start_loc_arr is None:
+            start_loc_arr = np.array([
+                np.random.randint(h - self.tile_size[0], size=self.n_bubbles),
+                np.random.randint(w - self.tile_size[1], size=self.n_bubbles),
+            ]).T
 
         # print("Start Locations {}".format(start_loc_arr))
 

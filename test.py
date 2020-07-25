@@ -143,6 +143,58 @@ class TopNTracker(object):
         return lst_items, lst_values
 
 
+def get_closest_distance_and_index(desired_d, d_arr):
+    """
+    """
+    offset_dist_arr = np.abs(d_arr - desired_d)
+    min_dist = np.min(offset_dist_arr)
+    idx = np.argmin(offset_dist_arr)
+
+    return min_dist, idx
+
+
+def _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds):
+    """ For use see get_bubbles_locations"""
+    bubbles_locations_arr = []
+    n_bubbles = 0
+    while len(c1) > 1:
+        d_arr = ds.get_distance_point_and_contour(c1[0], c1)
+
+        desired_d = bubble_len + frag_len
+        if 0 == n_bubbles:
+            desired_d = desired_d // 2  # first bubble location is different
+
+        min_dist, idx = get_closest_distance_and_index(desired_d, d_arr)
+        if min_dist < 1:
+            # print("Adding point {} at index {} to bubble_loc array".format(c1[idx], idx))
+            bubbles_locations_arr.append(c1[idx])
+
+        n_bubbles += 1
+        c1 = c1[idx:]
+
+    return np.array(bubbles_locations_arr)
+
+
+def get_bubbles_locations(contour, start_point_idx, frag_len, bubble_len, ds):
+    """
+    Starting at the start point (specified by index in c1) iteratively parse contour c1
+    to find insert location of bubbles that result in a contour with fragmes of size fragment
+    length and separated by bubble lengths
+
+    The first visible fragment is centered  at the starting point
+    """
+    # RHS
+    c1 = contour[start_point_idx:]
+    rhs_bubbles = _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds)
+
+    # LHS
+    c1 = contour[:start_point_idx]
+    c1 = c1[::-1]  # reverse it and use the same way
+    lhs_bubbles = _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds)
+
+    return np.concatenate((rhs_bubbles, lhs_bubbles), axis=0)
+
+
 def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -186,10 +238,10 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     # Main
     # -----------------------------------------------------------------------------------
+    # Find top n max responsive images for each channel
+    # --------------------------------------------------
+    print("Finding Optimal Stimuli for each channel ....")
 
-    # --------------------------------------------------
-    # Find top n max responsive images for this channel
-    # --------------------------------------------------
     top_n_per_channel_trackers = [TopNTracker(top_n) for _ in range(n_channels)]
 
     for iteration, data_loader_out in enumerate(data_loader, 1):
@@ -259,39 +311,28 @@ def main(model, results_dir):
         # process each image
         for item_idx, item in enumerate(max_active_nodes):
 
-            # First find the closest point on contour to max active point
+            # Find the closest point on contour to max active point
             d_to_contour = data_set.get_distance_point_and_contour(item.position, item.c1 // 4)
             closest_contour_point_idx = np.argmin(d_to_contour)
-            closest_contour_point = item.c1[closest_contour_point_idx]
+            closest_contour_point = item.c1[closest_contour_point_idx].numpy()
 
+            # Bubble location based on distance
             for bubble_tile_size in bubble_tile_sizes:
 
-                # Get the location of bubbles
-                lhs_bubbles_idx = np.arange(
-                    closest_contour_point_idx + frag_tile_size[0] // 2 + bubble_tile_size[0] // 2,
-                    len(item.c1),
-                    (bubble_tile_size[0] + frag_tile_size[0]))
-
-                rhs_bubbles_idx = np.arange(
-                    closest_contour_point_idx - frag_tile_size[0] // 2 - bubble_tile_size[0] // 2,
-                    0,
-                    -(bubble_tile_size[0] + frag_tile_size[0]))
-
-                bubble_insert_locations = []
-                for idx in lhs_bubbles_idx:
-                    bubble_insert_locations.append(item.c1[idx])
-                for idx in rhs_bubbles_idx:
-                    bubble_insert_locations.append(item.c1[idx])
-                bubble_insert_locations = torch.stack(bubble_insert_locations)
+                bubble_insert_locations = get_bubbles_locations(
+                    item.c1.numpy(),
+                    closest_contour_point_idx,
+                    frag_tile_size[0],
+                    bubble_tile_size[0],
+                    data_set,)
 
                 # Bubbles are inserted using the position of the top left corner of the tile
                 # Note: - bubble_tile_size = full tile_size //2
-                bubble_insert_locations = \
-                    bubble_insert_locations - bubble_tile_size
+                bubble_insert_locations = bubble_insert_locations - bubble_tile_size
 
                 # Create punctured image
                 puncture = utils.PunctureImage(
-                    n_bubbles=1, fwhm=bubble_tile_size[0], tile_size=bubble_tile_size*2)
+                    n_bubbles=1, fwhm=bubble_tile_size[0], tile_size=bubble_tile_size * 2)
 
                 new_img = data_set.get_img_by_index(item.index)
                 punctured_img = puncture(new_img, start_loc_arr=bubble_insert_locations)
