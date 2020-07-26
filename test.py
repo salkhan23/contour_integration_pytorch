@@ -172,7 +172,7 @@ def _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds):
         n_bubbles += 1
         c1 = c1[idx:]
 
-    return np.array(bubbles_locations_arr)
+    return bubbles_locations_arr
 
 
 def get_bubbles_locations(contour, start_point_idx, frag_len, bubble_len, ds):
@@ -185,14 +185,60 @@ def get_bubbles_locations(contour, start_point_idx, frag_len, bubble_len, ds):
     """
     # RHS
     c1 = contour[start_point_idx:]
-    rhs_bubbles = _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds)
+    bubble_locations = _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds)
 
     # LHS
     c1 = contour[:start_point_idx]
     c1 = c1[::-1]  # reverse it and use the same way
     lhs_bubbles = _rhs_get_bubbles_locations(c1, frag_len, bubble_len, ds)
+    bubble_locations.extend(lhs_bubbles)
 
-    return np.concatenate((rhs_bubbles, lhs_bubbles), axis=0)
+    bubble_locations = np.array(bubble_locations)
+
+    return bubble_locations
+
+
+def plot_channel_responses(model, img, ch_idx, dev, ch_mean, ch_std, item=None):
+    """" Debugging plot"""
+    f, ax_arr = plt.subplots(1, 3, figsize=(21, 7))
+
+    label_out = process_image(model, dev, ch_mean, ch_std, img)
+
+    img = np.transpose(img.squeeze(), axes=(1, 2, 0))
+    ax_arr[0].imshow(img)
+
+    tgt_ch_in_acts = cont_int_in_act[0, ch_idx, :, :]
+    ax_arr[1].imshow(tgt_ch_in_acts)
+    ax_arr[1].set_title("In.")
+    if item:
+        ax_arr[2].scatter(item.position[1], item.position[0], marker='o', color='magenta', s=120)
+        ax_arr[2].set_title("In.\n @ {} ={:0.4f}[stored]".format(
+            item.position, tgt_ch_in_acts[item.position[0], item.position[1]]))
+
+    tgt_ch_out_acts = cont_int_out_act[0, ch_idx, :, :]
+    max_act_idx = np.argmax(tgt_ch_out_acts)  # 1d index
+    max_act_idx = np.unravel_index(max_act_idx, tgt_ch_out_acts.shape)  # 2d i
+    ax_arr[2].imshow(tgt_ch_out_acts)
+    ax_arr[2].set_title("Out\n. Max = {:.4f} @ {}".format(np.max(tgt_ch_out_acts), max_act_idx))
+    ax_arr[2].scatter(max_act_idx[1], max_act_idx[0], marker='+', color='red', s=120)
+
+    if item:
+        ax_arr[2].scatter(item.position[1], item.position[0], marker='o', color='magenta', s=120)
+        ax_arr[2].set_title("Out.\n @ {} ={:0.4f} [Current max] \n @ {} ={:0.4f}[stored]".format(
+            max_act_idx, np.max(tgt_ch_out_acts), item.position,
+            tgt_ch_out_acts[item.position[0], item.position[1]]))
+    #     ax_arr[2].scatter(item.ep1[1] // 4, item.ep1[0] // 4, marker='o', color='magenta', s=60)
+    #     ax_arr[2].scatter(item.ep2[1] // 4, item.ep2[0] // 4, marker='o', color='magenta', s=60)
+    #     ax_arr[2].scatter(item.c1[:, 1] // 4, item.c1[:, 0] // 4, marker='.', color='magenta')
+
+    title = "Prediction {:0.4f}".format(label_out.item())
+    if item:
+        title = \
+            "GT={}, prediction={:0.4f}, Stored  prediction {:0.4f}, Out max act = {:0.4f}," \
+            " position {}".format(
+                item.gt, label_out.item(), item.prediction, item.activation, item.position)
+
+    f.suptitle(title)
 
 
 def main(model, results_dir):
@@ -240,7 +286,7 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     # Find top n max responsive images for each channel
     # --------------------------------------------------
-    print("Finding Optimal Stimuli for each channel ....")
+    print("Finding Optimal Stimuli for each channel ...")
 
     top_n_per_channel_trackers = [TopNTracker(top_n) for _ in range(n_channels)]
 
@@ -302,23 +348,26 @@ def main(model, results_dir):
     bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15]])
 
     for ch_idx in range(n_channels):
-
-        print("Channel {}. Number of Stored images = {}".format(
+        print("Finding Contour Gain for Channel {}. Number of Stored Images {}. ...".format(
             ch_idx, len(top_n_per_channel_trackers[ch_idx])))
 
         max_active_nodes, _ = top_n_per_channel_trackers[ch_idx].get_stored_values()
 
-        # process each image
+        # Results to Track
+        tgt_n_in_act_mat = np.zeros((len(max_active_nodes), len(bubble_tile_sizes)))
+        tgt_n_out_act_mat = np.zeros_like(tgt_n_in_act_mat)
+        tgt_n_labels_mat = np.ones_like(tgt_n_in_act_mat) * -1000
+
+        # Process each image
         for item_idx, item in enumerate(max_active_nodes):
 
             # Find the closest point on contour to max active point
             d_to_contour = data_set.get_distance_point_and_contour(item.position, item.c1 // 4)
             closest_contour_point_idx = np.argmin(d_to_contour)
-            closest_contour_point = item.c1[closest_contour_point_idx].numpy()
 
-            # Bubble location based on distance
-            for bubble_tile_size in bubble_tile_sizes:
-
+            for bubble_tile_idx, bubble_tile_size in enumerate(bubble_tile_sizes):
+                # Create punctured image
+                # -----------------------------------------------------------------------
                 bubble_insert_locations = get_bubbles_locations(
                     item.c1.numpy(),
                     closest_contour_point_idx,
@@ -330,7 +379,6 @@ def main(model, results_dir):
                 # Note: - bubble_tile_size = full tile_size //2
                 bubble_insert_locations = bubble_insert_locations - bubble_tile_size
 
-                # Create punctured image
                 puncture = utils.PunctureImage(
                     n_bubbles=1, fwhm=bubble_tile_size[0], tile_size=bubble_tile_size * 2)
 
@@ -340,20 +388,38 @@ def main(model, results_dir):
                 data_set.add_end_stop(punctured_img, item.ep1)
                 data_set.add_end_stop(punctured_img, item.ep2)
 
-                # Display the Image
-                org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
-                f, ax_arr = plt.subplots(1, 2)
+                # # Debug : Display the Image
+                # org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
+                # plot_channel_responses(model, org_img, ch_idx, dev, ch_mean, ch_std, item)
+                # plt.gcf().suptitle('Original Image\n' + plt.gcf()._suptitle.get_text())
+                #
+                # plot_channel_responses(model, punctured_img, ch_idx, dev, ch_mean, ch_std, item)
+                # plt.gcf().suptitle('Punctured Image\n' + plt.gcf()._suptitle.get_text())
 
-                ax_arr[0].imshow(np.transpose(org_img, axes=(1, 2, 0)))
-                ax_arr[1].imshow(np.transpose(punctured_img, axes=(1, 2, 0)))
-                ax_arr[1].scatter(
-                    closest_contour_point[1], closest_contour_point[0], marker='+',
-                    color='red', s=120)
-                f.suptitle("Bubble_size {}".format(bubble_tile_size))
+                # Process the punctured image
+                # -----------------------------------------------------------------------
+                label_out = process_image(model, dev, ch_mean, ch_std, punctured_img)
+                r = item.position[0]
+                c = item.position[1]
 
-            import pdb
-            pdb.set_trace()
-            plt.close('all')
+                tgt_n_in_act_mat[item_idx, bubble_tile_idx] = cont_int_in_act[0, ch_idx, r, c]
+                tgt_n_out_act_mat[item_idx, bubble_tile_idx] = cont_int_out_act[0, ch_idx, r, c]
+                tgt_n_labels_mat[item_idx, bubble_tile_idx] = label_out
+
+        # Plot the results
+        # relative co-linear distance
+        rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
+        plt.figure()
+        plt.errorbar(
+            rcd, tgt_n_in_act_mat.mean(axis=0), tgt_n_in_act_mat.std(axis=0), label='in act')
+        plt.errorbar(
+            rcd, tgt_n_out_act_mat.mean(axis=0), tgt_n_out_act_mat.std(axis=0), label='out act')
+        plt.grid()
+        plt.legend()
+
+
+        import pdb
+        pdb.set_trace()
 
 
 if __name__ == '__main__':
