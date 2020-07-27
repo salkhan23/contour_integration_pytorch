@@ -248,7 +248,7 @@ def plot_channel_responses(model, img, ch_idx, dev, ch_mean, ch_std, item=None):
     f.suptitle(title)
 
 
-def main(model, results_dir):
+def main(model, base_results_dir):
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
@@ -259,7 +259,7 @@ def main(model, results_dir):
     model.contour_integration_layer.register_forward_hook(contour_integration_cb)
 
     n_channels = 64
-    top_n = 10
+    top_n = 50
 
     # Imagenet Mean and STD
     ch_mean = [0.485, 0.456, 0.406]
@@ -270,7 +270,7 @@ def main(model, results_dir):
     # -----------------------------------------------------------------------------------
     biped_dataset_dir = './data/BIPED/edges'
     biped_dataset_type = 'train'
-    n_biped_imgs = 200
+    n_biped_imgs = 20000
 
     data_set = OnlineNaturalImagesPathfinder(
         data_dir=biped_dataset_dir,
@@ -354,10 +354,27 @@ def main(model, results_dir):
     frag_tile_size = np.array([7, 7])
     bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15]])
 
+    results_dir = os.path.join(base_results_dir, 'experiment_gain_vs_frag_size_natural_images')
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
+
+    idv_channels_results_dir = os.path.join(results_dir, 'individual_channels')
+    if not os.path.exists(idv_channels_results_dir):
+        os.makedirs(idv_channels_results_dir)
+
     for ch_idx in range(n_channels):
         print("Finding Contour Gain for Channel {}. Number of Stored Images {}. ...".format(
             ch_idx, len(top_n_per_channel_trackers[ch_idx])))
 
+        ch_results_dir = os.path.join(idv_channels_results_dir, 'channel_{}'.format(ch_idx))
+        if not os.path.exists(ch_results_dir):
+            os.makedirs(ch_results_dir)
+
+        ch_summary_file = os.path.join(ch_results_dir, 'summary.txt')
+        f_handle = open(ch_summary_file, 'w+')
+        # f_handle.write("bubble_sizes {}\n".format(bubble_tile_sizes))
+
+        # -------------------------------------------------------------------------------
         max_active_nodes, _ = top_n_per_channel_trackers[ch_idx].get_stored_values()
 
         # Results to Track
@@ -413,17 +430,49 @@ def main(model, results_dir):
                 tgt_n_out_act_mat[item_idx, bubble_tile_idx] = cont_int_out_act[0, ch_idx, r, c]
                 tgt_n_labels_mat[item_idx, bubble_tile_idx] = label_out
 
-        # Plot the results
-        # relative co-linear distance
-        rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
-        plt.figure()
-        plt.errorbar(
-            rcd, tgt_n_in_act_mat.mean(axis=0), tgt_n_in_act_mat.std(axis=0), label='in act')
-        plt.errorbar(
-            rcd, tgt_n_out_act_mat.mean(axis=0), tgt_n_out_act_mat.std(axis=0), label='out act')
-        plt.grid()
-        plt.legend()
+        # Saves the results
+        np.set_printoptions(precision=3)
+        f_handle.write("Inputs: \n")
+        print(tgt_n_in_act_mat, file=f_handle)
+        f_handle.write('\n')
 
+        f_handle.write("Outputs: \n")
+        print(tgt_n_out_act_mat, file=f_handle)
+        f_handle.write('\n')
+        f_handle.close()
+
+        # Plot Input and outputs
+        rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])  # relative co-linear distance
+        f, ax = plt.subplots()
+        ax.errorbar(
+            rcd,
+            tgt_n_in_act_mat.mean(axis=0),
+            tgt_n_in_act_mat.std(axis=0),
+            label='In act')
+        ax.errorbar(
+            rcd,
+            tgt_n_out_act_mat.mean(axis=0),
+            tgt_n_out_act_mat.std(axis=0),
+            label='out act')
+
+        ax.set_title("Activations. Channel {}. Number of images {}".format(
+            ch_idx, len(max_active_nodes)))
+        ax.grid()
+        ax.legend()
+        f.savefig(os.path.join(ch_results_dir, 'activations_channel_{}.png'.format(ch_idx)))
+
+        # Plot Main Gains
+        f, ax = plt.subplots()
+        gain = tgt_n_out_act_mat / (tgt_n_in_act_mat + 1e-4)
+        ax.errorbar(
+            rcd,
+            gain.mean(axis=0),
+            gain.std(axis=0))
+        ax.set_title("Contour Integration Gain Channel {}. Number of images {}".format(
+            ch_idx, len(max_active_nodes)))
+        ax.grid()
+        ax.legend()
+        f.savefig(os.path.join(ch_results_dir, 'gain_channel_{}.png'.format(ch_idx)))
 
         import pdb
         pdb.set_trace()
@@ -461,8 +510,7 @@ if __name__ == '__main__':
     #     'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200716_173915_with_maxpooling/' \
     #     'best_accuracy.pth'
 
-    # results_store_dir = os.path.dirname(saved_model)
-    results_store_dir = './results/sample_images'
+    results_store_dir = os.path.dirname(saved_model)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
