@@ -185,7 +185,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     pathfinder_transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+        utils.PunctureImage(n_bubbles=100, fwhm=np.array([7, 9, 11, 13, 15]))
     ]
     pathfinder_pre_process_transforms = transforms.Compose(pathfinder_transforms_list)
 
@@ -240,7 +240,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Pre-processing
     contour_transforms_list = [
         transforms.Normalize(mean=meta_data['channel_mean'], std=meta_data['channel_std']),
-        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+        utils.PunctureImage(n_bubbles=100, fwhm=np.array([7, 9, 11, 13, 15]))
     ]
 
     contour_pre_process_transforms = transforms.Compose(contour_transforms_list)
