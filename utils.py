@@ -208,7 +208,7 @@ class PunctureImage(object):
         self.fwhm = fwhm  # full width half magnitude
         self.bubble_sigma = fwhm / 2.35482
 
-        if tile_size:
+        if tile_size is not None:
             self.tile_size = tile_size
         else:
             if isinstance(fwhm, np.ndarray):
@@ -236,7 +236,7 @@ class PunctureImage(object):
             sigma = np.random.choice(self.bubble_sigma)
             # print("Using bubble sigma {}".format(sigma))
         else:
-            sigma = self.sigma
+            sigma = self.bubble_sigma
 
         bubble_frag = get_2d_gaussian_kernel(shape=self.tile_size, sigma=sigma)
         bubble_frag = torch.from_numpy(bubble_frag)
