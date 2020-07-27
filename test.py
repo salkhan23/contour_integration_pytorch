@@ -427,6 +427,7 @@ def main(model, results_dir):
 
         import pdb
         pdb.set_trace()
+        plt.close('all')
 
 
 if __name__ == '__main__':
