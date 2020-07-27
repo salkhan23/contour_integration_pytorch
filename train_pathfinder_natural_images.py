@@ -100,7 +100,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Pre-processing
     transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+        utils.PunctureImage(n_bubbles=100, fwhm=np.array([7, 9, 11, 13, 15]), peak_bubble_transparency=0)
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 

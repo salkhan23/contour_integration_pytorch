@@ -198,7 +198,7 @@ class PunctureImage(object):
 
     def __init__(self, n_bubbles=0, fwhm=11, tile_size=None, peak_bubble_transparency=0):
 
-        if  0 > peak_bubble_transparency or 1 < peak_bubble_transparency:
+        if 0 > peak_bubble_transparency or 1 < peak_bubble_transparency:
             raise Exception("Bubble transparency {}, should be between [0, 1]".format(
                 peak_bubble_transparency))
         self.peak_bubble_transparency = peak_bubble_transparency
@@ -208,10 +208,14 @@ class PunctureImage(object):
         self.fwhm = fwhm  # full width half magnitude
         self.bubble_sigma = fwhm / 2.35482
 
-        if tile_size is None:
-            self.tile_size = np.array([np.int(2*self.fwhm), np.int(2*self.fwhm)])
-        else:
+        if tile_size:
             self.tile_size = tile_size
+        else:
+            if isinstance(fwhm, np.ndarray):
+                max_fwhm = max(fwhm)
+                self.tile_size = np.array([np.int(2 * max_fwhm), np.int(2 * max_fwhm)])
+            else:
+                self.tile_size = np.array([np.int(2 * self.fwhm), np.int(2 * self.fwhm)])
 
     def __call__(self, img, start_loc_arr=None):
         """
@@ -228,7 +232,13 @@ class PunctureImage(object):
 
         img = img.permute(1, 2, 0)
 
-        bubble_frag = get_2d_gaussian_kernel(shape=self.tile_size, sigma=self.bubble_sigma)
+        if isinstance(self.bubble_sigma, np.ndarray):
+            sigma = np.random.choice(self.bubble_sigma)
+            # print("Using bubble sigma {}".format(sigma))
+        else:
+            sigma = self.sigma
+
+        bubble_frag = get_2d_gaussian_kernel(shape=self.tile_size, sigma=sigma)
         bubble_frag = torch.from_numpy(bubble_frag)
         bubble_frag = bubble_frag.float().unsqueeze(-1)
         bubble_frag = 1 - bubble_frag
@@ -278,7 +288,7 @@ class PunctureImage(object):
 
     def __repr__(self):
         return self.__class__.__name__ + \
-               '(n_bubbles={}, fwhm = {}, bubbles_sigma={:0.4f}, tile_size={}), ' \
+               '(n_bubbles={}, fwhm = {}, bubbles_sigma={}, tile_size={}), ' \
                'max bubble transparency={}'.format(
                    self.n_bubbles, self.fwhm, self.bubble_sigma, self.tile_size,
                    self.peak_bubble_transparency)
