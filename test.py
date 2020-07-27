@@ -103,15 +103,22 @@ class TopNTracker(object):
         self._heap = []
         self.depth = depth
 
-    def push(self, value, item):
+    def push(self, value, count, item):
+        """
+        The count variable is added to make items unique in case max activations are equal.
+        In which case, heappq will try to compare the next item in the tuple (MaxActiveElement)
+        which it does not know how to compare. The count must be unique
+
+        REF: https://stackoverflow.com/questions/42985030/inserting-dictionary-to-heap-python
+        """
 
         if len(self._heap) < self.depth:
-            heapq.heappush(self._heap, (value, item))
+            heapq.heappush(self._heap, (value, count, item))
         else:
-            min_stored_val, min_stored_item = self.pop()  # pop the lowest
+            min_stored_val, _, min_stored_item = self.pop()  # pop the lowest
 
             if value > min_stored_val:
-                heapq.heappush(self._heap, (value, item))
+                heapq.heappush(self._heap, (value, count, item))
 
     def pop(self):
         return heapq.heappop(self._heap)
@@ -128,7 +135,7 @@ class TopNTracker(object):
 
         while len(self._heap) > 0:
 
-            v, item = self.pop()
+            v, count, item = self.pop()
             lst_items.append(item)
             lst_values.append(v)
 
@@ -339,7 +346,7 @@ def main(model, results_dir):
                         gt=label
                     )
 
-                    top_n_per_channel_trackers[ch_idx].push(curr_max_act, node)
+                    top_n_per_channel_trackers[ch_idx].push(curr_max_act, iteration, node)
 
     # -------------------------------------------------------------------------------
     # Effect of fragment spacing
