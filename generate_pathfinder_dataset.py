@@ -110,20 +110,20 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                       "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
 
                 full_label = self._get_threshold_label(full_label_raw, th)
-
-            # Guard against circular contours - we want two distinct end points in
-            # each image
-            dist_start_stop_c1 = self.get_distance_between_two_points(c1[0], c1[-1])
-            while dist_start_stop_c1 <= (self.end_stop_radius * 2) and len(c1) > 1:
-                c1.pop()
+            else:
+                # Guard against circular contours - we want two distinct end points in
+                # each image
                 dist_start_stop_c1 = self.get_distance_between_two_points(c1[0], c1[-1])
+                while dist_start_stop_c1 <= (self.end_stop_radius * 2) and len(c1) > 1:
+                    c1.pop()
+                    dist_start_stop_c1 = self.get_distance_between_two_points(c1[0], c1[-1])
 
-                # # Debug
-                print("Found circle. Distance start stop {:0.2f}. [Image idx {}: {}]".format(
-                    dist_start_stop_c1, index, self.labels[index]))
-                # # plt.figure()
-                # # contour.show_contour(full_label[0, ], c1)
-                # circle_found = True
+                    # # Debug
+                    print("Found circle. Distance start stop {:0.2f}. [Image idx {}: {}]".format(
+                        dist_start_stop_c1, index, self.labels[index]))
+                    # # plt.figure()
+                    # # contour.show_contour(full_label[0, ], c1)
+                    # circle_found = True
 
         ideal_c2_dist = dist_start_stop_c1
 
