@@ -164,7 +164,7 @@ def main(model, base_results_dir):
     # -----------------------------------------------------------------------------------
     biped_dataset_dir = './data/BIPED/edges'
     biped_dataset_type = 'train'
-    n_biped_imgs = 500
+    n_biped_imgs = 1000
 
     # -----------------------------------------------------------------------------------
     # Main
@@ -360,21 +360,21 @@ if __name__ == '__main__':
 
     # Model
     # ------
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
-    saved_model = \
-        'results/joint_training/' \
-        'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
-        'last_epoch.pth'
-
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    # net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
     # saved_model = \
-    #     './results/pathfinder/' \
-    #     'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200716_173915_with_maxpooling/' \
-    #     'best_accuracy.pth'
+    #     'results/joint_training/' \
+    #     'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
+    #     'last_epoch.pth'
+
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    saved_model = \
+        './results/pathfinder/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200726_214351_puncture_various/' \
+        'best_accuracy.pth'
 
     results_store_dir = os.path.dirname(saved_model)
 
