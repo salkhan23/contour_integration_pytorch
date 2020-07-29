@@ -278,6 +278,7 @@ def main(model, base_results_dir):
         transform=None,
         subset_size=n_biped_imgs,
         resize_size=(256, 256),
+        p_connect=1,
     )
 
     data_loader = DataLoader(
