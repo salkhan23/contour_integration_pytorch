@@ -413,14 +413,6 @@ def main(model, base_results_dir):
                 data_set.add_end_stop(punctured_img, item.ep1)
                 data_set.add_end_stop(punctured_img, item.ep2)
 
-                # # Debug : Display the Image
-                # org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
-                # plot_channel_responses(model, org_img, ch_idx, dev, ch_mean, ch_std, item)
-                # plt.gcf().suptitle('Original Image\n' + plt.gcf()._suptitle.get_text())
-                #
-                # plot_channel_responses(model, punctured_img, ch_idx, dev, ch_mean, ch_std, item)
-                # plt.gcf().suptitle('Punctured Image\n' + plt.gcf()._suptitle.get_text())
-
                 # Process the punctured image
                 # -----------------------------------------------------------------------
                 label_out = process_image(model, dev, ch_mean, ch_std, punctured_img)
@@ -430,6 +422,21 @@ def main(model, base_results_dir):
                 tgt_n_in_act_mat[item_idx, bubble_tile_idx] = cont_int_in_act[0, ch_idx, r, c]
                 tgt_n_out_act_mat[item_idx, bubble_tile_idx] = cont_int_out_act[0, ch_idx, r, c]
                 tgt_n_labels_mat[item_idx, bubble_tile_idx] = label_out
+
+                # # Debug : Display the Image
+                # # ----------------------------------------------------------------------
+                # if bubble_tile_idx == 0:
+                #     org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
+                #     plot_channel_responses(model, org_img, ch_idx, dev, ch_mean, ch_std, item)
+                #     plt.gcf().suptitle('Original Image\n' + plt.gcf()._suptitle.get_text())
+                #
+                # plot_channel_responses(model, punctured_img, ch_idx, dev, ch_mean, ch_std, item)
+                # plt.gcf().suptitle(
+                #     'Punctured Image {}\n'.format(bubble_tile_size[0]) +
+                #     plt.gcf()._suptitle.get_text())
+
+            # import pdb
+            # pdb.set_trace()
 
         # Saves the results
         np.set_printoptions(precision=3)
