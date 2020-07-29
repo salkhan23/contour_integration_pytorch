@@ -110,7 +110,7 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
             if len(c1) == 0:
                 th_old = th
 
-                if len(th_arr) > 1:
+                if len(th_arr) >= 1:
                     th = th_arr.pop()
                     print("No valid C1 contour found. Change interpolation th {}->{}. "
                           "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
