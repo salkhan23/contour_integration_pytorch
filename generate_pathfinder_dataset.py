@@ -121,7 +121,9 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                     print("No valid C1 contour found for image at index {} and "
                           "interpolation thresholds exhausted".format(index))
 
-                    return None
+                    # Pytorch Data loader does not like None (doesnt know how to add batch dim
+                    # Just check output.dim() == 1 (should be 4 in normal case (the img))
+                    return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
             else:
                 # Guard against circular contours - we want two distinct end points in
                 # each image
@@ -480,7 +482,7 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
 
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
-            if data_loader_out is not None:
+            if data_loader_out[0].dim() == 4:  # if valid image
                 imgs, class_labels, indv_contours_label, full_labels, distances, \
                     org_img_idxs, _, _, _, _ = data_loader_out
 

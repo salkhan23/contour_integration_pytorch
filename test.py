@@ -300,7 +300,7 @@ def main(model, base_results_dir):
 
     for iteration, data_loader_out in enumerate(data_loader, 1):
 
-        if data_loader_out is not None:
+        if data_loader_out[0].dim() == 4:  # if valid image
             img, label, sep_c_label, full_label, d, org_img_idx, \
                 c1, c2, start_point, end_point = data_loader_out
 
