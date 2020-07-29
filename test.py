@@ -441,11 +441,11 @@ def main(model, base_results_dir):
         # Saves the results
         np.set_printoptions(precision=3)
         f_handle.write("Inputs: \n")
-        print(tgt_n_in_act_mat, file=f_handle)
+        print('np.'+ repr(tgt_n_in_act_mat), file=f_handle)
         f_handle.write('\n')
 
         f_handle.write("Outputs: \n")
-        print(tgt_n_out_act_mat, file=f_handle)
+        print('np.' + repr(tgt_n_out_act_mat), file=f_handle)
         f_handle.write('\n')
         f_handle.close()
 
@@ -482,8 +482,6 @@ def main(model, base_results_dir):
         ax.legend()
         f.savefig(os.path.join(ch_results_dir, 'gain_channel_{}.png'.format(ch_idx)))
 
-        import pdb
-        pdb.set_trace()
         plt.close('all')
 
 
@@ -502,21 +500,21 @@ if __name__ == '__main__':
 
     # Model
     # ------
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
-    saved_model = \
-        'results/joint_training/' \
-        'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
-        'last_epoch.pth'
-
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    # net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
     # saved_model = \
-    #     './results/pathfinder/' \
-    #     'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200716_173915_with_maxpooling/' \
-    #     'best_accuracy.pth'
+    #     'results/joint_training/' \
+    #     'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
+    #     'last_epoch.pth'
+
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    saved_model = \
+        './results/pathfinder/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200726_214351_puncture_various/' \
+        'best_accuracy.pth'
 
     results_store_dir = os.path.dirname(saved_model)
 
