@@ -140,12 +140,11 @@ class TopNTracker(object):
             lst_values.append(v)
 
         if len(lst_items):
-            # reverse the order, max first.
-            zipped_object = zip(lst_values, lst_items)
-            zipped_object = sorted(zipped_object, reverse=True)
+            idxs = np.argsort(lst_values)
+            idxs = idxs[::-1]  # reverse the order, max first.
 
-            unzipped_object = zip(*zipped_object)
-            lst_values, lst_items = list(unzipped_object)
+            lst_items = [lst_items[idx] for idx in idxs]
+            lst_values = [lst_values[idx] for idx in idxs]
 
         return lst_items, lst_values
 
