@@ -29,8 +29,8 @@ import contour
 
 
 class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
-    def __init__(self, p_connect=0.5, min_sep_dist=10, end_stop_radius=6,
-                 intrpl_ths=None, *args, **kwargs):
+    def __init__(self, p_connect=0.5, min_sep_dist=10, end_stop_radius=6, min_contour_len=30,
+                 max_contour_len=None, intrpl_ths=None, *args, **kwargs):
         """
         Generate natural pathfinder images/labels on the fly
         Use the BIPED Dataset/loaders
@@ -52,6 +52,8 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         self.end_stop_radius = end_stop_radius
         self.p_connect = p_connect
         self.min_sep_dist = min_sep_dist
+        self.min_contour_len = min_contour_len
+        self.max_contour_len = max_contour_len
 
         super(OnlineNaturalImagesPathfinder, self).__init__(
             calculate_stats=False, *args, **kwargs)
@@ -101,15 +103,25 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         dist_start_stop_c1 = 0
 
         while len(c1) <= 0:
-            c1 = contour.get_random_contour(full_label[0, ])
+            c1 = contour.get_random_contour(
+                full_label[0, ], min_contour_len=self.min_contour_len,
+                max_contour_len=self.max_contour_len)
 
             if len(c1) == 0:
                 th_old = th
-                th = th_arr.pop()
-                print("No valid C1 contour found. Change interpolation th {}->{}. "
-                      "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
 
-                full_label = self._get_threshold_label(full_label_raw, th)
+                if len(th_arr) > 1:
+                    th = th_arr.pop()
+                    print("No valid C1 contour found. Change interpolation th {}->{}. "
+                          "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
+
+                    full_label = self._get_threshold_label(full_label_raw, th)
+                else:
+                    # Just give up
+                    print("No valid C1 contour found for image at index {} and "
+                          "interpolation thresholds exhausted".format(index))
+
+                    return None
             else:
                 # Guard against circular contours - we want two distinct end points in
                 # each image
@@ -468,45 +480,47 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
 
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
-            imgs, class_labels, indv_contours_label, full_labels, distances, \
-                org_img_idxs, _, _, _, _ = data_loader_out
+            if data_loader_out is not None:
+                imgs, class_labels, indv_contours_label, full_labels, distances, \
+                    org_img_idxs, _, _, _, _ = data_loader_out
 
-            img = np.transpose(imgs[0, ], axes=(1, 2, 0))
-            img_file_name = 'img_{}.png'.format(n_imgs_created)
-            plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img.numpy())
-            data_key_handle.write("{}\n".format(img_file_name))
+                img = np.transpose(imgs[0, ], axes=(1, 2, 0))
+                img_file_name = 'img_{}.png'.format(n_imgs_created)
+                plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img.numpy())
+                data_key_handle.write("{}\n".format(img_file_name))
 
-            class_label = class_labels[0]
-            class_labels_handle.write("{}\n".format(int(class_label)))
+                class_label = class_labels[0]
+                class_labels_handle.write("{}\n".format(int(class_label)))
 
-            org_img_idx = org_img_idxs[0]
-            org_img_name = data_loader.dataset.images[org_img_idx]
-            org_imgs_map_handle.write("{}\n".format(org_img_name))
+                org_img_idx = org_img_idxs[0]
+                org_img_name = data_loader.dataset.images[org_img_idx]
+                org_imgs_map_handle.write("{}\n".format(org_img_name))
 
-            ind_contour_label = indv_contours_label[0]
-            ind_contour_label = np.squeeze(ind_contour_label)
-            plt.imsave(
-                fname=os.path.join(indv_contours_labels_dir, 'img_{}.png'.format(n_imgs_created)),
-                arr=ind_contour_label.numpy())
+                ind_contour_label = indv_contours_label[0]
+                ind_contour_label = np.squeeze(ind_contour_label)
+                plt.imsave(
+                    fname=os.path.join(
+                        indv_contours_labels_dir, 'img_{}.png'.format(n_imgs_created)),
+                    arr=ind_contour_label.numpy())
 
-            full_label = full_labels[0]
-            full_label = np.squeeze(full_label)
+                full_label = full_labels[0]
+                full_label = np.squeeze(full_label)
 
-            plt.imsave(
-                fname=os.path.join(full_labels_dir, 'img_{}.png'.format(n_imgs_created)),
-                arr=full_label.numpy())
+                plt.imsave(
+                    fname=os.path.join(full_labels_dir, 'img_{}.png'.format(n_imgs_created)),
+                    arr=full_label.numpy())
 
-            d_between_points = int(distances[0])
-            distances_handle.write("{}\n".format(d_between_points))
+                d_between_points = int(distances[0])
+                distances_handle.write("{}\n".format(d_between_points))
 
-            # Store distances between points
-            for idx in range(data_loader_out[1].shape[0]):
-                if data_loader_out[1][idx]:
-                    dist_connected.append(data_loader_out[4][idx])
-                else:
-                    dist_not_connected.append(data_loader_out[4][idx])
+                # Store distances between points
+                for idx in range(data_loader_out[1].shape[0]):
+                    if data_loader_out[1][idx]:
+                        dist_connected.append(data_loader_out[4][idx])
+                    else:
+                        dist_not_connected.append(data_loader_out[4][idx])
 
-            n_imgs_created += 1
+                n_imgs_created += 1
 
     print("Connected: m={:0.2f}, std={:0.2f}, Not connected: m={:0.2f}, std={:0.2f}".format(
         np.mean(dist_connected), np.std(dist_connected),

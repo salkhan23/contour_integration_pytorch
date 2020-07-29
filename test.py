@@ -299,54 +299,55 @@ def main(model, base_results_dir):
 
     for iteration, data_loader_out in enumerate(data_loader, 1):
 
-        img, label, sep_c_label, full_label, d, org_img_idx, \
-            c1, c2, start_point, end_point = data_loader_out
+        if data_loader_out is not None:
+            img, label, sep_c_label, full_label, d, org_img_idx, \
+                c1, c2, start_point, end_point = data_loader_out
 
-        label_out = process_image(model, dev, ch_mean, ch_std, img)
+            label_out = process_image(model, dev, ch_mean, ch_std, img)
 
-        # Remove batch dimension
-        label = np.squeeze(label)
-        # sep_c_label = np.squeeze(sep_c_label)
-        # full_label = np.squeeze(full_label)
-        # d = np.squeeze(d)
-        org_img_idx = np.squeeze(org_img_idx)
-        c1 = np.squeeze(c1)
-        c2 = np.squeeze(c2)
-        start_point = np.squeeze(start_point)
-        end_point = np.squeeze(end_point)
+            # Remove batch dimension
+            label = np.squeeze(label)
+            # sep_c_label = np.squeeze(sep_c_label)
+            # full_label = np.squeeze(full_label)
+            # d = np.squeeze(d)
+            org_img_idx = np.squeeze(org_img_idx)
+            c1 = np.squeeze(c1)
+            c2 = np.squeeze(c2)
+            start_point = np.squeeze(start_point)
+            end_point = np.squeeze(end_point)
 
-        if label:  # only consider connected samples
+            if label:  # only consider connected samples
 
-            for ch_idx in range(n_channels):
+                for ch_idx in range(n_channels):
 
-                # Target channel activation
-                curr_tgt_ch_acts = cont_int_out_act[0, ch_idx, :, :]
-                curr_max_act = np.max(curr_tgt_ch_acts)
+                    # Target channel activation
+                    curr_tgt_ch_acts = cont_int_out_act[0, ch_idx, :, :]
+                    curr_max_act = np.max(curr_tgt_ch_acts)
 
-                curr_max_act_idx = np.argmax(curr_tgt_ch_acts)  # 1d index
-                curr_max_act_idx = np.unravel_index(
-                    curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
+                    curr_max_act_idx = np.argmax(curr_tgt_ch_acts)  # 1d index
+                    curr_max_act_idx = np.unravel_index(
+                        curr_max_act_idx, curr_tgt_ch_acts.shape)  # 2d idx
 
-                # Check for valid sample:
-                # 1. Endpoints should be connected
-                # 2. max_active should be at most one pixel away from the contour
-                min_d_to_contour = np.min(
-                    data_set.get_distance_point_and_contour(curr_max_act_idx, c1 // 4))
+                    # Check for valid sample:
+                    # 1. Endpoints should be connected
+                    # 2. max_active should be at most one pixel away from the contour
+                    min_d_to_contour = np.min(
+                        data_set.get_distance_point_and_contour(curr_max_act_idx, c1 // 4))
 
-                if min_d_to_contour < 1.5:
-                    node = MaxActiveElement(
-                        activation=curr_max_act,
-                        position=curr_max_act_idx,
-                        index=org_img_idx,
-                        c1=c1,
-                        c2=c2,
-                        ep1=start_point,  # get rid of batch dim
-                        ep2=end_point,
-                        prediction=label_out.item(),
-                        gt=label
-                    )
+                    if min_d_to_contour < 1.5:
+                        node = MaxActiveElement(
+                            activation=curr_max_act,
+                            position=curr_max_act_idx,
+                            index=org_img_idx,
+                            c1=c1,
+                            c2=c2,
+                            ep1=start_point,  # get rid of batch dim
+                            ep2=end_point,
+                            prediction=label_out.item(),
+                            gt=label
+                        )
 
-                    top_n_per_channel_trackers[ch_idx].push(curr_max_act, iteration, node)
+                        top_n_per_channel_trackers[ch_idx].push(curr_max_act, iteration, node)
 
     # -------------------------------------------------------------------------------
     # Effect of fragment spacing
