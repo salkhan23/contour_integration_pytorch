@@ -468,7 +468,7 @@ def main(model, base_results_dir):
     # -----------------------------------------------------------------------------------
     biped_dataset_dir = './data/BIPED/edges'
     biped_dataset_type = 'train'
-    n_biped_imgs = 20000
+    n_biped_imgs = 200
 
     data_set = OnlineNaturalImagesPathfinder(
         data_dir=biped_dataset_dir,
@@ -617,8 +617,8 @@ def main(model, base_results_dir):
             title=("Channel {}. Number of images {}".format(ch_idx, n_images))
         )
         mean_full_c_resps = np.mean(tgt_n_full_image_acts, axis=0)
-        ax.scatterplot(1, mean_full_c_resps[0], marker='+', s=60, c='r', label='Full Contour In')
-        ax.scatterplot(1, mean_full_c_resps[1], marker='+', s=60, c='b', label='Full contour Out')
+        ax.scatter(1, mean_full_c_resps[0], marker='+', s=60, c='r', label='Full Contour In')
+        ax.scatter(1, mean_full_c_resps[1], marker='+', s=60, c='b', label='Full contour Out')
         ax.legend()
         f.savefig(os.path.join(ch_results_dir, 'activations_channel_{}.png'.format(ch_idx)))
 
