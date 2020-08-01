@@ -421,6 +421,78 @@ def plot_predictions(x, preds_mat, title=None):
     return fig, axis
 
 
+def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
+
+    n_channels = len(mean_in_acts)
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+
+    for ch_idx in range(n_channels):
+        r_idx = ch_idx // tile_single_dim
+        c_idx = ch_idx - r_idx * tile_single_dim
+
+        ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in')
+        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out')
+        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+
+    f.suptitle("Individual Neuron Activations")
+
+    return f, ax_arr
+
+
+def plot_tiled_gains(x, mean_in_acts, mean_out_acts, epsilon):
+    n_channels = len(mean_in_acts)
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+
+    for ch_idx in range(n_channels):
+        r_idx = ch_idx // tile_single_dim
+        c_idx = ch_idx - r_idx * tile_single_dim
+
+        ax_arr[r_idx, c_idx].plot(
+            x, mean_out_acts[ch_idx] / (epsilon + mean_in_acts[ch_idx, ]), label='gain')
+        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+
+    f.suptitle("Individual Neuron Gain")
+
+    return f, ax_arr
+
+
+def plot_averaged_results(x, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts, epsilon):
+
+    pop_mean_in_act, pop_std_in_act = get_averaged_results(mean_in_acts, std_in_acts)
+    pop_mean_out_act, pop_std_out_act = get_averaged_results(mean_out_acts, std_out_acts)
+
+    gains = mean_out_acts / (mean_in_acts + epsilon)
+    pop_mean_gains = np.mean(gains, axis=0)
+    pop_std_gains = np.std(gains, axis=0)
+
+    f, ax_arr = plt.subplots(1, 2)
+    ax_arr[0].plot(x, pop_mean_gains)
+    ax_arr[0].fill_between(
+        x, pop_mean_gains - pop_std_gains, pop_mean_gains + pop_std_gains, alpha=0.2)
+    ax_arr[0].set_xlabel('Spacing (relative co-linear distance)')
+    ax_arr[0].set_ylabel("Gain (Output/Input)")
+    ax_arr[0].grid()
+
+    ax_arr[1].plot(x, pop_mean_in_act, label='In')
+    ax_arr[1].fill_between(
+        x, pop_mean_in_act - pop_std_in_act, pop_mean_in_act + pop_std_in_act, alpha=0.2)
+    ax_arr[1].plot(x, pop_mean_out_act, label='Out')
+    ax_arr[1].fill_between(
+        x, pop_mean_out_act - pop_std_out_act, pop_mean_out_act + pop_std_out_act, alpha=0.2)
+    ax_arr[1].set_xlabel('Spacing (relative co-linear distance)')
+    ax_arr[1].set_ylabel("Activations")
+    ax_arr[1].legend()
+    ax_arr[1].grid()
+
+    f.suptitle("Population Average")
+
+    return f, ax_arr
+
+
 def main(model, base_results_dir):
     # -----------------------------------------------------------------------------------
     # Initialization
@@ -641,61 +713,17 @@ def main(model, base_results_dir):
     print("Mean Out Activations: \n" + 'np.' + repr(mean_out_acts), file=f_handle)
     print("Std Out Activations: \n" + 'np.' + repr(mean_out_acts), file=f_handle)
 
-    # Activations - Tiled Image
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
-    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
-    for ch_idx in range(n_channels):
-        r_idx = ch_idx // tile_single_dim
-        c_idx = ch_idx - r_idx * tile_single_dim
-
-        ax_arr[r_idx, c_idx].plot(rcd, mean_in_acts[ch_idx, ], label='in')
-        ax_arr[r_idx, c_idx].plot(rcd, mean_out_acts[ch_idx, ], label='out')
-        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
-
-    f.suptitle("Individual Neuron Activations")
+    # Tiled Individual channels
+    # Activations
+    f, ax_arr = plot_tiled_activations(rcd, mean_in_acts, mean_out_acts)
     f.savefig(os.path.join(results_store_dir, 'individual_channel_activations.jpg'), format='jpg')
-
-    # Gains - Tiled Image
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
-    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
-    for ch_idx in range(n_channels):
-        r_idx = ch_idx // tile_single_dim
-        c_idx = ch_idx - r_idx * tile_single_dim
-
-        ax_arr[r_idx, c_idx].plot(
-            rcd, mean_out_acts[ch_idx]/(epsilon + mean_in_acts[ch_idx, ]), label='gain')
-        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
-
-    f.suptitle("Individual Neuron Gain")
+    # Gains
+    f, ax_arr = plot_tiled_gains(rcd, mean_in_acts, mean_out_acts, epsilon)
     f.savefig(os.path.join(results_store_dir, 'individual_channel_gains.jpg'), format='jpg')
 
     # Average Results
-    pop_mean_in_act, pop_std_in_act = get_averaged_results(mean_in_acts, std_in_acts)
-    pop_mean_out_act, pop_std_out_act = get_averaged_results(mean_out_acts, std_out_acts)
-    gains = mean_out_acts / (mean_in_acts + epsilon)
-    pop_mean_gains = np.mean(gains, axis=0)
-    pop_std_gains = np.std(gains, axis=0)
-
-    f, ax_arr = plt.subplots(1, 2)
-    ax_arr[0].plot(rcd, pop_mean_gains)
-    ax_arr[0].fill_between(
-        rcd, pop_mean_gains - pop_std_gains, pop_mean_gains + pop_std_gains, alpha=0.2)
-    ax_arr[0].set_xlabel('Spacing (relative co-linear distance)')
-    ax_arr[0].set_ylabel("Gain (Output/Input)")
-    ax_arr[0].grid()
-
-    ax_arr[1].plot(rcd, pop_mean_in_act, label='In')
-    ax_arr[1].fill_between(
-        rcd, pop_mean_in_act - pop_std_in_act, pop_mean_in_act + pop_std_in_act, alpha=0.2)
-    ax_arr[1].plot(rcd, pop_mean_out_act, label='Out')
-    ax_arr[1].fill_between(
-        rcd, pop_mean_out_act - pop_std_out_act, pop_mean_out_act + pop_std_out_act, alpha=0.2)
-    ax_arr[1].set_xlabel('Spacing (relative co-linear distance)')
-    ax_arr[1].set_ylabel("Activations")
-    ax_arr[1].legend()
-    ax_arr[1].grid()
-
-    f.suptitle("Population Average")
+    f, ax_arr = plot_averaged_results(
+        rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts, epsilon )
     f.savefig(os.path.join(results_store_dir, 'population_results.jpg'), format='jpg')
 
     plt.close('all')
