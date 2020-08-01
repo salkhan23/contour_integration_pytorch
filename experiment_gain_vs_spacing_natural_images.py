@@ -400,7 +400,6 @@ def plot_gains(x, in_acts, out_acts, epsilon, title=None):
     axis.set_xlabel('Spacing (relative co-linear distance)')
     axis.set_ylabel("Gain (Output/Input)")
     axis.grid()
-    axis.legend()
 
     return fig, axis
 
@@ -415,7 +414,7 @@ def plot_predictions(x, preds_mat, title=None):
     axis.fill_between(x, mean_preds - std_preds, mean_preds + std_preds, alpha=0)
 
     if title:
-        axis.set_title()
+        axis.set_title(title)
     axis.set_xlabel('Spacing (Relative co-linear distance)')
     axis.set_ylabel('Avg Prediction')
     axis.legend()
