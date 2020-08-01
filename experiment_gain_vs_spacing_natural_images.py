@@ -682,15 +682,18 @@ def main(model, base_results_dir):
         rcd, pop_mean_gains - pop_std_gains, pop_mean_gains + pop_std_gains, alpha=0.2)
     ax_arr[0].set_xlabel('Spacing (relative co-linear distance)')
     ax_arr[0].set_ylabel("Gain (Output/Input)")
+    ax_arr[0].grid()
 
-    ax_arr[1].plot(rcd, pop_mean_in_act, 'In')
+    ax_arr[1].plot(rcd, pop_mean_in_act, label='In')
     ax_arr[1].fill_between(
         rcd, pop_mean_in_act - pop_std_in_act, pop_mean_in_act + pop_std_in_act, alpha=0.2)
-    ax_arr[1].plot(rcd, pop_mean_out_act, 'Out')
+    ax_arr[1].plot(rcd, pop_mean_out_act, label='Out')
     ax_arr[1].fill_between(
         rcd, pop_mean_out_act - pop_std_out_act, pop_mean_out_act + pop_std_out_act, alpha=0.2)
     ax_arr[1].set_xlabel('Spacing (relative co-linear distance)')
     ax_arr[1].set_ylabel("Activations")
+    ax_arr[1].legend()
+    ax_arr[1].grid()
 
     f.suptitle("Population Average")
     f.savefig(os.path.join(results_store_dir, 'population_results.jpg'), format='jpg')
