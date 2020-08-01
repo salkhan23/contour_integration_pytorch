@@ -522,6 +522,10 @@ def main(model, base_results_dir):
         ch_f_handle = open(ch_summary_file, 'w+')
 
         n_images = len(top_n_per_channel_trackers[ch_idx])
+        if n_images == 0:
+            print("No stored images for channel {}".format(ch_idx))
+            continue
+
         print("Finding Contour Gain for Channel {}. Number of Stored Images {}. ...".format(
             ch_idx, n_images))
 
@@ -668,14 +672,27 @@ def main(model, base_results_dir):
     # Average Results
     pop_mean_in_act, pop_std_in_act = get_averaged_results(mean_in_acts, std_in_acts)
     pop_mean_out_act, pop_std_out_act = get_averaged_results(mean_out_acts, std_out_acts)
+    gains = mean_out_acts / (mean_in_acts + epsilon)
+    pop_mean_gains = np.mean(gains, axis=0)
+    pop_std_gains = np.std(gains, axis=0)
 
-    f, ax = plt.subplots(1, 2)
-    ax.plot(rcd, pop_mean_in_act, 'In')
-    ax.fill_between(
+    f, ax_arr = plt.subplots(1, 2)
+    ax_arr[0].plot(rcd, pop_mean_gains)
+    ax_arr[0].fill_between(
+        rcd, pop_mean_gains - pop_std_gains, pop_mean_gains + pop_std_gains, alpha=0.2)
+    ax_arr[0].set_xlabel('Spacing (relative co-linear distance)')
+    ax_arr[0].set_ylabel("Gain (Output/Input)")
+
+    ax[1].plot(rcd, pop_mean_in_act, 'In')
+    ax[1].fill_between(
         rcd, pop_mean_in_act - pop_std_in_act, pop_mean_in_act + pop_std_in_act, alpha=0.2)
-    ax.plot(rcd, pop_mean_out_act, 'Out')
-    ax.fill_between(
+    ax[1].plot(rcd, pop_mean_out_act, 'Out')
+    ax[1].fill_between(
         rcd, pop_mean_out_act - pop_std_out_act, pop_mean_out_act + pop_std_out_act, alpha=0.2)
+    ax_arr[1].set_xlabel('Spacing (relative co-linear distance)')
+    ax_arr[1].set_ylabel("Activations")
+
+    f.suptitle("Population Average")
     f.savefig(os.path.join(results_store_dir, 'population_results.jpg'), format='jpg')
 
     plt.close('all')
