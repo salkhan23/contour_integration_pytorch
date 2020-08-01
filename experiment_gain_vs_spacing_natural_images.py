@@ -315,7 +315,7 @@ def find_best_stimuli_for_each_channel(model, data_loader, top_n, n_channels, ch
 
                     if min_d_to_contour < 1.5:
                         node = MaxActiveElement(
-                            in_act=curr_tgt_ch_acts[curr_max_act_idx[0], curr_max_act_idx[1]],
+                            in_act=cont_int_in_act[0, ch_idx, curr_max_act_idx[0], curr_max_act_idx[1]],
                             out_act=curr_max_act,
                             position=curr_max_act_idx,
                             index=org_img_idx,
@@ -417,6 +417,7 @@ def plot_predictions(x, preds_mat, title=None):
         axis.set_title(title)
     axis.set_xlabel('Spacing (Relative co-linear distance)')
     axis.set_ylabel('Avg Prediction')
+    axis.grid()
 
     return fig, axis
 
@@ -432,8 +433,8 @@ def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
 
-        ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in')
-        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out')
+        ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in', color='r')
+        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out',color='b')
         ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
 
     f.suptitle("Individual Neuron Activations")
@@ -716,15 +717,15 @@ def main(model, base_results_dir):
     # Tiled Individual channels
     # Activations
     f, ax_arr = plot_tiled_activations(rcd, mean_in_acts, mean_out_acts)
-    f.savefig(os.path.join(results_store_dir, 'individual_channel_activations.jpg'), format='jpg')
+    f.savefig(os.path.join(results_dir, 'individual_channel_activations.jpg'), format='jpg')
     # Gains
     f, ax_arr = plot_tiled_gains(rcd, mean_in_acts, mean_out_acts, epsilon)
-    f.savefig(os.path.join(results_store_dir, 'individual_channel_gains.jpg'), format='jpg')
+    f.savefig(os.path.join(results_dir, 'individual_channel_gains.jpg'), format='jpg')
 
     # Average Results
     f, ax_arr = plot_averaged_results(
         rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts, epsilon )
-    f.savefig(os.path.join(results_store_dir, 'population_results.jpg'), format='jpg')
+    f.savefig(os.path.join(results_dir, 'population_results.jpg'), format='jpg')
 
     plt.close('all')
 
