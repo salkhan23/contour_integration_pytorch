@@ -232,34 +232,36 @@ class PunctureImage(object):
 
         img = img.permute(1, 2, 0)
 
-        if isinstance(self.bubble_sigma, np.ndarray):
-            sigma = np.random.choice(self.bubble_sigma)
-            # print("Using bubble sigma {}".format(sigma))
+        if start_loc_arr is not None:
+            n_bubbles = len(start_loc_arr)
         else:
-            sigma = self.bubble_sigma
-
-        bubble_frag = get_2d_gaussian_kernel(shape=self.tile_size, sigma=sigma)
-        bubble_frag = torch.from_numpy(bubble_frag)
-        bubble_frag = bubble_frag.float().unsqueeze(-1)
-        bubble_frag = 1 - bubble_frag
-
-        if start_loc_arr is None:
+            n_bubbles = self.n_bubbles
             start_loc_arr = np.array([
                 np.random.randint(h - self.tile_size[0], size=self.n_bubbles),
                 np.random.randint(w - self.tile_size[1], size=self.n_bubbles),
             ]).T
 
-        # print("Start Locations {}".format(start_loc_arr))
+        if isinstance(self.bubble_sigma, np.ndarray):
+            sigma_arr = np.random.choice(self.bubble_sigma, size=n_bubbles)
+        else:
+            sigma_arr = np.ones(n_bubbles) * self.bubble_sigma
 
         mask = torch.ones_like(img)
-        mask = fields1993_stimuli.tile_image(
-            mask,
-            bubble_frag,
-            start_loc_arr,
-            rotate_frags=False,
-            gaussian_smoothing=False,
-            replace=False
-        )
+        for start_loc_idx, start_loc in enumerate(start_loc_arr):
+            bubble_frag = get_2d_gaussian_kernel(
+                shape=self.tile_size, sigma=sigma_arr[start_loc_idx])
+            bubble_frag = torch.from_numpy(bubble_frag)
+            bubble_frag = bubble_frag.float().unsqueeze(-1)
+            bubble_frag = 1 - bubble_frag
+
+            mask = fields1993_stimuli.tile_image(
+                mask,
+                bubble_frag,
+                start_loc,
+                rotate_frags=False,
+                gaussian_smoothing=False,
+                replace=False
+            )
 
         mask = mask + self.peak_bubble_transparency
         mask[mask > 1] = 1
