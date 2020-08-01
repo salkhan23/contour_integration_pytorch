@@ -417,7 +417,6 @@ def plot_predictions(x, preds_mat, title=None):
         axis.set_title(title)
     axis.set_xlabel('Spacing (Relative co-linear distance)')
     axis.set_ylabel('Avg Prediction')
-    axis.legend()
 
     return fig, axis
 
@@ -515,8 +514,6 @@ def main(model, base_results_dir):
     std_preds = np.zeros_like(mean_out_acts)
 
     for ch_idx in range(n_channels):
-
-        print("Processing Channel {}".format(ch_idx))
 
         ch_results_dir = os.path.join(idv_channels_results_dir, 'channel_{}'.format(ch_idx))
         if not os.path.exists(ch_results_dir):
