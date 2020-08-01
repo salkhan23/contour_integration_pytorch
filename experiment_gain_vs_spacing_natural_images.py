@@ -367,7 +367,7 @@ def get_averaged_results(mu_mat, std_mat):
 
 
 def plot_activations(x, in_mean, in_std, out_mean, out_std, title=None):
-    fig, axis = plt.subplots()
+    fig, axis = plt.subplots(figsize=(11, 11))
 
     axis.plot(x, in_mean, color='r', label='In')
     axis.fill_between(x, in_mean - in_std, in_mean + in_std, alpha=0.2, color='r')
@@ -386,7 +386,7 @@ def plot_activations(x, in_mean, in_std, out_mean, out_std, title=None):
 
 
 def plot_gains(x, in_acts, out_acts, epsilon, title=None):
-    fig, axis = plt.subplots()
+    fig, axis = plt.subplots(figsize=(11, 11))
     gain = out_acts / (in_acts + epsilon)
 
     mean_gain = np.mean(gain, axis=0)
@@ -405,7 +405,7 @@ def plot_gains(x, in_acts, out_acts, epsilon, title=None):
 
 
 def plot_predictions(x, preds_mat, title=None):
-    fig, axis = plt.subplots()
+    fig, axis = plt.subplots(figsize=(11, 11))
 
     mean_preds = preds_mat.mean(axis=0)
     std_preds = preds_mat.std(axis=0)
@@ -427,15 +427,15 @@ def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
     n_channels = len(mean_in_acts)
     tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
 
-    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
     for ch_idx in range(n_channels):
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
 
         ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in', color='r')
-        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out',color='b')
-        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out', color='b')
+        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
 
     f.suptitle("Individual Neuron Activations")
 
@@ -446,7 +446,7 @@ def plot_tiled_gains(x, mean_in_acts, mean_out_acts, epsilon):
     n_channels = len(mean_in_acts)
     tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
 
-    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
+    f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
     for ch_idx in range(n_channels):
         r_idx = ch_idx // tile_single_dim
@@ -454,7 +454,7 @@ def plot_tiled_gains(x, mean_in_acts, mean_out_acts, epsilon):
 
         ax_arr[r_idx, c_idx].plot(
             x, mean_out_acts[ch_idx] / (epsilon + mean_in_acts[ch_idx, ]), label='gain')
-        ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
 
     f.suptitle("Individual Neuron Gain")
 
@@ -539,7 +539,7 @@ def main(model, base_results_dir):
     # -----------------------------------------------------------------------------------
     biped_dataset_dir = './data/BIPED/edges'
     biped_dataset_type = 'train'
-    n_biped_imgs = 200
+    n_biped_imgs = 20000
 
     data_set = OnlineNaturalImagesPathfinder(
         data_dir=biped_dataset_dir,
@@ -724,7 +724,7 @@ def main(model, base_results_dir):
 
     # Average Results
     f, ax_arr = plot_averaged_results(
-        rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts, epsilon )
+        rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts, epsilon)
     f.savefig(os.path.join(results_dir, 'population_results.jpg'), format='jpg')
 
     plt.close('all')
