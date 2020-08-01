@@ -624,7 +624,7 @@ def main(model, base_results_dir):
 
         # Gain
         f, ax = plot_gains(
-            rcd, mean_in_acts[ch_idx, ], std_in_acts[ch_idx, ], epsilon,
+            rcd, tgt_n_in_act_mat, tgt_n_out_act_mat, epsilon,
             title="Channel {}. Number of images {}".format(ch_idx, n_images))
         f.savefig(os.path.join(ch_results_dir, 'gains_channel_{}.png'.format(ch_idx)))
 
