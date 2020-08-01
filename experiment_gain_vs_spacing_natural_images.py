@@ -512,10 +512,12 @@ def main(model, base_results_dir):
     std_out_acts = np.zeros_like(mean_out_acts)
     mean_in_acts = np.zeros_like(mean_out_acts)
     std_in_acts = np.zeros_like(mean_out_acts)
-    mean_preds = np.zeros(mean_out_acts)
-    std_preds = np.zeros(mean_out_acts)
+    mean_preds = np.zeros_like(mean_out_acts)
+    std_preds = np.zeros_like(mean_out_acts)
 
     for ch_idx in range(n_channels):
+
+        print("Processing Channel {}".format(ch_idx))
 
         ch_results_dir = os.path.join(idv_channels_results_dir, 'channel_{}'.format(ch_idx))
         if not os.path.exists(ch_results_dir):
