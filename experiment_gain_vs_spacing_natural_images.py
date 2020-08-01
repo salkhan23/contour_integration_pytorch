@@ -629,6 +629,8 @@ def main(model, base_results_dir):
             rcd, tgt_n_pred_mat, title="Channel {}. Number of images {}".format(ch_idx, n_images))
         f.savefig(os.path.join(ch_results_dir, 'predictions_channel_{}.png'.format(ch_idx)))
 
+        plt.close('all')
+
     # Population Results -------------------------
     print("Mean In Activations: \n" + 'np.' + repr(mean_in_acts), file=f_handle)
     print("Std In Activations: \n" + 'np.' + repr(mean_in_acts), file=f_handle)
