@@ -549,7 +549,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    data_store_dir = './data/pathfinder_natural_images'
+    data_store_dir = './data/pathfinder_natural_images_test'
     random_seed = 8
 
     # Total number of images = n_biped_images * n_epochs
