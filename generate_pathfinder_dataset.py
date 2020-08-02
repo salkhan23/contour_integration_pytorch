@@ -175,9 +175,22 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
             # Check that no points on or near C2 has a valid contour that is within
             # min overlap distance from C1.
             if not is_overlapping:
-                p1 = c2[0]
                 nearby_points = contour.find_all_edge_points_within_distance(
-                    full_label[0, ], p1, self.min_sep_dist)
+                    full_label[0, ], c2[0], self.min_sep_dist)
+                nearby_points_ep2 = contour.find_all_edge_points_within_distance(
+                    full_label[0, ], c2[-1], self.min_sep_dist)
+                nearby_points = np.concatenate((nearby_points, nearby_points_ep2), axis=0)
+
+                # # Debug - plot nearby points
+                # plt.figure()
+                # temp = np.copy(full_label)
+                # plt.imshow(temp[0, ])
+                # plt.scatter(nearby_points[:, 1], nearby_points[:, 0], c='r', marker='+')
+                # contour.show_contour(temp[0, ], c1, value=0.5)
+                # contour.show_contour(temp[0, ], c2, value=0.25)
+                # plt.title("Nearby points")
+                # import pdb
+                # pdb.set_trace()
 
                 nearby_contours = []
 
@@ -190,7 +203,7 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
                 for point in nearby_points:
                     for full_label_extended in expanded_full_labels:
-                        c3 = contour.get_contour_around_point(full_label_extended[0,], point)
+                        c3 = contour.get_contour_around_point(full_label_extended[0, ], point)
 
                         if len(c3) is not 0 and c3 not in nearby_contours:
                             nearby_contours.append(c3)
@@ -212,7 +225,7 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
                         is_overlapping = True
 
-                        # # Debug
+                        # # Debug - plot Nearby Contours and problem point
                         # plt.figure()
                         # temp = np.copy(full_label)
                         # for c in nearby_contours:
