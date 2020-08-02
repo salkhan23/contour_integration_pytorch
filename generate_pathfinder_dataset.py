@@ -264,12 +264,15 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 start_point = c1[-1]
                 end_point = c2[-1]
 
-        # [5] Create a new label with the two contours
+        # [5] Create a new label with the two contours - These are only for debug, so
+        # highlight the selected contours
         single_contours_label = torch.zeros_like(full_label)
         for p in c1:
-            single_contours_label[:, p[0], p[1]] = 1  # channel first
-        for p in c2:
             single_contours_label[:, p[0], p[1]] = 0.5  # channel first
+            full_label[:, p[0], p[1]] = 0.5
+        for p in c2:
+            single_contours_label[:, p[0], p[1]] = 0.25  # channel first
+            full_label[:, p[0], p[1]] = 0.25
 
         # Add the starting point
         self.add_end_stop(single_contours_label, start_point, radius=self.end_stop_radius)
