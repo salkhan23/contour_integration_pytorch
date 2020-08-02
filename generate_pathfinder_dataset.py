@@ -205,12 +205,13 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                         is_overlapping = True
 
                         # # Debug
-                        # contour.show_contour(full_label[0, ], c1, value=0.5)
-                        # contour.show_contour(full_label[0, ], c2, value=0.25)
+                        # temp = np.copy(full_label)
                         # for c in nearby_contours:
-                        #     contour.show_contour(full_label[0, ], c, value=0.75)
-                        # plt.scatter(point[1],point[0], color='r', marker='+', s=200)
-                        #
+                        #     contour.show_contour(temp[0, ], c, value=0.75)
+                        # contour.show_contour(temp[0, ], c1, value=0.5)
+                        # contour.show_contour(temp[0, ], c2, value=0.25)
+                        # plt.scatter(point[1], point[0], color='r', marker='+', s=200)
+                        # plt.title("Extension point from C2 too close to C1")
                         # import pdb
                         # pdb.set_trace()
 
@@ -306,27 +307,13 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
         # ax_arr[2].set_title("Full label")
         #
         # f.suptitle(
-        #     "Are connected {}, [Lengths C1={},C2={}, Dist between End-points {:0.1f}, "
-        #     "Distance between contour start/stop C1={:0.1f}, C2={:0.1f}]".format(
+        #     "connected: {}\n Lengths C1={}, C2={}, Dist b/w Endpoints {:0.1f}".format(
         #         connected, len(c1), len(c2),
-        #         self.get_distance_between_two_points(start_point, end_point),
-        #         self.get_distance_between_two_points(c1[0], c1[-1]),
-        #         self.get_distance_between_two_points(c2[0], c2[-1])))
-        #
-        # results_dir = './results/sample_images'
-        # if not os.path.exists(results_dir):
-        #     os.makedirs(results_dir)
-        #
-        # f.savefig(
-        #     os.path.join(
-        #         results_dir, "img{}_{}".format(index, self.images[index].split('/')[-1])),
-        #     format='jpg'
-        # )
+        #         self.get_distance_between_two_points(start_point, end_point)))
         #
         # import pdb
         # pdb.set_trace()
-        #
-        # plt.close(f)
+        # plt.close('all')
 
         return img, connected, single_contours_label, full_label, dist_between_points, index,\
             torch.tensor(c1), torch.tensor(c2), torch.tensor(start_point), torch.tensor(end_point)
