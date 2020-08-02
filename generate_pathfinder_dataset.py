@@ -172,20 +172,28 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 if is_overlapping:
                     break
 
-            # Check that no points in c2 or near C2 that has a valid contour
-            # comes close to C1
+            # Check that no points on or near C2 has a valid contour that is within
+            # min overlap distance from C1.
             if not is_overlapping:
-
                 p1 = c2[0]
                 nearby_points = contour.find_all_edge_points_within_distance(
                     full_label[0, ], p1, self.min_sep_dist)
 
                 nearby_contours = []
-                for point in nearby_points:
-                    c3 = contour.get_contour_around_point(full_label[0, ], point)
 
-                    if len(c3) is not 0 and c3 not in nearby_contours:
-                        nearby_contours.append(c3)
+                # Don't only consider edges at current interpolation thresholds.
+                # But all considered interpolation thresholds (gets fat edges  that may be missed)
+                extra_intrpl_ths = self.intrpl_ths.copy()
+                expanded_full_labels = []
+                for th1 in extra_intrpl_ths:
+                    expanded_full_labels.append(self._get_threshold_label(full_label_raw, th1))
+
+                for point in nearby_points:
+                    for full_label_extended in expanded_full_labels:
+                        c3 = contour.get_contour_around_point(full_label_extended[0,], point)
+
+                        if len(c3) is not 0 and c3 not in nearby_contours:
+                            nearby_contours.append(c3)
 
                 # Get all points on nearby contours
                 points_on_nearby_contours = []
@@ -205,13 +213,14 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                         is_overlapping = True
 
                         # # Debug
+                        # plt.figure()
                         # temp = np.copy(full_label)
                         # for c in nearby_contours:
                         #     contour.show_contour(temp[0, ], c, value=0.75)
                         # contour.show_contour(temp[0, ], c1, value=0.5)
                         # contour.show_contour(temp[0, ], c2, value=0.25)
                         # plt.scatter(point[1], point[0], color='r', marker='+', s=200)
-                        # plt.title("Extension point from C2 too close to C1")
+                        # plt.title("Extension point from C2 too close to C1!")
                         # import pdb
                         # pdb.set_trace()
 
