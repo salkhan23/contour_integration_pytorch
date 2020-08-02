@@ -575,7 +575,7 @@ if __name__ == "__main__":
     random_seed = 8
 
     # Total number of images = n_biped_images * n_epochs
-    train_n_biped_imgs = 30000
+    train_n_biped_imgs = 60000
     train_n_epochs = 1
 
     val_n_biped_imgs = 50
