@@ -119,7 +119,7 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 else:
                     # Just give up
                     print("No valid C1 contour found for image at index {} and "
-                          "interpolation thresholds exhausted".format(index))
+                          "interpolation thresholds exhausted (Giving Up)".format(index))
 
                     # Pytorch Data loader does not like None (doesnt know how to add batch dim
                     # Just check output.dim() == 1 (should be 4 in normal case (the img))
@@ -161,10 +161,21 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
                 if len(c2) == 0:
                     th_old = th
-                    th = th_arr.pop()
-                    print("No valid C2 contour found. Change interpolation th {}->{}.\n "
-                          "[Image idx {}: {}]".format(th_old, th, index, self.labels[index]))
-                    full_label = self._get_threshold_label(full_label_raw, th)
+
+                    if len(th_arr) >= 1:
+                        th = th_arr.pop()
+                        print("No valid C2 contour found. Change interpolation th {}->{}. "
+                              "[Image idx{}: {}]".format(th_old, th, index, self.labels[index]))
+
+                        full_label = self._get_threshold_label(full_label_raw, th)
+                    else:
+                        # Just give up
+                        print("No valid C2 contour found for image at index {} and "
+                              "interpolation thresholds exhausted (Giving Up)".format(index))
+
+                        # Pytorch Data loader does not like None (doesnt know how to add batch dim
+                        # Just check output.dim() == 1 (should be 4 in normal case (the img))
+                        return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
             # Check that C2 is separate from C1
             for p in c1:
@@ -243,14 +254,20 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                 # print("C2 overlaps with C1. count {}".format(overlap_count))
                 overlap_count += 1
 
-                if overlap_count >= 100:
+                if overlap_count > 1000:
+                    # Just give up
+                    print("C2 overlapped with C1 more than 1000 times and searched for C2"
+                          "contours over all image (Giving Up)")
+                    # Pytorch Data loader does not like None (doesnt know how to add batch dim
+                    # Just check output.dim() == 1 (should be 4 in normal case (the img))
+                    return 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+                elif 0 == overlap_count % 100:
                     old_p_scale = p_scale
                     p_scale = p_scale + 10
                     print("C2 overlapped with C1 more than 100 times. Broaden contour search "
                           "space. {}->{}.\n[Image idx {}: {}]".format(
                             old_p_scale, p_scale, index, self.labels[index]))
-
-                    overlap_count = 0
 
         # [3] Randomly choose to connect the end dot to the contour
         connected = np.random.choice([0, 1], p=[1 - self.p_connect, self.p_connect])
