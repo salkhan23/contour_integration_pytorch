@@ -100,7 +100,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Pre-processing
     transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=100, fwhm=np.array([7, 9, 11, 13, 15]))
+        # utils.PunctureImage(n_bubbles=200, fwhm=np.array([7, 9, 11, 13, 15, 17]))
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
@@ -444,7 +444,7 @@ if __name__ == '__main__':
     plt.ion()
 
     data_set_parameters = {
-        'data_set_dir': './data/pathfinder_natural_images',
+        'data_set_dir': './data/pathfinder_natural_images_2',
     }
 
     train_parameters = {
