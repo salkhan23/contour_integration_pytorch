@@ -333,7 +333,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         for iteration, data_loader_out in enumerate(pathfinder_train_data_loader, 1):
             optimizer.zero_grad()  # zero the parameter gradients
 
-            img, label, _, _, _, _ = data_loader_out
+            img, label, _, _, _, = data_loader_out
 
             img = img.to(device)
             label = label.to(device)
@@ -380,7 +380,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         with torch.no_grad():
             for iteration, data_loader_out in enumerate(pathfinder_val_data_loader, 1):
 
-                img, label, _, _, _, _ = data_loader_out
+                img, label, _, _, _ = data_loader_out
 
                 img = img.to(device)
                 label = label.to(device)

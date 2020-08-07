@@ -171,7 +171,7 @@ if __name__ == "__main__":
     with torch.no_grad():
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
-            img, label, individual_contours_labels, full_labels, _, _ = data_loader_out
+            img, label, individual_contours_labels, full_labels, _ = data_loader_out
 
             in_img = img.clone()
             in_img = in_img.to(device)

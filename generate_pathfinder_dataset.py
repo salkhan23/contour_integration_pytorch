@@ -18,6 +18,7 @@ from datetime import datetime
 import os
 import shutil
 import sys
+import pickle
 
 import torch
 from PIL import Image
@@ -470,14 +471,12 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
 
     data_key_filename = os.path.join(data_dir, 'data_key.txt')
     class_labels_filename = os.path.join(data_dir, 'classification_labels.txt')
-    map_to_org_imgs_filename = os.path.join(data_dir, 'map_to_original_images.txt')
-    distances_filename = os.path.join(data_dir, 'distances_between_points.txt')
-
     data_key_handle = open(data_key_filename, 'w+')
     class_labels_handle = open(class_labels_filename, 'w+')
 
-    org_imgs_map_handle = open(map_to_org_imgs_filename, 'w+')
-    distances_handle = open(distances_filename, 'w+')
+    extra_info_dir = os.path.join(data_dir, 'extra_info')
+    if not os.path.exists(extra_info_dir):
+        os.makedirs(extra_info_dir)
 
     # Setup the Online Pathfinder Data Loader
     # ---------------------------------------
@@ -512,39 +511,63 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
         for iteration, data_loader_out in enumerate(data_loader, 1):
 
             if data_loader_out[0].dim() == 4:  # if valid image
-                imgs, class_labels, indv_contours_label, full_labels, distances, \
-                    org_img_idxs, _, _, _, _ = data_loader_out
+                imgs, class_labels, indv_contours_labels, full_labels, ep_distances, \
+                    org_img_idxs, c1_arr, c2_arr, ep1_arr, ep2_arr = data_loader_out
 
-                img = np.transpose(imgs[0, ], axes=(1, 2, 0))
+                # Remove batch dimension
+                img = imgs[0]
+                class_label = class_labels[0]
+                indv_contours_label = indv_contours_labels[0]
+                full_label = full_labels[0]
+                ep_distance = ep_distances[0]
+                org_img_idx = org_img_idxs[0]
+                c1 = c1_arr[0]
+                c2 = c2_arr[0]
+                ep1 = ep1_arr[0]
+                ep2 = ep2_arr[0]
+
+                # save image with endpoints
+                img = np.transpose(img, axes=(1, 2, 0))
                 img_file_name = 'img_{}.png'.format(n_imgs_created)
                 plt.imsave(fname=os.path.join(imgs_dir, img_file_name), arr=img.numpy())
+                # Add to the datakey
                 data_key_handle.write("{}\n".format(img_file_name))
 
-                class_label = class_labels[0]
+                # save classification label
                 class_labels_handle.write("{}\n".format(int(class_label)))
 
-                org_img_idx = org_img_idxs[0]
-                org_img_name = data_loader.dataset.images[org_img_idx]
-                org_imgs_map_handle.write("{}\n".format(org_img_name))
-
-                ind_contour_label = indv_contours_label[0]
-                ind_contour_label = np.squeeze(ind_contour_label)
+                # Save the selected contours debug label
+                ind_contour_label = np.squeeze(indv_contours_label[0])  # remove channel dim. (=1)
                 plt.imsave(
                     fname=os.path.join(
                         indv_contours_labels_dir, 'img_{}.png'.format(n_imgs_created)),
                     arr=ind_contour_label.numpy())
 
-                full_label = full_labels[0]
+                # Save the full edges debug label  # remove channel dim. (=1)
                 full_label = np.squeeze(full_label)
-
                 plt.imsave(
                     fname=os.path.join(full_labels_dir, 'img_{}.png'.format(n_imgs_created)),
                     arr=full_label.numpy())
 
-                d_between_points = int(distances[0])
-                distances_handle.write("{}\n".format(d_between_points))
+                # For each image, store some additional information: (1) C1 (2) C2
+                # (3) ep1 (4) ep2 (5) distance between endpoints, (6) original image index
+                # in a pickle file
+                extra_info = {
+                    'org_img_idx': org_img_idx.item(),
+                    'ep_distance': ep_distance.item(),
+                    'ep1': ep1.numpy(),
+                    'ep2': ep2.numpy(),
+                    'c1': c1.numpy(),
+                    'c2': c2.numpy(),
+                }
 
-                # Store distances between points
+                extra_info_filename = \
+                    os.path.join(extra_info_dir, 'img_{}.pickle'.format(n_imgs_created))
+                with open(extra_info_filename, 'wb') as handle:
+                    pickle.dump(extra_info, handle)
+
+                # Record distance between end points for (not) connected cases. Used to
+                # plot distribution of distances for the two classes.
                 for idx in range(data_loader_out[1].shape[0]):
                     if data_loader_out[1][idx]:
                         dist_connected.append(data_loader_out[4][idx])
@@ -577,11 +600,15 @@ def create_dataset(data_dir, biped_dataset_type, n_biped_imgs, n_epochs):
 
     data_key_handle.close()
     class_labels_handle.close()
-    org_imgs_map_handle.close()
-    distances_handle.close()
 
     print("Dataset Created. Number images {} from {} unique images. Time {}".format(
         n_imgs_created, n_biped_imgs, datetime.now() - start_time))
+
+    summary_filename = os.path.join(data_dir, 'summary.txt')
+    f_handle = open(summary_filename, 'w+')
+    f_handle.write("Dataset contains {} Images.\n".format(n_imgs_created))
+    f_handle.write("Data generation took {}.\n".format(datetime.now() - start_time))
+    f_handle.close()
 
 
 if __name__ == "__main__":
