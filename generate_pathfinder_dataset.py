@@ -406,13 +406,12 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         return overlaps
 
-    @staticmethod
-    def add_end_stop(img1, center=(0, 0), radius=8):
+    def add_end_stop(self, img1, center=(0, 0)):
         """
         img1 should be 3d (channel first)
         """
-        ax = torch.arange(center[0] - radius, center[0] + radius + 1)
-        ay = torch.arange(center[1] - radius, center[1] + radius + 1)
+        ax = torch.arange(center[0] - self.end_stop_radius, center[0] + self.end_stop_radius + 1)
+        ay = torch.arange(center[1] - self.end_stop_radius, center[1] + self.end_stop_radius + 1)
 
         max_value = torch.max(img1)
         n_channels = img1.shape[0]
@@ -422,7 +421,8 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
             for x in ax:
                 for y in ay:
                     if ((0 <= x < img1.shape[1]) and (0 <= y < img1.shape[2])
-                            and ((x - center[0]) ** 2 + (y - center[1]) ** 2) <= radius ** 2):
+                            and (((x - center[0]) ** 2 + (y - center[1]) ** 2) <=
+                                 self.end_stop_radius ** 2)):
                         x = x.int()
                         y = y.int()
                         img1[:, x, y] = 0
@@ -443,7 +443,7 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
                         elif d < 4:
                             img1[:, x, y] = 0
                             img1[2, x, y] = max_value
-                        elif d <= radius:
+                        elif d <= self.end_stop_radius:
                             img1[:, x, y] = 0
                             img1[0, x, y] = max_value
         return img1
