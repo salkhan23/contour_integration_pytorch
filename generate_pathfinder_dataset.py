@@ -316,14 +316,14 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
             full_label[:, p[0], p[1]] = 0.25
 
         # Add the starting point
-        self.add_end_stop(single_contours_label, start_point, radius=self.end_stop_radius)
-        self.add_end_stop(img, start_point, radius=self.end_stop_radius)
-        self.add_end_stop(full_label, start_point, radius=self.end_stop_radius)
+        self.add_end_stop(single_contours_label, start_point)
+        self.add_end_stop(img, start_point)
+        self.add_end_stop(full_label, start_point)
 
         # Add the end point
-        self.add_end_stop(single_contours_label, end_point, radius=self.end_stop_radius)
-        self.add_end_stop(img, end_point, radius=self.end_stop_radius)
-        self.add_end_stop(full_label, end_point, radius=self.end_stop_radius)
+        self.add_end_stop(single_contours_label, end_point)
+        self.add_end_stop(img, end_point)
+        self.add_end_stop(full_label, end_point)
 
         dist_between_points = self.get_distance_between_two_points(start_point, end_point)
 
