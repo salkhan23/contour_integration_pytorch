@@ -69,10 +69,10 @@ class OnlineNaturalImagesPathfinder(dataset_biped.BipedDataSet):
 
         if start_point is not None:
             self.add_end_stop(
-                img, (start_point[0], start_point[1]), radius=self.end_stop_radius)
+                img, (start_point[0], start_point[1]))
 
         if end_point is not None:
-            self.add_end_stop(img, (end_point[0], end_point[1]), radius=self.end_stop_radius)
+            self.add_end_stop(img, (end_point[0], end_point[1]))
 
         return img
 
