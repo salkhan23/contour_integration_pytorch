@@ -18,6 +18,7 @@ import torch
 from torchvision import transforms
 
 import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
 from generate_pathfinder_dataset import OnlineNaturalImagesPathfinder
 from torch.utils.data import DataLoader
 import utils
@@ -1024,22 +1025,28 @@ if __name__ == '__main__':
     plt.ion()
     start_time = datetime.now()
 
-    # Model
-    # ------
+    # # Model
+    # # ------
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # net = new_piech_models.JointPathfinderContourResnet50(cont_int_layer)
+    #
+    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     # saved_model = \
-    #     'results/joint_training/' \
-    #     'JointPathfinderContourResnet50_CurrentSubtractInhibitLayer_20200719_104417_base/' \
-    #     'last_epoch.pth'
+    #     './results/pathfinder/' \
+    #     'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200807_214306_base/' \
+    #     'best_accuracy.pth'
+    # scale_down_input_to_contour_integration_layer = 4
 
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # Control Model
+    # -----
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+        lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200807_214306_base/' \
+        'BinaryClassifierResnet50_ControlMatchParametersLayer_20200807_214527_base/' \
         'best_accuracy.pth'
     scale_down_input_to_contour_integration_layer = 4
 
