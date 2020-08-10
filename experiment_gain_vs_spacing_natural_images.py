@@ -913,24 +913,24 @@ def main(model, base_results_dir, cont_int_scale):
                 # import pdb
                 # pdb.set_trace()
 
-                # Debug : Display the Image
-                # -------------------------
-                if bubble_tile_idx == 0:
-                    org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
-                    plot_channel_responses(
-                        model, org_img, ch_idx, dev, ch_mean, ch_std, cont_int_scale, item)
-                    plt.gcf().suptitle('Original Image\n' + plt.gcf()._suptitle.get_text())
-
-                plot_channel_responses(
-                    model, punctured_img, ch_idx, dev, ch_mean, ch_std, cont_int_scale, item)
-                plt.gcf().suptitle(
-                    'Punctured Image {}\n'.format(bubble_tile_size[0]) +
-                    plt.gcf()._suptitle.get_text())
+                # # Debug : Display the Image
+                # # -------------------------
+                # if bubble_tile_idx == 0:
+                #     org_img = data_set.get_img_by_index(item.index, item.ep1, item.ep2)
+                #     plot_channel_responses(
+                #         model, org_img, ch_idx, dev, ch_mean, ch_std, cont_int_scale, item)
+                #     plt.gcf().suptitle('Original Image\n' + plt.gcf()._suptitle.get_text())
+                #
+                # plot_channel_responses(
+                #     model, punctured_img, ch_idx, dev, ch_mean, ch_std, cont_int_scale, item)
+                # plt.gcf().suptitle(
+                #     'Punctured Image {}\n'.format(bubble_tile_size[0]) +
+                #     plt.gcf()._suptitle.get_text())
 
             # -----------------------------
-            import pdb
-            pdb.set_trace()
-            plt.close('all')
+            # import pdb
+            # pdb.set_trace()
+            # plt.close('all')
 
         # Per channel processing --------------------------------------------------------
         # Save the results
