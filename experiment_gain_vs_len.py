@@ -690,7 +690,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         n_channels = embedded_layer_identifier.edge_extract.weight.shape[0]
 
     # Results Directory
-    results_store_dir = os.path.join(base_results_dir, 'experiment_gain_vs_length_frag_{}'.format(frag_size))
+    results_store_dir = \
+        os.path.join(base_results_dir, 'experiment_gain_vs_length_frag_{}_test'.format(frag_size))
     print("Results store directory: {}".format(results_store_dir))
     if not os.path.exists(results_store_dir):
         os.makedirs(results_store_dir)
