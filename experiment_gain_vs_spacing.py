@@ -203,8 +203,10 @@ def find_optimal_stimulus(
 
             # # Debug - Show Test Image
             # plt.figure()
-            # plt.imshow(test_img)
+            # plt.imshow(np.transpose(test_img,axes=(1, 2, 0)))
             # plt.title("Input Image - Find optimal stimulus")
+            # import pdb
+            # pdb.set_trace()
 
             # Get target activations
             process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
@@ -362,20 +364,21 @@ def get_contour_gain_vs_spacing(
 
     # First Get response to Single Fragment and co-linear distance = 1 (noise pattern)
     for img_idx in range(n_images):
-        test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
-            frag=frag,
-            frag_params=g_params,
-            c_len=1,
-            beta=0,
-            alpha=0,
-            f_tile_size=np.array([14, 14]),
-            img_size=img_size,
-            random_alpha_rot=True,
-            rand_inter_frag_direction_change=True,
-            use_d_jitter=False,
-            bg_frag_relocate=False,
-            bg=bg
-        )
+        test_img, test_img_label, contour_frags_starts, end_acc_angle, start_acc_angle = \
+            fields1993_stimuli.generate_contour_image(
+                frag=frag,
+                frag_params=g_params,
+                c_len=1,
+                beta=0,
+                alpha=0,
+                f_tile_size=np.array([14, 14]),
+                img_size=img_size,
+                random_alpha_rot=True,
+                rand_inter_frag_direction_change=True,
+                use_d_jitter=False,
+                bg_frag_relocate=False,
+                bg=bg
+            )
 
         test_img = transform_functional.to_tensor(test_img)
         process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
@@ -388,6 +391,11 @@ def get_contour_gain_vs_spacing(
         np.mean(tgt_n_single_frag_acts), np.std(tgt_n_single_frag_acts)))
     print("Max Active Neuron Single Fragment (RCD=1.0) Resp: mean {:0.2f}, std {:0.2f}".format(
         np.mean(max_act_n_single_frag_acts), np.std(max_act_n_single_frag_acts)))
+
+    # # Debug
+    # plt.figure()
+    # plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
+    # plt.title("Input Image")
     # import pdb
     # pdb.set_trace()
 
@@ -399,20 +407,21 @@ def get_contour_gain_vs_spacing(
         for img_idx in range(n_images):
 
             # (1) Create Test Image
-            test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
-                frag=frag,
-                frag_params=g_params,
-                c_len=c_len,
-                beta=0,
-                alpha=0,
-                f_tile_size=full_tile_s,
-                img_size=img_size,
-                random_alpha_rot=True,
-                rand_inter_frag_direction_change=True,
-                use_d_jitter=False,
-                bg_frag_relocate=False,
-                bg=bg
-            )
+            test_img, test_img_label, contour_frags_starts, end_acc_angle, start_acc_angle = \
+                fields1993_stimuli.generate_contour_image(
+                    frag=frag,
+                    frag_params=g_params,
+                    c_len=c_len,
+                    beta=0,
+                    alpha=0,
+                    f_tile_size=full_tile_s,
+                    img_size=img_size,
+                    random_alpha_rot=True,
+                    rand_inter_frag_direction_change=True,
+                    use_d_jitter=False,
+                    bg_frag_relocate=False,
+                    bg=bg
+                )
 
             # # Debug - Plot Test Image
             # # ------------------------
@@ -420,7 +429,7 @@ def get_contour_gain_vs_spacing(
             # print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(test_img_label)))
             #
             # plt.figure()
-            # plt.imshow(test_img)
+            # plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
             # plt.title("Input Image")
             #
             # # Highlight Label

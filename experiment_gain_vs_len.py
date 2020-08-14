@@ -255,6 +255,8 @@ def find_optimal_stimulus(
         # plt.figure()
         # plt.plot(orient_arr, tgt_n_acts[base_gp_idx, :])
         # plt.title("Neuron {}: responses vs Orientation. Gabor Set {}".format(k_idx, base_gp_idx))
+        # import pdb
+        # pdb.set_trace()
 
     # ---------------------------
     if tgt_n_opt_params is not None:
@@ -384,20 +386,21 @@ def get_contour_gain_vs_length(
         for img_idx in range(n_images):
 
             # (1) Create Test Image
-            test_img, test_img_label, _, _, _ = fields1993_stimuli.generate_contour_image(
-                frag=frag,
-                frag_params=g_params,
-                c_len=c_len,
-                beta=0,
-                alpha=0,
-                f_tile_size=full_tile_size,
-                img_size=img_size,
-                random_alpha_rot=True,
-                rand_inter_frag_direction_change=True,
-                use_d_jitter=False,
-                bg_frag_relocate=False,
-                bg=bg
-            )
+            test_img, test_img_label, contour_frags_starts, end_acc_angle, start_acc_angle = \
+                fields1993_stimuli.generate_contour_image(
+                    frag=frag,
+                    frag_params=g_params,
+                    c_len=c_len,
+                    beta=0,
+                    alpha=0,
+                    f_tile_size=full_tile_size,
+                    img_size=img_size,
+                    random_alpha_rot=True,
+                    rand_inter_frag_direction_change=True,
+                    use_d_jitter=False,
+                    bg_frag_relocate=False,
+                    bg=bg
+                )
 
             test_img = transform_functional.to_tensor(test_img)
             test_img_label = torch.from_numpy(np.array(test_img_label)).unsqueeze(0)
