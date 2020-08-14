@@ -1123,7 +1123,8 @@ def generate_data_set(
           base_dir, n_total_imgs, datetime.now() - start_time))
 
 
-def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), edge_width=1, display_figure=True):
+def plot_label_on_image(
+        img, label, f_tile_size, edge_color=(255, 0, 0), edge_width=1, display_figure=True):
     f_tile_starts = get_background_tiles_locations(
         frag_len=f_tile_size[0],
         img_len=np.max(img.shape),
@@ -1132,7 +1133,8 @@ def plot_label_on_image(img, label, f_tile_size, edge_color=(255, 0, 0), edge_wi
     )
 
     contour_containing_tiles = f_tile_starts[label.flatten().nonzero()]
-    labeled_image = highlight_tiles(img, f_tile_size, contour_containing_tiles, edge_color, edge_width)
+    labeled_image = highlight_tiles(
+        img, f_tile_size, contour_containing_tiles, edge_color, edge_width)
 
     if display_figure:
         plt.figure()
@@ -1170,11 +1172,11 @@ def is_label_valid(label, n_contours=1):
         # print("neigbors {}".format(neigbors))
         # print("Neighbors sum {}".format(neigbors.sum()))
 
-    if num_ends <= 2*n_contours:
+    if num_ends <= 2 * n_contours:
         is_valid = True
     # else:
-    #     print("Contour has discontinuities. Contours with only one neighbor {}. Expected {}".format(
-    #          num_ends, 2*n_contours))
+    #     print("Contour has discontinuities. Contours with only one neighbor {}. "
+    #           "Expected {}".format(num_ends, 2*n_contours))
 
     return is_valid
 
@@ -1194,11 +1196,11 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    # ----------------------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------
     # Gabor Fragment
     # -----------------------------------------------------------------------------------
     # BW Gabor, Single Channel (white on black Background)
-    # ----------------------------------
+    # ----------------------------------------------------
     bg_value = 0
     gabor_parameters_list = [{
         'x0': 0,
@@ -1212,7 +1214,7 @@ if __name__ == "__main__":
     }]
 
     # # BW Gabor, Single Channel (white on black Background)
-    # # ----------------------------------
+    # # ----------------------------------------------------
     # bg_value = 255
     # gabor_parameters_list = [{
     #     'x0': 0,
@@ -1226,7 +1228,7 @@ if __name__ == "__main__":
     # }]
 
     # # Colored Gabor, 3 Channels
-    # # ------------------------------------
+    # # -------------------------
     # bg_value = None
     # gabor_parameters_list = [
     #     {
@@ -1275,12 +1277,12 @@ if __name__ == "__main__":
     # contour_len = 9
     # beta_rotation = 15
     # alpha_rotation = 0
-
+    #
     # #  Add the Contour Path
     # test_image, path_fragment_starts, _, _ = add_contour_path_constant_separation(
     #     img=test_image,
     #     frag=fragment,
-    #     frag_params=gabor_parameters,
+    #     frag_params=gabor_parameters_list,
     #     c_len=contour_len,
     #     beta=beta_rotation,
     #     alpha=alpha_rotation,
@@ -1300,13 +1302,13 @@ if __name__ == "__main__":
     #     path_fragment_starts,
     #     full_tile_size,
     #     beta_rotation,
-    #     gabor_parameters,
+    #     gabor_parameters_list,
     #     relocate_allowed=True
     # )
     # plt.figure()
     # plt.imshow(test_image)
-    # plt.title("Highlighted Tiles: Stimulus c_len = {}, beta = {}, alpha = {}".format(contour_len, beta_rotation,
-    #                                                                                  alpha_rotation))
+    # plt.title("Highlighted Tiles: Stimulus c_len = {}, beta = {}, alpha = {}".format(
+    #     contour_len, beta_rotation, alpha_rotation))
     # # Highlight Tiles
     # full_tile_starts = get_background_tiles_locations(
     #     frag_len=full_tile_size[0],
@@ -1316,9 +1318,12 @@ if __name__ == "__main__":
     #     tgt_n_visual_rf_start=image_size[0] // 2 - (full_tile_size[0] // 2)
     # )
     #
-    # test_image = highlight_tiles(test_image, fragment_size, bg_tiles, edge_color=(255, 255, 0))
-    # test_image = highlight_tiles(test_image, full_tile_size, full_tile_starts, edge_color=(255, 0, 0))
-    # test_image = highlight_tiles(test_image, fragment_size, path_fragment_starts, edge_color=(0, 0, 255))
+    # test_image = highlight_tiles(
+    #     test_image, fragment_size, bg_tiles, edge_color=(255, 255, 0))
+    # test_image = highlight_tiles(
+    #     test_image, full_tile_size, full_tile_starts, edge_color=(255, 0, 0))
+    # test_image = highlight_tiles(
+    #     test_image, fragment_size, path_fragment_starts, edge_color=(0, 0, 255))
     #
     # plt.figure()
     # plt.imshow(test_image)
@@ -1351,6 +1356,84 @@ if __name__ == "__main__":
     plt.imshow(image)
     plt.title("Input Image")
 
-    plot_label_on_image(image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=1)
+    plot_label_on_image(
+        image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=1)
 
     input("press any key to exit")
+
+    # # -----------------------------------------------------------------------------------
+    # # Gabor Fragments from List
+    # # -----------------------------------------------------------------------------------
+    # import pickle
+    #
+    # gabor_params_file = 'channel_wise_optimal_stimuli.pickle'
+    # with open(gabor_params_file, 'rb') as handle:
+    #     data = pickle.load(handle)
+    #
+    # base_gabors_params_list = None
+    # if type(data) is list:
+    #     gabor_parameters_list = data
+    # elif type(data) is dict:
+    #     gabor_parameters_list = data['list_of_optimal_stimuli']
+    #     base_gabors_params_list = data['base_gabor_params']
+    # else:
+    #     raise Exception("Unknown pickle file type")
+    #
+    # for idx in range(64):
+    #     contour_len = 9
+    #     beta_rotation = 15
+    #     alpha_rotation = 15
+    #
+    #     fragment = gabor_fits.get_gabor_fragment(gabor_parameters_list[idx], fragment_size)
+    #
+    #     x_start_range, y_start_range = get_contour_start_ranges(
+    #         c_len=contour_len,
+    #         frag_orient=gabor_parameters_list[idx][0]['theta_deg'],
+    #         # Todo handle the case when there are three orientations
+    #         f_tile_size=full_tile_size,
+    #         img_size=image_size
+    #     )
+    #
+    #     middle_frag_start = np.array([
+    #         np.random.randint(x_start_range[0], x_start_range[1]),
+    #         np.random.randint(y_start_range[0], y_start_range[1]),
+    #     ])
+    #
+    #     image, image_label, _, _, _ = generate_contour_image(
+    #         frag=fragment,
+    #         frag_params=gabor_parameters_list[idx],
+    #         c_len=contour_len,
+    #         beta=beta_rotation,
+    #         alpha=alpha_rotation,
+    #         f_tile_size=full_tile_size,
+    #         img_size=image_size,
+    #         random_alpha_rot=True,
+    #         rand_inter_frag_direction_change=True,
+    #         use_d_jitter=True,
+    #         bg=gabor_parameters_list[idx][0]['bg'],
+    #         center_frag_start=middle_frag_start,
+    #     )
+    #     print(image_label)
+    #     print("Label is valid? {}".format(is_label_valid(image_label)))
+    #
+    #     plt.figure()
+    #     plt.imshow(image)
+    #     plt.title("Input Image")
+    #
+    #     import pdb
+    #
+    #     pdb.set_trace()
+    #
+    #     plot_label_on_image(
+    #         image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=1)
+    #
+    #     import pdb
+    #     pdb.set_trace()
+    #     plt.close('all')
+
+    # -----------------------------------------------------------------------------------
+    # End
+    # -----------------------------------------------------------------------------------
+    print("End")
+    import pdb
+    pdb.set_trace()
