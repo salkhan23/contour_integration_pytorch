@@ -1064,9 +1064,9 @@ if __name__ == '__main__':
     # Dataset Parameters
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
-        'biped_dataset_type': 'test',
-        'n_biped_imgs': 50,
-        'n_epochs': 200  # Total images = n_epochs * n_biped_images
+        'biped_dataset_type': 'train',
+        'n_biped_imgs': 20000,
+        'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
     # # Model
