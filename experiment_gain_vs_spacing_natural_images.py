@@ -515,6 +515,40 @@ def plot_predictions(x, preds_mat, title=None):
     return fig, axis
 
 
+def plot_histogram_of_linear_fit_gradients(x, mean_in_acts, mean_out_acts):
+    """
+    For each channel plot the histogram of gradients for the linear fit for each channel
+    # different way of showing population results
+     mean_in_acts = [n_channels x n_RCD]
+    """
+    n_channels = len(mean_in_acts)
+
+    in_acts_gradients = []
+    out_acts_gradients = []
+
+    for ch_idx in range(n_channels):
+        in_acts = mean_in_acts[ch_idx, ]
+        out_acts = mean_out_acts[ch_idx, ]
+
+        m_in, b_in = np.polyfit(x, in_acts, deg=1)
+        m_out, b_out = np.polyfit(x, out_acts, deg=1)
+
+        in_acts_gradients.append(m_in)
+        out_acts_gradients.append(m_out)
+
+    f, ax_arr = plt.subplots(1, 2, figsize=(11, 11))
+
+    ax_arr[0].hist(m_in)
+    ax_arr[0].set_x_label("Linear fit Gradient")
+    ax_arr[0].set_title("Gradients of linear fits to Input act vs RCD")
+
+    ax_arr[0].hist(m_out)
+    ax_arr[0].set_x_label("Linear fit Gradient")
+    ax_arr[0].set_title("Gradients of linear fits to Output act vs RCD")
+
+    return f, ax_arr
+
+
 def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
     """
     Plot mean input/output activation per channel (dim=0) individually in a tiled image.
@@ -1002,7 +1036,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f.savefig(os.path.join(results_dir, 'individual_channel_predictions.jpg'), format='jpg')
 
     # Population Average Results
-    # Population Avg  activations and gains
+    # Population Avg activations and gains
     f, ax_arr = plot_population_average_results(
         rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts,
         epsilon_gain_oi, epsilon_gain_oo)
@@ -1010,6 +1044,9 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     # Population average predictions
     f, ax_arr = plot_population_average_predictions(rcd, mean_preds, std_preds)
     f.savefig(os.path.join(results_dir, 'population_predictions.jpg'), format='jpg')
+    # Distribution of gradients of gain vs rcd curves
+    f, ax_arr = plot_histogram_of_linear_fit_gradients(rcd, mean_in_acts, mean_out_acts)
+    f.savefig(os.path.join(results_dir, 'histogram_of_gradient_fits.jpg'), format='jpg')
 
     plt.close('all')
 # ---------------------------------------------------------------------------------------
