@@ -767,7 +767,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     #           activations
     #           predictions
 
-    results_dir = os.path.join(base_results_dir, 'experiment_gain_vs_frag_size_natural_images')
+    results_dir = os.path.join(
+        base_results_dir, 'experiment_gain_vs_frag_size_natural_images_test')
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
