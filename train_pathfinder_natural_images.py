@@ -30,7 +30,7 @@ def get_lr(opt):
         return param_group['lr']
 
 
-def main(model, train_params, data_set_params, base_results_store_dir='./results'):
+def main(model, train_params, data_set_params, cont_int_scale, base_results_store_dir='./results'):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -422,19 +422,22 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     ax_arr[1].legend()
     f.savefig(os.path.join(results_store_dir, 'loss_and accuracy.jpg'), format='jpg')
 
-    # # -----------------------------------------------------------------------------------
-    # # Run Li 2006 experiments
-    # # -----------------------------------------------------------------------------------
-    # print("====> Running Experiments")
-    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir, iou_results=False)
-    # experiment_gain_vs_len.main(
-    #     model,
-    #     base_results_dir=results_store_dir,
-    #     iou_results=False,
-    #     frag_size=np.array([11, 11])
-    # )
-    #
-    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    # -----------------------------------------------------------------------------------
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    dataset_parameters = {
+        'biped_dataset_dir': './data/BIPED/edges',
+        'biped_dataset_type': 'test',
+        'n_biped_imgs': 50,
+        'n_epochs': 200  # Total images = n_epochs * n_biped_images
+    }
+
+    main(
+        model,
+        results_store_dir,
+        data_set_params=dataset_parameters,
+        cont_int_scale=cont_int_scale
+    )
 
 
 if __name__ == '__main__':
@@ -465,10 +468,16 @@ if __name__ == '__main__':
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
+    scale_down_input_to_contour_integration_layer = 4
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
 
-    main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/pathfinder')
+    main(
+        net,
+        train_params=train_parameters,
+        data_set_params=data_set_parameters,
+        base_results_store_dir='./results/pathfinder',
+        cont_int_scale=scale_down_input_to_contour_integration_layer
+    )
 
     # -----------------------------------------------------------------------------------
     # End

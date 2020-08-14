@@ -724,13 +724,10 @@ def debug_plot_contour_and_bubble_locations(
 # ---------------------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------------------
-def main(model, base_results_dir, cont_int_scale):
+def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_channels=64):
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
-    n_channels = 64
-    top_n = 50  # Track top 50 images
-
     # Imagenet Mean and STD
     ch_mean = [0.485, 0.456, 0.406]
     ch_std = [0.229, 0.224, 0.225]
@@ -742,10 +739,11 @@ def main(model, base_results_dir, cont_int_scale):
     epsilon_gain_oi = 1e-2  # for gain = Output / (input + epsilon_gain_oi)
     epsilon_gain_oo = 1e-4  # for gain = Outputs / (output RCD=1 + epsilon_gain_oo)
 
-    biped_dataset_dir = './data/BIPED/edges'
-    biped_dataset_type = 'test'
-    n_biped_imgs = 50
-    n_epochs = 200          # Total images = n_epochs * n_biped_images
+    required_data_set_params = [
+        'biped_dataset_dir', 'biped_dataset_type', 'n_biped_imgs', 'n_epochs']
+    for param in required_data_set_params:
+        if param not in data_set_params:
+            raise Exception("Required Dataset Param {} not found".format(param))
 
     # Immutable
     # ---------
@@ -753,7 +751,7 @@ def main(model, base_results_dir, cont_int_scale):
 
     # Relative co-linear distance =  spacing / fragment length
     rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
-    total_n_imgs = n_biped_imgs * n_epochs
+    total_n_imgs = data_set_params['n_biped_imgs'] * data_set_params['n_epochs']
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(dev)
@@ -797,10 +795,10 @@ def main(model, base_results_dir, cont_int_scale):
     # Data Loader
     # -----------------------------------------------------------------------------------
     data_set = OnlineNaturalImagesPathfinder(
-        data_dir=biped_dataset_dir,
-        dataset_type=biped_dataset_type,
+        data_dir=data_set_params['biped_dataset_dir'],
+        dataset_type=data_set_params['biped_dataset_type'],
         transform=None,  # Normalize each image individually, as part of process_image
-        subset_size=n_biped_imgs,
+        subset_size=data_set_params['n_biped_imgs'],
         resize_size=(256, 256),
         p_connect=1,  # Only interested in connected samples
     )
@@ -818,7 +816,8 @@ def main(model, base_results_dir, cont_int_scale):
     # -----------------------------------------------------------------------------------
     print("Finding Optimal Stimuli for each Channel. Num Images {} ...".format(total_n_imgs))
     top_n_per_channel_trackers = find_best_stimuli_for_each_channel(
-        model, data_loader, top_n, n_channels, ch_mean, ch_std, n_epochs, cont_int_scale)
+        model, data_loader, top_n, n_channels, ch_mean, ch_std,
+        data_set_params['n_epochs'], cont_int_scale)
 
     # -----------------------------------------------------------------------------------
     # Effect of Fragment spacing
@@ -1016,7 +1015,6 @@ def main(model, base_results_dir, cont_int_scale):
 
 
 if __name__ == '__main__':
-
     # Initialization
     # --------------
     random_seed = 7
@@ -1024,6 +1022,14 @@ if __name__ == '__main__':
     np.random.seed(random_seed)
     plt.ion()
     start_time = datetime.now()
+
+    # Dataset Parameters
+    dataset_parameters = {
+        'biped_dataset_dir': './data/BIPED/edges',
+        'biped_dataset_type': 'test',
+        'n_biped_imgs': 50,
+        'n_epochs': 200  # Total images = n_epochs * n_biped_images
+    }
 
     # # Model
     # # ------
@@ -1054,7 +1060,12 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
-    main(net, results_store_dir, scale_down_input_to_contour_integration_layer)
+    main(
+        net,
+        results_store_dir,
+        data_set_params=dataset_parameters,
+        cont_int_scale=scale_down_input_to_contour_integration_layer
+    )
 
     # -----------------------------------------------------------------------------------
     # End
