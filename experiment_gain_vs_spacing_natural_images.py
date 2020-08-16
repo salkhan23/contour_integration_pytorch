@@ -542,9 +542,9 @@ def plot_histogram_of_linear_fit_gradients(x, mean_in_acts, mean_out_acts):
     ax_arr[0].set_xlabel("Linear fit Gradient")
     ax_arr[0].set_title("Gradients of linear fits to Input act vs RCD")
 
-    ax_arr[0].hist(m_out)
-    ax_arr[0].set_xlabel("Linear fit Gradient")
-    ax_arr[0].set_title("Gradients of linear fits to Output act vs RCD")
+    ax_arr[1].hist(m_out)
+    ax_arr[1].set_xlabel("Linear fit Gradient")
+    ax_arr[1].set_title("Gradients of linear fits to Output Act vs RCD")
 
     return f, ax_arr
 
