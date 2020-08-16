@@ -109,7 +109,8 @@ def contour_integration_cb(self, layer_in, layer_out):
     cont_int_out_act = layer_out.cpu().detach().numpy()
 
 
-def process_image(model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=None, detect_thres=0.5):
+def process_image(
+        model, devise_to_use, ch_mus, ch_sigmas, in_img, in_img_label=None, detect_thres=0.5):
     """
     Pass image through model and get iou score of the prediction if in_img_label is not None
 
@@ -215,11 +216,17 @@ def find_optimal_stimulus(
             process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
 
             if extract_point == 'edge_extract_layer_out':
-                center_n_acts = edge_extract_act[0, :, edge_extract_act.shape[2]//2, edge_extract_act.shape[3]//2]
+                center_n_acts = \
+                    edge_extract_act[
+                        0, :, edge_extract_act.shape[2]//2, edge_extract_act.shape[3]//2]
             elif extract_point == 'contour_integration_layer_in':
-                center_n_acts = cont_int_in_act[0, :, cont_int_in_act.shape[2]//2, cont_int_in_act.shape[3]//2]
+                center_n_acts = \
+                    cont_int_in_act[
+                        0, :, cont_int_in_act.shape[2]//2, cont_int_in_act.shape[3]//2]
             else:  # 'contour_integration_layer_out'
-                center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2]//2, cont_int_out_act.shape[3]//2]
+                center_n_acts = \
+                    cont_int_out_act[
+                        0, :, cont_int_out_act.shape[2]//2, cont_int_out_act.shape[3]//2]
 
             tgt_n_act = center_n_acts[k_idx]
             tgt_n_acts[base_gp_idx, o_idx] = tgt_n_act
@@ -291,10 +298,11 @@ def find_optimal_stimulus(
         #
         # plt.legend()
         # plt.grid(True)
-        # plt.title("Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
-        #     k_idx,
-        #     tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
-        #     tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
+        # plt.title(
+        #     "Kernel {}. Max Active Base Set {}. Is most responsive to this stimulus {}".format(
+        #         k_idx,
+        #         tgt_n_opt_params[0]['extra_info']['optim_stim_base_gabor_set'],
+        #         tgt_n_opt_params[0]['extra_info']['max_active_neuron_is_target'])
         # )
         #
         # import pdb
@@ -321,7 +329,8 @@ def plot_tuning_curve(gp_params, k_idx=None):
     # # Highlight Max location
     # tgt_n_max_act = np.max(gp_params[0]['extra_info']['orient_tuning_curve_y'])
     # tgt_n_max_act_idx = np.argmax(gp_params[0]['extra_info']['orient_tuning_curve_y'])
-    # plt.axvline(gp_params[0]['extra_info']['orient_tuning_curve_x'][tgt_n_max_act_idx], color='green')
+    # plt.axvline(
+    #     gp_params[0]['extra_info']['orient_tuning_curve_x'][tgt_n_max_act_idx], color='green')
 
     # Mark the value of the neuron which had the max response to this stimulus
     plt.plot(
@@ -342,9 +351,9 @@ def plot_tuning_curve(gp_params, k_idx=None):
 
 
 def get_contour_gain_vs_length(
-        model, device_to_use, g_params, k_idx, ch_mus, ch_sigmas, rslt_dir, c_len_arr, frag_size=np.array([7, 7]),
-        full_tile_size=np.array([14, 14]), img_size=np.array([256, 256, 3]), n_images=50, epsilon=1e-5,
-        iou_results=True):
+        model, device_to_use, g_params, k_idx, ch_mus, ch_sigmas, rslt_dir, c_len_arr,
+        frag_size=np.array([7, 7]), full_tile_size=np.array([14, 14]),
+        img_size=np.array([256, 256, 3]), n_images=50, epsilon=1e-5, iou_results=True):
     """
 
     :param iou_results:
@@ -409,7 +418,8 @@ def get_contour_gain_vs_length(
             # # ------------------------
             # if c_len == 9:
             #     print(test_img_label)
-            #     print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(test_img_label)))
+            #     print("Label is valid? {}".format(
+            #         fields1993_stimuli.is_label_valid(test_img_label)))
             #
             #     plt.figure()
             #     plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
@@ -417,8 +427,8 @@ def get_contour_gain_vs_length(
             #
             #     # Highlight Label
             #     label_image = fields1993_stimuli.plot_label_on_image(
-            #         test_img, test_img_label, full_tile_size, edge_color=(250, 0, 0), edge_width=2,
-            #         display_figure=False)
+            #         test_img, test_img_label, full_tile_size, edge_color=(250, 0, 0),
+            #         edge_width=2, display_figure=False)
             #
             #     # Highlight Bg Tiles
             #     full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
@@ -447,7 +457,9 @@ def get_contour_gain_vs_length(
                 label = None
                 process_image(model, device_to_use, ch_mus, ch_sigmas, test_img, label)
 
-            center_n_acts = cont_int_out_act[0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
+            center_n_acts = \
+                cont_int_out_act[
+                    0, :, cont_int_out_act.shape[2] // 2, cont_int_out_act.shape[3] // 2]
 
             tgt_n_out_acts[img_idx, c_len_idx] = center_n_acts[tgt_n]
             max_act_n_acts[img_idx, c_len_idx] = center_n_acts[max_act_n_idx]
@@ -486,9 +498,11 @@ def get_contour_gain_vs_length(
     # Gain vs Length
     # f = plt.figure()
     f, ax_arr = plt.subplots(1, 2)
-    ax_arr[0].errorbar(c_len_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, label='Target Neuron {}'.format(tgt_n))
-    ax_arr[1].errorbar(c_len_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr,
-                       label='Max Active Neuron {}'.format(max_act_n_idx))
+    ax_arr[0].errorbar(
+        c_len_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, label='Target Neuron {}'.format(tgt_n))
+    ax_arr[1].errorbar(
+        c_len_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr,
+        label='Max Active Neuron {}'.format(max_act_n_idx))
     ax_arr[0].set_xlabel("Contour Length")
     ax_arr[1].set_xlabel("Contour Length")
     ax_arr[0].set_ylabel("Gain")
@@ -517,8 +531,8 @@ def get_contour_gain_vs_length(
     f.savefig(os.path.join(rslt_dir, 'output_activations_vs_len.jpg'), format='jpg')
     plt.close(f)
 
-    return iou_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, max_act_n_mean_gain_arr, max_act_n_std_gain_arr, \
-        tgt_n_avg_noise_resp, max_active_n_avg_noise_resp
+    return iou_arr, tgt_n_mean_gain_arr, tgt_n_std_gain_arr, max_act_n_mean_gain_arr, \
+        max_act_n_std_gain_arr, tgt_n_avg_noise_resp, max_active_n_avg_noise_resp
 
 
 def plot_iou_vs_contour_length(c_len_arr, ious_arr, store_dir, f_name, f_title=None):
@@ -541,7 +555,9 @@ def plot_iou_vs_contour_length(c_len_arr, ious_arr, store_dir, f_name, f_title=N
     if f_title is not None:
         plt.title("{}".format(f_title))
 
-    plt.axhline(np.mean(ious_arr), label='average_iou_{:0.2f}'.format(np.mean(ious_arr)), linestyle=':', color='red')
+    plt.axhline(
+        np.mean(ious_arr), label='average_iou_{:0.2f}'.format(np.mean(ious_arr)),
+        linestyle=':', color='red')
     plt.legend()
 
     f.savefig(os.path.join(store_dir, 'iou_vs_len_{}.jpg'.format(f_name)), format='jpg')
@@ -552,8 +568,8 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
     """
     Average list of averages as if they are from the same RV.
     Average across the channel dimension (axis=0)
-    Each entry itself is averaged value. We want to get the average mu and sigma as if they are from the
-    same RV
+    Each entry itself is averaged value. We want to get the average mu and sigma as if
+    they are from the same RV
 
     REF: https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
 
@@ -569,8 +585,9 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
     # For Two RVs, X and Y
     # Given mu_x, mu_y, sigma_x, sigma_y
     # sigma (standard deviation) of X + Y = np.sqrt(sigma_x**2 + sigma_y**2)
-    # This gives the standard deviation of the sum, of X+Y, to get the average variance if all samples were from same
-    # RV, just average the summed variance. Then sqrt it to get avg std
+    # This gives the standard deviation of the sum, of X+Y, to get the average variance
+    # if all samples were from same RV, just average the summed variance. Then sqrt it to
+    # get avg std
     n = gain_mu_mat.shape[0]
 
     sum_var = np.sum(gain_std_mat ** 2, axis=0)
@@ -580,7 +597,8 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat):
     return iou, mean_gain, std_gain
 
 
-def plot_gain_vs_contour_length(c_len_arr, mu_gain_arr, sigma_gain_arr, store_dir, f_name, f_title=None):
+def plot_gain_vs_contour_length(
+        c_len_arr, mu_gain_arr, sigma_gain_arr, store_dir, f_name, f_title=None):
     """
      Plot and Save Gain vs Contour Length
 
@@ -618,7 +636,8 @@ def write_detailed_results(noise_resp_arr, mean_gains_mat, std_gains_mat, f_hand
 
     f_handle.write("Gains standard deviation\n")
     for idx in range(mean_gains_mat.shape[0]):
-        f_handle.write("[" + ",".join('{:0.4f}'.format(item) for item in std_gains_mat[idx, ]) + "],\n")
+        f_handle.write(
+            "[" + ",".join('{:0.4f}'.format(item) for item in std_gains_mat[idx, ]) + "],\n")
 
 
 def get_filtered_averaged_population_results(iou_mat, mean_gains_mat, std_gains_mat, outliers):
@@ -641,9 +660,12 @@ def get_filtered_averaged_population_results(iou_mat, mean_gains_mat, std_gains_
 
 
 def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle):
-    f_handle.write("Population IoU      : [" + ",".join('{:0.4f}'.format(x) for x in iou_arr) + "]\n")
-    f_handle.write("Population mean gain: [" + ",".join('{:0.4f}'.format(x) for x in mean_gain_arr) + "]\n")
-    f_handle.write("Population std gain : [" + ",".join('{:0.4f}'.format(x) for x in std_gain_arr) + "]\n")
+    f_handle.write(
+        "Population IoU      : [" + ",".join('{:0.4f}'.format(x) for x in iou_arr) + "]\n")
+    f_handle.write(
+        "Population mean gain: [" + ",".join('{:0.4f}'.format(x) for x in mean_gain_arr) + "]\n")
+    f_handle.write(
+        "Population std gain : [" + ",".join('{:0.4f}'.format(x) for x in std_gain_arr) + "]\n")
 
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
@@ -686,7 +708,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         n_channels = model.edge_extract.weight.shape[0]
     else:
         embedded_layer_identifier.edge_extract.register_forward_hook(edge_extract_cb)
-        embedded_layer_identifier.contour_integration_layer.register_forward_hook(contour_integration_cb)
+        embedded_layer_identifier.contour_integration_layer.register_forward_hook(
+            contour_integration_cb)
         n_channels = embedded_layer_identifier.edge_extract.weight.shape[0]
 
     # Results Directory
@@ -733,7 +756,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
             continue
 
         # Save Tuning Curve and Gabor fit params:
-        n_results_dir = os.path.join(individual_neuron_results_store_dir, 'neuron_{}'.format(ch_idx))
+        n_results_dir = os.path.join(
+            individual_neuron_results_store_dir, 'neuron_{}'.format(ch_idx))
         if not os.path.exists(n_results_dir):
             os.makedirs(n_results_dir)
 
@@ -799,7 +823,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     summary_file = os.path.join(results_store_dir, 'results.txt')
     file_handle = open(summary_file, 'w+')
 
-    file_handle.write("Neurons for which the optimal stimulus cannot be found: {}\n".format(skipped_neurons))
+    file_handle.write("Neurons for which the optimal stimulus cannot be found: {}\n".format(
+        skipped_neurons))
     file_handle.write("Contour Lengths: {}\n".format(c_len_arr))
 
     tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std = get_averaged_results(
@@ -821,11 +846,12 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     file_handle.write("Target Neurons\n")
     write_population_avg_results(tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std, file_handle)
 
-    max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std = get_averaged_results(
-        iou_per_len_mat,
-        max_active_neuron_mean_gain_mat,
-        max_active_neuron_std_gain_mat
-    )
+    max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std = \
+        get_averaged_results(
+            iou_per_len_mat,
+            max_active_neuron_mean_gain_mat,
+            max_active_neuron_std_gain_mat
+        )
 
     plot_gain_vs_contour_length(
         c_len_arr,
@@ -837,10 +863,12 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     )
 
     file_handle.write("Max Active Neurons\n")
-    write_population_avg_results(max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std, file_handle)
+    write_population_avg_results(
+        max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std, file_handle)
 
     if iou_results:
-        plot_iou_vs_contour_length(c_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
+        plot_iou_vs_contour_length(
+            c_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
 
     # Filtered Results :
     # [Li -2006]: Neurons that were not responsive to single bars or did not show a clear
@@ -850,7 +878,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     # -------------------------------------------------------------------------------------
     min_clen_1_resp = 0.1
 
-    tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
+    tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr)
+                      if np.any(item < min_clen_1_resp)]
     filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
         iou_per_len_mat,
         tgt_neuron_mean_gain_mat,
@@ -868,14 +897,17 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     )
 
     file_handle.write(
-        "{1} Filtered with noise (single fragment) Response >= {0} {1}\n".format(min_clen_1_resp, '-' * 20))
+        "{1} Filtered with noise (single fragment) Response >= {0} {1}\n".format(
+            min_clen_1_resp, '-' * 20))
     file_handle.write("Target Neurons\n")
     file_handle.write("Removed {} neurons @ {}\n".format(len(tgt_n_outliers), tgt_n_outliers))
     if len(tgt_n_outliers) < len(tgt_neuron_noise_resp_arr):
-        write_population_avg_results(filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
+        write_population_avg_results(
+            filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
 
     max_active_n_outliers = \
-        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if np.any(item < min_clen_1_resp)]
+        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr)
+         if np.any(item < min_clen_1_resp)]
     filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
         iou_per_len_mat,
         max_active_neuron_mean_gain_mat,
@@ -888,14 +920,17 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_pop_gain_std,
         results_store_dir,
         f_name='pop_gain_vs_len_max_active_n_filtered',
-        f_title='Max Active Neurons population contour gain vs length\n(filtered noise response > {})'
-                '\nRemoved {} Neurons'.format(min_clen_1_resp, len(max_active_n_outliers))
+        f_title='Max Active Neurons population contour gain vs length\n'
+                '(filtered noise response > {})\nRemoved {} Neurons'.format(
+                    min_clen_1_resp, len(max_active_n_outliers))
     )
 
     file_handle.write("Max Active Neurons\n")
-    file_handle.write("Removed {} neurons @ {}\n".format(len(max_active_n_outliers), max_active_n_outliers))
+    file_handle.write("Removed {} neurons @ {}\n".format(
+        len(max_active_n_outliers), max_active_n_outliers))
     if len(max_active_n_outliers) < len(max_active_neuron_noise_resp_arr):
-        write_population_avg_results(filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
+        write_population_avg_results(
+            filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
 
     # (2) Write Detailed Results
     # --------------------------------------------------
@@ -949,8 +984,10 @@ if __name__ == "__main__":
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
-    saved_model = './results/new_model/ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
-                  'best_accuracy.pth'
+    saved_model = \
+        './results/new_model/' \
+        'ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
+        'best_accuracy.pth'
 
     plt.ion()
     torch.manual_seed(random_seed)
