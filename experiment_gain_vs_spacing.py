@@ -429,44 +429,58 @@ def get_contour_gain_vs_spacing(
                     random_alpha_rot=True,
                     rand_inter_frag_direction_change=True,
                     use_d_jitter=False,
-                    bg_frag_relocate=False,
+                    bg_frag_relocate=True,
                     bg=bg
                 )
 
+            test_img = transform_functional.to_tensor(test_img)
+            test_img_label = torch.from_numpy(np.array(test_img_label)).unsqueeze(0)
+
             # # Debug - Plot Test Image
             # # ------------------------
-            # print(test_img_label)
-            # print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(test_img_label)))
+            # if img_idx == 0:
+            #     disp_img = np.transpose(test_img.numpy(), axes=(1, 2, 0))
+            #     disp_img = (disp_img - disp_img.min()) / (disp_img.max() - disp_img.min()) * 255.
+            #     disp_img = disp_img.astype('uint8')
+            #     disp_label = test_img_label.numpy()
             #
-            # plt.figure()
-            # plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
-            # plt.title("Input Image")
+            #     print(disp_label)
+            #     print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(disp_label)))
             #
-            # # Highlight Label
-            # label_image = fields1993_stimuli.plot_label_on_image(
-            #     test_img, test_img_label, full_tile_s, edge_color=(250, 0, 0),
-            #     edge_width=2, display_figure=False)
+            #     plt.figure()
+            #     plt.imshow(disp_img)
+            #     plt.title("Input Image. Full Tile Size = {}".format(full_tile_s))
             #
-            # # Highlight Bg Tiles
-            # full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
-            #     frag_len=full_tile_s[0],
-            #     img_len=img_size[1],
-            #     row_offset=0,
-            #     space_bw_tiles=0,
-            #     tgt_n_visual_rf_start=img_size[0] // 2 - (full_tile_s[0] // 2)
-            # )
+            #     # Highlight Label Tiles
+            #     disp_label_image = fields1993_stimuli.plot_label_on_image(
+            #         disp_img,
+            #         disp_label,
+            #         full_tile_s,
+            #         edge_color=(250, 0, 0),
+            #         edge_width=2,
+            #         display_figure=False
+            #     )
             #
-            # label_image = fields1993_stimuli.highlight_tiles(
-            #     label_image, full_tile_s, full_tile_starts, edge_color=(255, 255, 0))
+            #     # Highlight All background Tiles
+            #     full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
+            #         frag_len=full_tile_s[0],
+            #         img_len=img_size[1],
+            #         row_offset=0,
+            #         space_bw_tiles=0,
+            #         tgt_n_visual_rf_start=img_size[0] // 2 - (full_tile_s[0] // 2)
+            #     )
             #
-            # plt.figure()
-            # plt.imshow(label_image)
-            # plt.title("Labeled Image")
+            #     disp_label_image = fields1993_stimuli.highlight_tiles(
+            #         disp_label_image,
+            #         full_tile_s,
+            #         full_tile_starts,
+            #         edge_color=(255, 255, 0))
             #
-            # import pdb
-            # pdb.set_trace()
+            #     plt.figure()
+            #     plt.imshow(disp_label_image)
+            #     plt.title("Labeled Image. Full Tile Size = {}".format(full_tile_s))
 
-            test_img = transform_functional.to_tensor(test_img)
+            # (2) Get output Activations
             _ = process_image(model, device_to_use, ch_mus, ch_sigmas, test_img)
 
             center_n_acts = \
@@ -475,6 +489,10 @@ def get_contour_gain_vs_spacing(
 
             tgt_n_out_acts[img_idx, ft_idx] = center_n_acts[tgt_n]
             max_act_n_acts[img_idx, ft_idx] = center_n_acts[max_act_n_idx]
+
+    # ------------------
+    # import pdb
+    # pdb.set_trace()
 
     # -------------------------------------------
     # Gain
@@ -980,7 +998,7 @@ if __name__ == "__main__":
     # Model trained with 5 iterations
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
         './results/new_model_resnet_based/' \
         'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline/' \
@@ -991,7 +1009,8 @@ if __name__ == "__main__":
     np.random.seed(random_seed)
     start_time = datetime.now()
 
-    net.load_state_dict(torch.load(saved_model))
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.load_state_dict(torch.load(saved_model, map_location=dev))
     results_dir = os.path.dirname(saved_model)
 
     main(net, results_dir)
