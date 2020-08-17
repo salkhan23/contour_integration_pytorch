@@ -407,7 +407,7 @@ def get_contour_gain_vs_length(
                     random_alpha_rot=True,
                     rand_inter_frag_direction_change=True,
                     use_d_jitter=False,
-                    bg_frag_relocate=False,
+                    bg_frag_relocate=True,
                     bg=bg
                 )
 
@@ -416,21 +416,30 @@ def get_contour_gain_vs_length(
 
             # # Debug - Plot Test Image
             # # ------------------------
-            # if c_len == 9:
-            #     print(test_img_label)
-            #     print("Label is valid? {}".format(
-            #         fields1993_stimuli.is_label_valid(test_img_label)))
+            # if img_idx == 0:
+            #     disp_img = np.transpose(test_img.numpy(), axes=(1, 2, 0))
+            #     disp_img = (disp_img - disp_img.min()) / (disp_img.max() - disp_img.min()) * 255.
+            #     disp_img = disp_img.astype('uint8')
+            #     disp_label = test_img_label.numpy()
+            #
+            #     print(disp_label)
+            #     print("Label is valid? {}".format(fields1993_stimuli.is_label_valid(disp_label)))
             #
             #     plt.figure()
-            #     plt.imshow(np.transpose(test_img, axes=(1, 2, 0)))
-            #     plt.title("Input Image")
+            #     plt.imshow(disp_img)
+            #     plt.title("Input Image. Contour Length = {}".format(c_len))
             #
-            #     # Highlight Label
-            #     label_image = fields1993_stimuli.plot_label_on_image(
-            #         test_img, test_img_label, full_tile_size, edge_color=(250, 0, 0),
-            #         edge_width=2, display_figure=False)
+            #     # # Highlight Label Tiles
+            #     # disp_label_image = fields1993_stimuli.plot_label_on_image(
+            #     #     disp_img,
+            #     #     disp_label,
+            #     #     full_tile_size,
+            #     #     edge_color=(250, 0, 0),
+            #     #     edge_width=2,
+            #     #     display_figure=False
+            #     # )
             #
-            #     # Highlight Bg Tiles
+            #     # Highlight All background Tiles
             #     full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
             #         frag_len=full_tile_size[0],
             #         img_len=img_size[1],
@@ -439,15 +448,15 @@ def get_contour_gain_vs_length(
             #         tgt_n_visual_rf_start=img_size[0] // 2 - (full_tile_size[0] // 2)
             #     )
             #
-            #     label_image = fields1993_stimuli.highlight_tiles(
-            #         label_image, full_tile_size, full_tile_starts, edge_color=(255, 255, 0))
+            #     disp_label_image = fields1993_stimuli.highlight_tiles(
+            #         disp_label_image,
+            #         full_tile_size,
+            #         full_tile_starts,
+            #         edge_color=(255, 255, 0))
             #
             #     plt.figure()
-            #     plt.imshow(label_image)
-            #     plt.title("Labeled Image")
-            #
-            #     import pdb
-            #     pdb.set_trace()
+            #     plt.imshow(disp_label_image)
+            #     plt.title("Labeled Image. Countour Length = {}".format(c_len))
 
             # (2) Get output Activations
             if iou_results:
@@ -465,6 +474,9 @@ def get_contour_gain_vs_length(
             max_act_n_acts[img_idx, c_len_idx] = center_n_acts[max_act_n_idx]
 
         iou_arr.append(iou / n_images)
+
+    # import pdb
+    # pdb.set_trace()
 
     # ---------------------------------
     # IOU
@@ -983,10 +995,10 @@ if __name__ == "__main__":
     # -------
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model/' \
-        'ContourIntegrationCSI_20200130_181122_gaussian_reg_sigma_10_loss_e-5/' \
+        './results/new_model_resnet_based/' \
+        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline/' \
         'best_accuracy.pth'
 
     plt.ion()
@@ -994,7 +1006,8 @@ if __name__ == "__main__":
     np.random.seed(random_seed)
     start_time = datetime.now()
 
-    net.load_state_dict(torch.load(saved_model))
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.load_state_dict(torch.load(saved_model, map_location=dev))
     results_dir = os.path.dirname(saved_model)
 
     main(net, results_dir)
