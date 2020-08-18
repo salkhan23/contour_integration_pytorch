@@ -429,15 +429,15 @@ def get_contour_gain_vs_length(
             #     plt.imshow(disp_img)
             #     plt.title("Input Image. Contour Length = {}".format(c_len))
             #
-            #     # # Highlight Label Tiles
-            #     # disp_label_image = fields1993_stimuli.plot_label_on_image(
-            #     #     disp_img,
-            #     #     disp_label,
-            #     #     full_tile_size,
-            #     #     edge_color=(250, 0, 0),
-            #     #     edge_width=2,
-            #     #     display_figure=False
-            #     # )
+            #     # Highlight Label Tiles
+            #     disp_label_image = fields1993_stimuli.plot_label_on_image(
+            #         disp_img,
+            #         disp_label,
+            #         full_tile_size,
+            #         edge_color=(250, 0, 0),
+            #         edge_width=2,
+            #         display_figure=False
+            #     )
             #
             #     # Highlight All background Tiles
             #     full_tile_starts = fields1993_stimuli.get_background_tiles_locations(
@@ -475,10 +475,10 @@ def get_contour_gain_vs_length(
 
         iou_arr.append(iou / n_images)
 
+    # ---------------------------------
     # import pdb
     # pdb.set_trace()
 
-    # ---------------------------------
     # IOU
     if iou_results:
         # print("IoU per length {}".format(iou_arr))
