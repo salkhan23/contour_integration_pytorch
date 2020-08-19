@@ -452,12 +452,12 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir':  "./data/channel_wise_optimal_full14_frag7",
-        'train_subset_size': 20000,
+        # 'train_subset_size': 20000,
         # 'test_subset_size': 2000
     }
 
     train_parameters = {
-        'train_batch_size': 16,
+        'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 3e-5,
         'num_epochs': 50,
