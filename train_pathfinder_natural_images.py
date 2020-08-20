@@ -21,8 +21,7 @@ import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
 import dataset_pathfinder
 
-import experiment_gain_vs_len
-import experiment_gain_vs_spacing
+import experiment_gain_vs_spacing_natural_images
 
 
 def get_lr(opt):
@@ -427,12 +426,12 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     # -----------------------------------------------------------------------------------
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
-        'biped_dataset_type': 'test',
-        'n_biped_imgs': 50,
-        'n_epochs': 200  # Total images = n_epochs * n_biped_images
+        'biped_dataset_type': 'train',
+        'n_biped_imgs': 1,
+        'n_epochs': 20000  # Total images = n_epochs * n_biped_images
     }
 
-    main(
+    experiment_gain_vs_spacing_natural_images.main(
         model,
         results_store_dir,
         data_set_params=dataset_parameters,
