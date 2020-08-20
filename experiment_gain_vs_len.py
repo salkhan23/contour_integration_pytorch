@@ -920,7 +920,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
 
     # Target Neuron Gains
     print("Target Neuron Noise (single fragment) Response: \n" + 'np.' +
-          repr(tgt_neuron_noise_resp_arr), file=file_handle)
+          repr(np.array(tgt_neuron_noise_resp_arr)), file=file_handle)
     print("Target Neuron Mean Gains: \n" + 'np.' +
           repr(tgt_neuron_mean_gain_mat), file=file_handle)
     print("Target Neuron Std Gains: \n" + 'np.' +
@@ -928,7 +928,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
 
     # Max Active Neuron
     print("Max Active Neuron Noise (single fragment) Response: \n" + 'np.' +
-          repr(max_active_neuron_noise_resp_arr), file=file_handle)
+          repr(np.array(max_active_neuron_noise_resp_arr)), file=file_handle)
     print("Max Active Neuron Mean Gains: \n" + 'np.' +
           repr(max_active_neuron_mean_gain_mat), file=file_handle)
     print("Max Active Neuron Std Gains: \n" + 'np.' +
