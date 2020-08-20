@@ -823,21 +823,125 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     iou_per_len_mat = np.array(iou_per_len_mat)
 
     # -----------------------------------------------------------------------------------
-    # Population Results and Plots
+    # Write summary results
     # -----------------------------------------------------------------------------------
     print(">>>> Processing Results")
     summary_file = os.path.join(results_store_dir, 'results.txt')
     file_handle = open(summary_file, 'w+')
 
-    file_handle.write("Neurons for which the optimal stimulus cannot be found: {}\n".format(
-        skipped_neurons))
     file_handle.write("Contour Lengths: {}\n".format(c_len_arr))
 
+    file_handle.write("Optimal Stimulus not found for {} neurons:\n {}\n".format(
+        len(skipped_neurons), skipped_neurons))
+
+    file_handle.write("\n\n{0} Summary Results\n {0}".format('-' * 20))
+
+    # (1) Unfiltered
+    file_handle.write("{0} Unfiltered {0}\n".format('-' * 20))
+
     tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std = get_averaged_results(
-        iou_per_len_mat,
-        tgt_neuron_mean_gain_mat,
-        tgt_neuron_std_gain_mat
-    )
+        iou_per_len_mat, tgt_neuron_mean_gain_mat, tgt_neuron_std_gain_mat)
+    file_handle.write("Target Neurons\n")
+    write_population_avg_results(
+        tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std, file_handle)
+
+    max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std = \
+        get_averaged_results(
+            iou_per_len_mat, max_active_neuron_mean_gain_mat, max_active_neuron_std_gain_mat)
+    file_handle.write("Max Active Neurons\n")
+    write_population_avg_results(
+        max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std, file_handle)
+
+    #  (2) Filtered
+    # [Li -2006]: Neurons that were not responsive to single bars or did not show a clear
+    # orientation tuning preference were skipped.
+    # Method: Remove all neurons with a noise pattern (single fragment) activation
+    # below a threshold
+    min_clen_1_resp = 0.1
+    file_handle.write(
+        "{1} Filtered with noise (single fragment) response >= {0} {1}\n".format(
+            min_clen_1_resp, '-' * 20))
+
+    file_handle.write("Target Neurons\n")
+    tgt_n_outliers = \
+        [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if item < min_clen_1_resp]
+    file_handle.write("Removed {} MORE neurons @ new indexes {}\n".format(
+        len(tgt_n_outliers), tgt_n_outliers))
+    file_handle.write("Filtered results averaged over {} neurons\n".format(
+        n_channels - (len(skipped_neurons) + len(tgt_n_outliers))))
+
+    filt_tgt_n_pop_iou_mat, filt_tgt_n_pop_mean_gain_mat, filt_tgt_n_pop_gain_std_mat = \
+        get_filtered_averaged_population_results(
+            iou_per_len_mat,
+            tgt_neuron_mean_gain_mat,
+            tgt_neuron_std_gain_mat,
+            outliers=tgt_n_outliers)
+    filt_tgt_n_pop_iou, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std = get_averaged_results(
+        filt_tgt_n_pop_iou_mat, filt_tgt_n_pop_mean_gain_mat, filt_tgt_n_pop_gain_std_mat)
+    write_population_avg_results(
+        filt_tgt_n_pop_iou, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std, file_handle)
+
+    file_handle.write("Max Active Neurons\n")
+    max_active_n_outliers = \
+        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if item < min_clen_1_resp]
+    file_handle.write("Removed {} MORE neurons @ new indexes {}\n".format(
+        len(max_active_n_outliers), max_active_n_outliers))
+    file_handle.write("Filtered results averaged over {} neurons\n".format(
+        n_channels - (len(skipped_neurons) + len(max_active_n_outliers))))
+
+    filt_max_active_pop_iou_mat, filt_max_active_pop_mean_gain_mat, \
+        filt_max_active_pop_gain_std_mat = get_filtered_averaged_population_results(
+            iou_per_len_mat,
+            max_active_neuron_mean_gain_mat,
+            max_active_neuron_std_gain_mat,
+            outliers=max_active_n_outliers)
+    filt_max_active_pop_iou, filt_max_active_pop_mean_gain, filt_max_active_pop_gain_std = \
+        get_averaged_results(
+            filt_max_active_pop_iou_mat,
+            filt_max_active_pop_mean_gain_mat,
+            filt_max_active_pop_gain_std_mat)
+    write_population_avg_results(
+        filt_max_active_pop_iou, filt_max_active_pop_mean_gain,
+        filt_max_active_pop_gain_std, file_handle)
+
+    # -----------------------------------------------------------------------------------
+    # Detailed Results
+    # -----------------------------------------------------------------------------------
+    file_handle.write('\n\n{0} Detailed  Results {0}\n'.format("-" * 30))
+    file_handle.write('Value -1000 = No Result\n'.format("-" * 30))
+
+    np.set_printoptions(precision=3)
+
+    # Mean Output activations
+    print("Raw Mean Out Activations: \n" + 'np.' +
+          repr(tgt_neuron_mean_out_acts), file=file_handle)
+    print("Raw Std Out Activations: \n" + 'np.' +
+          repr(tgt_neuron_std_out_acts), file=file_handle)
+
+    # Target Neuron Gains
+    print("Target Neuron Noise (single fragment) Response: \n" + 'np.' +
+          repr(tgt_neuron_noise_resp_arr), file=file_handle)
+    print("Target Neuron Mean Gains: \n" + 'np.' +
+          repr(tgt_neuron_mean_gain_mat), file=file_handle)
+    print("Target Neuron Std Gains: \n" + 'np.' +
+          repr(tgt_neuron_mean_gain_mat), file=file_handle)
+
+    # Max Active Neuron
+    print("Max Active Neuron Noise (single fragment) Response: \n" + 'np.' +
+          repr(max_active_neuron_noise_resp_arr), file=file_handle)
+    print("Max Active Neuron Mean Gains: \n" + 'np.' +
+          repr(max_active_neuron_mean_gain_mat), file=file_handle)
+    print("Max Active Neuron Std Gains: \n" + 'np.' +
+          repr(max_active_neuron_std_gain_mat), file=file_handle)
+
+    file_handle.close()
+
+    # -----------------------------------------------------------------------------------
+    # Plots
+    # -----------------------------------------------------------------------------------
+    if iou_results:
+        plot_iou_vs_contour_length(
+            c_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
 
     plot_gain_vs_contour_length(
         c_len_arr,
@@ -848,17 +952,6 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         f_title='Target Neurons population contour gain vs length \n(unfiltered)'
     )
 
-    file_handle.write("{0} Unfiltered Results {0}\n".format('-' * 20))
-    file_handle.write("Target Neurons\n")
-    write_population_avg_results(tgt_n_pop_iou, tgt_n_pop_mean_gain, tgt_pop_gain_std, file_handle)
-
-    max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std = \
-        get_averaged_results(
-            iou_per_len_mat,
-            max_active_neuron_mean_gain_mat,
-            max_active_neuron_std_gain_mat
-        )
-
     plot_gain_vs_contour_length(
         c_len_arr,
         max_active_n_pop_mean_gain,
@@ -868,105 +961,30 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         f_title='Max Active Neurons population Contour gain vs Length \n(unfiltered)'
     )
 
-    file_handle.write("Max Active Neurons\n")
-    write_population_avg_results(
-        max_active_n_pop_iou, max_active_n_pop_mean_gain, max_active_pop_gain_std, file_handle)
-
-    if iou_results:
-        plot_iou_vs_contour_length(
-            c_len_arr, tgt_n_pop_iou, results_store_dir, "Population", "Population")
-
-    # Filtered Results :
-    # [Li -2006]: Neurons that were not responsive to single bars or did not show a clear
-    # orientation tuning preference were skipped.
-
-    # (1) Filtering 1: Remove all neurons with a noise pattern activation below a threshold
-    # -------------------------------------------------------------------------------------
-    min_clen_1_resp = 0.1
-
-    tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr)
-                      if np.any(item < min_clen_1_resp)]
-    filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
-        iou_per_len_mat,
-        tgt_neuron_mean_gain_mat,
-        tgt_neuron_std_gain_mat,
-        outliers=tgt_n_outliers)
-
     plot_gain_vs_contour_length(
         c_len_arr,
-        filt_pop_mean_gain,
-        filt_pop_gain_std,
+        filt_tgt_n_pop_mean_gain,
+        filt_tgt_n_pop_gain_std,
         results_store_dir,
         f_name='pop_gain_vs_len_tgt_n_filtered',
         f_title='Target Neurons population contour gain vs length\n(filtered noise response > {})'
-                '\nRemoved {} Neurons'.format(min_clen_1_resp, len(tgt_n_outliers))
+        '\n Average over {} neurons '.format(
+            min_clen_1_resp, n_channels - (len(skipped_neurons) + len(tgt_n_outliers)))
     )
-
-    file_handle.write(
-        "{1} Filtered with noise (single fragment) Response >= {0} {1}\n".format(
-            min_clen_1_resp, '-' * 20))
-    file_handle.write("Target Neurons\n")
-    file_handle.write("Removed {} neurons @ {}\n".format(len(tgt_n_outliers), tgt_n_outliers))
-    if len(tgt_n_outliers) < len(tgt_neuron_noise_resp_arr):
-        write_population_avg_results(
-            filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
-
-    max_active_n_outliers = \
-        [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr)
-         if np.any(item < min_clen_1_resp)]
-    filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std = get_filtered_averaged_population_results(
-        iou_per_len_mat,
-        max_active_neuron_mean_gain_mat,
-        max_active_neuron_std_gain_mat,
-        outliers=max_active_n_outliers)
 
     plot_gain_vs_contour_length(
         c_len_arr,
-        filt_pop_mean_gain,
-        filt_pop_gain_std,
+        filt_max_active_pop_mean_gain,
+        filt_max_active_pop_mean_gain,
         results_store_dir,
         f_name='pop_gain_vs_len_max_active_n_filtered',
         f_title='Max Active Neurons population contour gain vs length\n'
-                '(filtered noise response > {})\nRemoved {} Neurons'.format(
-                    min_clen_1_resp, len(max_active_n_outliers))
+                '(filtered noise response > {}).\n Average over {} neurons'.format(
+                    min_clen_1_resp,
+                    n_channels - (len(skipped_neurons) + len(max_active_n_outliers)))
     )
 
-    file_handle.write("Max Active Neurons\n")
-    file_handle.write("Removed {} neurons @ {}\n".format(
-        len(max_active_n_outliers), max_active_n_outliers))
-    if len(max_active_n_outliers) < len(max_active_neuron_noise_resp_arr):
-        write_population_avg_results(
-            filt_pop_iou, filt_pop_mean_gain, filt_pop_gain_std, file_handle)
-
-    # (2) Write Detailed Results
-    # --------------------------------------------------
-    file_handle.write('\n\n{0} Detailed  Results {0}\n'.format("-" * 30))
-    file_handle.write('Value -1000 = No Result'.format("-" * 30))
-
-    # Write Mean Output activations
-    np.set_printoptions(precision=3)
-    print("Raw Mean Out Activations: \n" + 'np.' +
-          repr(tgt_neuron_mean_out_acts), file=file_handle)
-    print("Raw Std Out Activations: \n" + 'np.' +
-          repr(tgt_neuron_std_out_acts), file=file_handle)
-
-    print("Target Neuron Noise (single fragment) Response: \n" + 'np.' +
-          repr(tgt_neuron_noise_resp_arr), file=file_handle)
-    print("Target Neuron Mean Gains: \n" + 'np.' +
-          repr(tgt_neuron_mean_gain_mat), file=file_handle)
-    print("Target Neuron Std Gains: \n" + 'np.' +
-          repr(tgt_neuron_mean_gain_mat), file=file_handle)
-
-    print("Max Active Neuron Noise (single fragment) Response: \n" + 'np.' +
-          repr(max_active_neuron_noise_resp_arr), file=file_handle)
-    print("Max Active Neuron Mean Gains: \n" + 'np.' +
-          repr(max_active_neuron_mean_gain_mat), file=file_handle)
-    print("Max Active Neuron Std Gains: \n" + 'np.' +
-          repr(max_active_neuron_std_gain_mat), file=file_handle)
-
-    file_handle.close()
-
-    # Individual gains in a single figure
+    # Individual gains in a single tiled figure
     tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
@@ -984,8 +1002,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
         i += 1
 
-    f.suptitle("Individual Neuron Gains vs contour length")
-    f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_clen.jpg'), format='jpg')
+    f.suptitle("Individual neuron gains vs contour length")
+    f.savefig(os.path.join(results_store_dir, 'individual_gain_vs_c_len.jpg'), format='jpg')
     plt.close()
 
 
@@ -998,9 +1016,9 @@ if __name__ == "__main__":
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model_resnet_based/' \
-        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline/' \
-        'best_accuracy.pth'
+        './results/new_model_resnet_based/Old/' \
+        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+        '/best_accuracy.pth'
 
     plt.ion()
     torch.manual_seed(random_seed)
