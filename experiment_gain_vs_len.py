@@ -648,7 +648,7 @@ def get_filtered_averaged_population_results(iou_mat, mean_gains_mat, std_gains_
     filt_tgt_std_gain_mat = std_gains_mat[filt_n_idxs, ]
 
     pop_iou = None
-    pop_mean_gain = None,
+    pop_mean_gain = None
     pop_gain_std = None
 
     if len(filt_iou_mat) is not 0:
@@ -659,12 +659,17 @@ def get_filtered_averaged_population_results(iou_mat, mean_gains_mat, std_gains_
 
 
 def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle):
-    f_handle.write(
-        "Population IoU      : [" + ",".join('{:0.4f}'.format(x) for x in iou_arr) + "]\n")
-    f_handle.write(
-        "Population mean gain: [" + ",".join('{:0.4f}'.format(x) for x in mean_gain_arr) + "]\n")
-    f_handle.write(
-        "Population std gain : [" + ",".join('{:0.4f}'.format(x) for x in std_gain_arr) + "]\n")
+    if iou_arr is not None:
+        f_handle.write(
+            "Population IoU      : [" + ",".join('{:0.4f}'.format(x) for x in iou_arr) + "]\n")
+    if mean_gain_arr is not None:
+        f_handle.write(
+            "Population mean gain: [" + ",".join('{:0.4f}'.format(x) for x in mean_gain_arr)
+            + "]\n")
+    if std_gain_arr is not None:
+        f_handle.write(
+            "Population std gain : [" + ",".join('{:0.4f}'.format(x) for x in std_gain_arr)
+            + "]\n")
 
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
@@ -863,21 +868,19 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
             min_clen_1_resp, '-' * 20))
 
     file_handle.write("Target Neurons\n")
-    tgt_n_outliers = \
-        [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if item < min_clen_1_resp]
+    tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if item < min_clen_1_resp]
     file_handle.write("Removed {} MORE neurons @ new indexes {}\n".format(
         len(tgt_n_outliers), tgt_n_outliers))
     file_handle.write("Filtered results averaged over {} neurons\n".format(
         n_channels - (len(skipped_neurons) + len(tgt_n_outliers))))
 
-    filt_tgt_n_pop_iou_mat, filt_tgt_n_pop_mean_gain_mat, filt_tgt_n_pop_gain_std_mat = \
+    filt_tgt_n_pop_iou, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std = \
         get_filtered_averaged_population_results(
             iou_per_len_mat,
             tgt_neuron_mean_gain_mat,
             tgt_neuron_std_gain_mat,
             outliers=tgt_n_outliers)
-    filt_tgt_n_pop_iou, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std = get_averaged_results(
-        filt_tgt_n_pop_iou_mat, filt_tgt_n_pop_mean_gain_mat, filt_tgt_n_pop_gain_std_mat)
+
     write_population_avg_results(
         filt_tgt_n_pop_iou, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std, file_handle)
 
@@ -889,17 +892,12 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     file_handle.write("Filtered results averaged over {} neurons\n".format(
         n_channels - (len(skipped_neurons) + len(max_active_n_outliers))))
 
-    filt_max_active_pop_iou_mat, filt_max_active_pop_mean_gain_mat, \
-        filt_max_active_pop_gain_std_mat = get_filtered_averaged_population_results(
+    filt_max_active_pop_iou, filt_max_active_pop_mean_gain, \
+        filt_max_active_pop_gain_std = get_filtered_averaged_population_results(
             iou_per_len_mat,
             max_active_neuron_mean_gain_mat,
             max_active_neuron_std_gain_mat,
             outliers=max_active_n_outliers)
-    filt_max_active_pop_iou, filt_max_active_pop_mean_gain, filt_max_active_pop_gain_std = \
-        get_averaged_results(
-            filt_max_active_pop_iou_mat,
-            filt_max_active_pop_mean_gain_mat,
-            filt_max_active_pop_gain_std_mat)
     write_population_avg_results(
         filt_max_active_pop_iou, filt_max_active_pop_mean_gain,
         filt_max_active_pop_gain_std, file_handle)
