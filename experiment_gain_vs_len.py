@@ -839,7 +839,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     file_handle.write("Optimal Stimulus not found for {} neurons:\n {}\n".format(
         len(skipped_neurons), skipped_neurons))
 
-    file_handle.write("\n\n{0} Summary Results\n {0}".format('-' * 20))
+    file_handle.write("\n\n{0} Summary Results {0} \n".format('-' * 20))
 
     # (1) Unfiltered
     file_handle.write("{0} Unfiltered {0}\n".format('-' * 20))
@@ -987,7 +987,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim)
     i = 0
-    for ch_idx in range(n_channels):
+    for ch_idx in range(len(tgt_neuron_mean_gain_mat)):
 
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
