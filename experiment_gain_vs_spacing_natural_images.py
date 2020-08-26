@@ -862,6 +862,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f_handle = open(summary_file, 'w+')
 
     f_handle.write("Settings {}\n".format('-' * 80))
+    for k, v in sorted(data_set_params.items()):
+        print("{}: {}".format(k, v), file=f_handle)
     f_handle.write("Fragment Length {}\n".format(frag_tile_size[0]))
     f_handle.write("Bubble Lengths  {}\n".format([x[0] for x in bubble_tile_sizes]))
     f_handle.write("Results {}\n".format('-' * 80))
@@ -1068,30 +1070,30 @@ if __name__ == '__main__':
         'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
-    # # Model
-    # # ------
-    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    #
-    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
-    # saved_model = \
-    #     './results/pathfinder/' \
-    #     'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200807_214306_base/' \
-    #     'best_accuracy.pth'
-    # scale_down_input_to_contour_integration_layer = 4
+    # Model
+    # ------
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
-    # Control Model
-    # -----
-    cont_int_layer = new_control_models.ControlMatchParametersLayer(
-        lateral_e_size=15, lateral_i_size=15)
-    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_ControlMatchParametersLayer_20200807_214527_base/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200807_214306_base/' \
         'best_accuracy.pth'
     scale_down_input_to_contour_integration_layer = 4
+
+    # # Control Model
+    # # -----
+    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    #     lateral_e_size=15, lateral_i_size=15)
+    # # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    # #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    # saved_model = \
+    #     './results/pathfinder/' \
+    #     'BinaryClassifierResnet50_ControlMatchParametersLayer_20200807_214527_base/' \
+    #     'best_accuracy.pth'
+    # scale_down_input_to_contour_integration_layer = 4
 
     results_store_dir = os.path.dirname(saved_model)
 
