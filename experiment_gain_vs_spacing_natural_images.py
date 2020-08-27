@@ -305,8 +305,6 @@ def find_best_stimuli_for_each_channel(
 
     @ return: A list of TopNTracker objects one for each channel
     """
-    func_start_time = datetime.now()
-
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(dev)
 
@@ -387,8 +385,6 @@ def find_best_stimuli_for_each_channel(
 
                             top_n_per_channel_trackers[ch_idx].push(
                                 curr_max_act, (n_images * epoch + iteration), node)
-
-    print("Finding Optimal stimuli took {}".format(datetime.now() - func_start_time))
 
     return top_n_per_channel_trackers
 
@@ -888,9 +884,12 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     # Find Optimal stimuli
     # -----------------------------------------------------------------------------------
     print("Finding Optimal Stimuli for each Channel. Num Images {} ...".format(total_n_imgs))
+    opt_stim_find_start_time = datetime.now()
     top_n_per_channel_trackers = find_best_stimuli_for_each_channel(
         model, data_loader, top_n, n_channels, ch_mean, ch_std,
         data_set_params['n_epochs'], cont_int_scale)
+    opt_stim_find_duration = datetime.now() - opt_stim_find_start_time
+    print("Finding Optimal stimuli took {}".format(opt_stim_find_duration))
 
     # -----------------------------------------------------------------------------------
     # Effect of Fragment spacing
@@ -899,6 +898,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
 
     summary_file = os.path.join(results_dir, 'summary.txt')
     f_handle = open(summary_file, 'w+')
+    calc_results_start_time = datetime.now()
 
     f_handle.write("Settings {}\n".format('-' * 80))
     for k, v in sorted(data_set_params.items()):
@@ -1066,6 +1066,10 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     print("Std predictions: \n" + 'np.' + repr(std_preds), file=f_handle)
     print("Number of images per channels: \n" + repr(n_images_list), file=f_handle)
 
+    print("{}".format('-' * 80), file=f_handle)
+    print("Finding Optimal Stimulus took {}".format(opt_stim_find_duration), file=f_handle)
+    print("Getting Results took {}".format(datetime.now() - calc_results_start_time), file=f_handle)
+
     # Overall Plots
     # Tiled Individual channels Activations
     f, ax_arr = plot_tiled_activations(rcd, mean_in_acts, mean_out_acts)
@@ -1094,6 +1098,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f.savefig(os.path.join(results_dir, 'histogram_of_gradient_fits.jpg'), format='jpg')
 
     plt.close('all')
+    f_handle.close()
 # ---------------------------------------------------------------------------------------
 
 
