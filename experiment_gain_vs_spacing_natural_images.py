@@ -27,6 +27,8 @@ edge_extract_act = []
 cont_int_in_act = []
 cont_int_out_act = []
 
+INVALID_RESULT = -1000
+
 
 def disable_print():
     """ Disable printing """
@@ -527,14 +529,16 @@ def plot_histogram_of_linear_fit_gradients(x, mean_in_acts, mean_out_acts):
     out_acts_gradients = []
 
     for ch_idx in range(n_channels):
-        in_acts = mean_in_acts[ch_idx, ]
-        out_acts = mean_out_acts[ch_idx, ]
 
-        m_in, b_in = np.polyfit(x, in_acts, deg=1)
-        m_out, b_out = np.polyfit(x, out_acts, deg=1)
+        if mean_out_acts[ch_idx, 0] != INVALID_RESULT:
+            in_acts = mean_in_acts[ch_idx, ]
+            out_acts = mean_out_acts[ch_idx, ]
 
-        in_acts_gradients.append(m_in)
-        out_acts_gradients.append(m_out)
+            m_in, b_in = np.polyfit(x, in_acts, deg=1)
+            m_out, b_out = np.polyfit(x, out_acts, deg=1)
+
+            in_acts_gradients.append(m_in)
+            out_acts_gradients.append(m_out)
 
     f, ax_arr = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
 
@@ -562,9 +566,13 @@ def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
 
-        ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in', color='r')
-        ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out', color='b')
-        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        if mean_out_acts[ch_idx, 0] != INVALID_RESULT:
+            ax_arr[r_idx, c_idx].plot(x, mean_in_acts[ch_idx, ], label='in', color='r')
+            ax_arr[r_idx, c_idx].plot(x, mean_out_acts[ch_idx, ], label='out', color='b')
+            # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        else:
+            ax_arr[r_idx, c_idx].set_xticks([])
+            ax_arr[r_idx, c_idx].set_yticks([])
 
     f.suptitle("Individual Neuron Activations [Red=Input, Blue=Output]")
 
@@ -590,9 +598,13 @@ def plot_tiled_out_all_vs_out_0_gains(x, mean_out_acts, epsilon):
 
         rcd_1_responses = mean_out_acts[ch_idx, 0]
 
-        ax_arr[r_idx, c_idx].plot(
-            x, mean_out_acts[ch_idx] / (epsilon + rcd_1_responses), label='gain')
-        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        if mean_out_acts[ch_idx, 0] != INVALID_RESULT:
+            ax_arr[r_idx, c_idx].plot(
+                x, mean_out_acts[ch_idx] / (epsilon + rcd_1_responses), label='gain')
+            # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        else:
+            ax_arr[r_idx, c_idx].set_xticks([])
+            ax_arr[r_idx, c_idx].set_yticks([])
 
     f.suptitle("Individual Neuron Gain [Output various RCD/ (Out RCD=1 + {})]".format(epsilon))
 
@@ -612,9 +624,13 @@ def plot_tiled_out_vs_in_gains(x, mean_in_acts, mean_out_acts, epsilon):
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
 
-        ax_arr[r_idx, c_idx].plot(
-            x, mean_out_acts[ch_idx] / (epsilon + mean_in_acts[ch_idx, ]), label='gain')
-        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        if mean_out_acts[ch_idx, 0] != INVALID_RESULT:
+            ax_arr[r_idx, c_idx].plot(
+                x, mean_out_acts[ch_idx] / (epsilon + mean_in_acts[ch_idx, ]), label='gain')
+            # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        else:
+            ax_arr[r_idx, c_idx].set_xticks([])
+            ax_arr[r_idx, c_idx].set_yticks([])
 
     f.suptitle("Individual Neuron Gain [Output / (Input + {}]".format(epsilon))
 
@@ -637,11 +653,15 @@ def plot_tiled_predictions(x, mean_preds, std_preds):
         r_idx = ch_idx // tile_single_dim
         c_idx = ch_idx - r_idx * tile_single_dim
 
-        ax_arr[r_idx, c_idx].plot(x, mean_preds[ch_idx], label='gain')
-        ax_arr[r_idx, c_idx].fill_between(
-            x, mean_preds[ch_idx] - std_preds[ch_idx], mean_preds[ch_idx] + std_preds[ch_idx],
-            alpha=0.2)
-        # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        if mean_preds[ch_idx, 0] != INVALID_RESULT:
+            ax_arr[r_idx, c_idx].plot(x, mean_preds[ch_idx], label='gain')
+            ax_arr[r_idx, c_idx].fill_between(
+                x, mean_preds[ch_idx] - std_preds[ch_idx], mean_preds[ch_idx] + std_preds[ch_idx],
+                alpha=0.2)
+            # ax_arr[r_idx, c_idx].axis('off')  # Turn off all labels
+        else:
+            ax_arr[r_idx, c_idx].set_xticks([])
+            ax_arr[r_idx, c_idx].set_yticks([])
 
     f.suptitle("Individual Predictions")
 
@@ -662,10 +682,21 @@ def plot_population_average_results(
     mean_in_acts = [n_channels x n_rcd]  where each row is the avg response across many images
     """
 
-    pop_mean_in_act, pop_std_in_act = get_averaged_results(mean_in_acts, std_in_acts)
-    pop_mean_out_act, pop_std_out_act = get_averaged_results(mean_out_acts, std_out_acts)
+    valid_idxs = \
+        [idx for idx, ch_resp in enumerate(mean_out_acts) if ch_resp[0] != INVALID_RESULT]
+
+    filtered_mean_in_acts = mean_in_acts[valid_idxs, ]
+    filtered_std_in_acts = std_in_acts[valid_idxs, ]
+    filtered_mean_out_acts = mean_out_acts[valid_idxs, ]
+    filtered_std_out_acts = std_out_acts[valid_idxs, ]
+
+    pop_mean_in_act, pop_std_in_act = \
+        get_averaged_results(filtered_mean_in_acts, filtered_std_in_acts)
+    pop_mean_out_act, pop_std_out_act = \
+        get_averaged_results(filtered_mean_out_acts, filtered_std_out_acts)
 
     f, ax_arr = plt.subplots(1, 3, figsize=(11, 11))
+    f.suptitle("Average over {} Channels".format(len(valid_idxs)))
 
     # Plot average activations
     ax_arr[0].plot(x, pop_mean_in_act, label='In')
@@ -680,7 +711,7 @@ def plot_population_average_results(
     ax_arr[0].grid()
 
     # Plot output vs output Gains
-    oo_gains = mean_out_acts / (pop_mean_out_act[0] + epsilon_oo_gain)
+    oo_gains = filtered_mean_out_acts / (pop_mean_out_act[0] + epsilon_oo_gain)
     # TODO: Check if the STD of population gain is correct
     pop_mean_gains = np.mean(oo_gains, axis=0)
     pop_std_gains = np.std(oo_gains, axis=0)
@@ -692,7 +723,7 @@ def plot_population_average_results(
     ax_arr[1].grid()
 
     # Plot output vs input gain
-    io_gains = mean_out_acts / (mean_in_acts + epsilon_oi_gain)
+    io_gains = filtered_mean_out_acts / (filtered_mean_in_acts + epsilon_oi_gain)
     pop_mean_gains = np.mean(io_gains, axis=0)
     pop_std_gains = np.std(io_gains, axis=0)
     ax_arr[2].plot(x, pop_mean_gains)
@@ -711,13 +742,21 @@ def plot_population_average_predictions(x, mean_pred_per_ch, std_pred_per_ch):
     """
     f, ax = plt.subplots()
 
-    pop_mean_pred, pop_std_pred = get_averaged_results(mean_pred_per_ch, std_pred_per_ch)
+    valid_idxs = \
+        [idx for idx, ch_resp in enumerate(mean_pred_per_ch) if ch_resp[0] != INVALID_RESULT]
+
+    filtered_mean_pred_per_ch = mean_pred_per_ch[valid_idxs, ]
+    filtered_std_pred_per_ch = std_pred_per_ch[valid_idxs, ]
+
+    pop_mean_pred, pop_std_pred = \
+        get_averaged_results(filtered_mean_pred_per_ch, filtered_std_pred_per_ch)
 
     ax.plot(x, pop_mean_pred)
     ax.fill_between(
         x, pop_mean_pred - pop_std_pred, pop_mean_pred + pop_std_pred, alpha=0.2)
     ax.set_xlabel('Spacing (relative co-linear distance)')
     ax.set_ylabel("predictions")
+    ax.set_title("Average over {} Channels".format(len(valid_idxs)))
     ax.grid()
 
     return f, ax
@@ -869,12 +908,12 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f_handle.write("Results {}\n".format('-' * 80))
 
     # Variables to track across all channels
-    mean_out_acts = np.zeros((n_channels, len(rcd)))
-    std_out_acts = np.zeros_like(mean_out_acts)
-    mean_in_acts = np.zeros_like(mean_out_acts)
-    std_in_acts = np.zeros_like(mean_out_acts)
-    mean_preds = np.zeros_like(mean_out_acts)
-    std_preds = np.zeros_like(mean_out_acts)
+    mean_out_acts = np.ones((n_channels, len(rcd))) * INVALID_RESULT
+    std_out_acts = np.ones_like(mean_out_acts) * INVALID_RESULT
+    mean_in_acts = np.ones_like(mean_out_acts) * INVALID_RESULT
+    std_in_acts = np.ones_like(mean_out_acts) * INVALID_RESULT
+    mean_preds = np.ones_like(mean_out_acts) * INVALID_RESULT
+    std_preds = np.ones_like(mean_out_acts) * INVALID_RESULT
     n_images_list = []  # Number of images averaged for each channel
 
     for ch_idx in range(n_channels):
@@ -1017,6 +1056,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
         plt.close('all')
 
     # Population Results -------------------------
+    f_handle.write(
+        "Optimal stimulus found for {} channels\n".format(np.count_nonzero(n_images_list)))
     print("Mean In Activations: \n" + 'np.' + repr(mean_in_acts), file=f_handle)
     print("Std In Activations: \n" + 'np.' + repr(std_in_acts), file=f_handle)
     print("Mean Out Activations: \n" + 'np.' + repr(mean_out_acts), file=f_handle)
