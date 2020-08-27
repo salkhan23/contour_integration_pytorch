@@ -1018,9 +1018,9 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
 
     # Population Results -------------------------
     print("Mean In Activations: \n" + 'np.' + repr(mean_in_acts), file=f_handle)
-    print("Std In Activations: \n" + 'np.' + repr(mean_in_acts), file=f_handle)
+    print("Std In Activations: \n" + 'np.' + repr(std_in_acts), file=f_handle)
     print("Mean Out Activations: \n" + 'np.' + repr(mean_out_acts), file=f_handle)
-    print("Std Out Activations: \n" + 'np.' + repr(mean_out_acts), file=f_handle)
+    print("Std Out Activations: \n" + 'np.' + repr(std_out_acts), file=f_handle)
     print("Mean predictions: \n" + 'np.' + repr(mean_preds), file=f_handle)
     print("Std predictions: \n" + 'np.' + repr(std_preds), file=f_handle)
     print("Number of images per channels: \n" + repr(n_images_list), file=f_handle)
