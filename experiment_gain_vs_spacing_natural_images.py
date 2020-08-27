@@ -819,7 +819,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
 
     # Immutable
     # ---------
-    np.set_printoptions(precision=3)
+    np.set_printoptions(precision=3, linewidth=100)
 
     # Relative co-linear distance =  spacing / fragment length
     rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
