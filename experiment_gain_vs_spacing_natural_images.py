@@ -361,7 +361,7 @@ def find_best_stimuli_for_each_channel(
                         d_ep2 = data_loader.dataset.get_distance_between_two_points(
                             curr_max_act_idx * cont_int_scale, end_point)
 
-                        if min_d_to_contour < 2 and \
+                        if min_d_to_contour < 3.0 and \
                                 d_ep1.item() >= float(data_loader.dataset.end_stop_radius) and \
                                 d_ep2.item() >= float(data_loader.dataset.end_stop_radius):
 
