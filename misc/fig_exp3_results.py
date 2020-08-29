@@ -2,8 +2,6 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-n_bubbles = 10
-
 mpl.rcParams.update({
     'font.size': 18,
     'lines.linewidth': 3}
