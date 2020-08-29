@@ -16,12 +16,31 @@ import models.new_control_models as new_control_models
 import utils
 
 
+class UnNormalize(object):
+    """ Revers Normalize Transform to view the original images properly """
+    def __init__(self, mean, std):
+        self.mean = mean
+        self.std = std
+
+    def __call__(self, tensor):
+        """
+        Args:
+            tensor (Tensor): Tensor image of size (C, H, W) to be normalized.
+        Returns:
+            Tensor: Normalized image.
+        """
+        for t, m, s in zip(tensor, self.mean, self.std):
+            t.mul_(s).add_(m)
+            # The normalize code -> t.sub_(m).div_(s)
+        return tensor
+
+
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
     random_seed = 5
-    data_set_dir = './data/pathfinder_natural_images/test'
+    data_set_dir = './data/pathfinder_natural_images_2/test'
 
     save_predictions = True
 
@@ -31,7 +50,7 @@ if __name__ == "__main__":
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200629_195058_lr_1e-4_reg_1e-5/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200826_220913_base_new/' \
         'best_accuracy.pth'
 
     # Immutable
@@ -157,12 +176,11 @@ if __name__ == "__main__":
             # # DEBUG : view the predictions
             # # -------------------------------------------------------------------------------
             # fig, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
-
+            #
             # # Image
-            # display_img = np.squeeze(img, axis=0)
-            # display_img = np.transpose(display_img, axes=(1, 2, 0))
-            # display_img = \
-            #     (display_img - display_img.min() / (display_img.max() - display_img.min()))
+            # unorm = UnNormalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225))
+            # display_img = unorm(np.squeeze(img, axis=0))
+            # display_img = np.transpose(display_img,axes=(1, 2, 0))
             #
             # ax_arr[0].imshow(display_img)
             # ax_arr[1].imshow(np.squeeze(individual_contours_labels))
@@ -172,8 +190,15 @@ if __name__ == "__main__":
             #     torch.sigmoid(label_out).item(),
             #     label.item()))
             #
+            # plt.figure()
+            # plt.imshow(display_img)
+            # plt.title("Model Pred {:0.2f}. GT ={}".format(
+            #     torch.sigmoid(label_out).item(),
+            #     label.item()))
+            #
             # import pdb
             # pdb.set_trace()
+            # plt.close('all')
 
     e_loss = e_loss / len(data_loader)
     e_acc = e_acc / len(data_loader)
