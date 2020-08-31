@@ -9,6 +9,9 @@ mpl.rcParams.update({
 
 INVALID_RESULT = -1000
 
+# ---------------------------------------------------------------------------------------
+# Results
+# ---------------------------------------------------------------------------------------
 # ./results/pathfinder/
 # BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200811_094315_no_max_pooling
 # First  run of model without max pooling
@@ -77,7 +80,6 @@ model_ch_predicts = np.array([
     [7.400e-01, 7.288e-01, 7.157e-01, 7.057e-01, 7.031e-01, 6.918e-01],
     [6.924e-01, 6.882e-01, 6.736e-01, 6.851e-01, 6.816e-01, 6.648e-01],
     [6.882e-01, 6.821e-01, 6.771e-01, 6.770e-01, 6.777e-01, 6.694e-01]])
-
 model_ch_outs = np.array([
     [2.612e+00, 2.397e+00, 2.239e+00, 2.343e+00, 2.361e+00, 2.417e+00],
     [2.051e+00, 1.962e+00, 1.823e+00, 1.761e+00, 1.630e+00, 1.551e+00],
@@ -144,9 +146,9 @@ model_ch_outs = np.array([
     [2.042e+00, 2.039e+00, 2.035e+00, 2.034e+00, 2.032e+00, 2.026e+00],
     [5.292e+00, 5.275e+00, 5.193e+00, 5.132e+00, 5.087e+00, 4.995e+00]])
 
-
 # ---------------------------------------------------------------------------------------
-# ./results/pathfinder/BinaryClassifierResnet50_ControlMatchParametersLayer_20200826_231032_no_max_pooling
+# ./results/pathfinder/
+# BinaryClassifierResnet50_ControlMatchParametersLayer_20200826_231032_no_max_pooling
 control_ch_predicts = np.array([
     [0.539, 0.541, 0.540, 0.547, 0.543, 0.538],
     [0.571, 0.570, 0.566, 0.567, 0.566, 0.565],
@@ -212,7 +214,6 @@ control_ch_predicts = np.array([
     [0.853, 0.846, 0.848, 0.849, 0.847, 0.843],
     [0.485, 0.479, 0.474, 0.468, 0.462, 0.452],
     [0.578, 0.572, 0.569, 0.565, 0.558, 0.561]])
-
 control_ch_outs = np.array([
     [0.033, 0.032, 0.028, 0.028, 0.024, 0.022],
     [0.311, 0.311, 0.309, 0.309, 0.303, 0.3],
@@ -279,34 +280,33 @@ control_ch_outs = np.array([
     [0.34, 0.34, 0.337, 0.337, 0.335, 0.331],
     [0.574, 0.581, 0.584, 0.586, 0.584, 0.579]])
 
-# --------------------------------------------------------------------------------------
 
-
+# ---------------------------------------------------------------------------------------
 def get_pop_mean_std(in_arr):
-    valid_idxs = \
+    valid_idx_arr = \
         [idx for idx, ch_resp in enumerate(in_arr) if ch_resp[0] != INVALID_RESULT]
 
-    filtered_in_arr = in_arr[valid_idxs, ]
+    filtered_in_arr = in_arr[valid_idx_arr, ]
     mean_in_arr = np.mean(filtered_in_arr, axis=0)
     std_in_arr = np.std(filtered_in_arr, axis=0)
-    n_ch = len(valid_idxs)
+    n_ch = len(valid_idx_arr)
 
     return mean_in_arr, std_in_arr, n_ch
 
 
 def get_pop_mean_std_oo_gain(out_arr, epsilon=1e-4):
     """ gain = output multiple RCD, output rcd=1 (first column)"""
-    valid_idxs = \
+    valid_idx_arr = \
         [idx for idx, ch_resp in enumerate(out_arr) if ch_resp[0] != INVALID_RESULT]
 
-    filtered_out_arr = out_arr[valid_idxs, ]
+    filtered_out_arr = out_arr[valid_idx_arr, ]
     noise_resp_arr = np.expand_dims(filtered_out_arr[:, 0], axis=1)
 
     gains = filtered_out_arr / (noise_resp_arr + epsilon)
 
     mean_gains = np.mean(gains, axis=0)
     std_gains = np.std(gains, axis=0)
-    n_ch = len(valid_idxs)
+    n_ch = len(valid_idx_arr)
 
     return mean_gains, std_gains, n_ch
 
@@ -325,14 +325,17 @@ def get_gradients_of_linear_fits(x, out_arr):
     return out_acts_gradients
 
 
-if __name__ == '__main__':
-    plt.ion()
+def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
+    """
 
-    frag_tile_size = np.array([7, 7])
-    bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15], [17, 17]])
+    :param rcd:
+    :param m_ch_preds:  model sigmodied outputs [ch x n_rcd]
+    :param m_ch_outs:   model activations at the output of contour integration layer
+    :param c_ch_preds:  control sigmodied outputs
+    :param c_ch_outs:
 
-    # Relative co-linear distance =  spacing / fragment length
-    rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
+    :return:
+    """
 
     fig = plt.figure(constrained_layout=True, figsize=(12, 9))
     gs = fig.add_gridspec(3, 4)
@@ -343,25 +346,19 @@ if __name__ == '__main__':
     # ax1.set_yticks([0, 0.5, 1])
     ax1.set_ylabel('Prediction')
     ax1.set_xlabel("Length")
+    # TODO
 
     # Predictions vs Spacing
     # ----------------------
-    mean_model_predicts, std_model_predicts, model_n_avg = get_pop_mean_std(model_ch_predicts)
-    mean_control_predicts, std_control_predicts, control_n_avg = get_pop_mean_std(control_ch_predicts)
+    mean_m_preds, std_m_preds, m_n_avg = get_pop_mean_std(m_ch_preds)
+    mean_c_preds, std_c_preds, c_n_avg = get_pop_mean_std(c_ch_preds)
 
     ax2 = fig.add_subplot(gs[0, 1], sharey=ax1)
-    ax2.plot(rcd, mean_model_predicts, label='Model (N={})'.format(model_n_avg), color='b')
-    ax2.fill_between(
-        rcd,
-        mean_model_predicts - std_model_predicts,
-        mean_model_predicts + std_model_predicts,
-        alpha=0.2, color='b')
-    ax2.plot(rcd, mean_control_predicts, label='Control (N={})'.format(control_n_avg), color='r')
-    ax2.fill_between(
-        rcd,
-        mean_control_predicts - std_control_predicts,
-        mean_control_predicts + std_control_predicts,
-        alpha=0.2, color='r')
+
+    ax2.plot(rcd, mean_m_preds, label='Model (N={})'.format(m_n_avg), color='b')
+    ax2.fill_between(rcd, mean_m_preds - std_m_preds, mean_m_preds + std_m_preds, alpha=0.2, color='b')
+    ax2.plot(rcd, mean_c_preds, label='Control (N={})'.format(c_n_avg), color='r')
+    ax2.fill_between(rcd, mean_c_preds - std_c_preds, mean_c_preds + std_c_preds, alpha=0.2, color='r')
 
     ax2.set_xlabel("RCD")
     # ax2.legend()
@@ -373,58 +370,74 @@ if __name__ == '__main__':
     ax3 = fig.add_subplot(gs[0, 2])
     ax3.set_ylabel('Gain')
     ax3.set_xlabel("Length")
+    # TODO
 
     # Gain vs Spacing
     # ----------------
-    mean_model_gains, std_model_gains, model_n_avg = get_pop_mean_std_oo_gain(model_ch_outs)
-    mean_control_gains, std_control_gains, control_n_avg = get_pop_mean_std_oo_gain(control_ch_outs)
+    mean_m_gains, std_m_gains, m_n_avg = get_pop_mean_std_oo_gain(m_ch_outs)
+    mean_c_gains, std_c_gains, c_n_avg = get_pop_mean_std_oo_gain(c_ch_outs)
 
     ax4 = fig.add_subplot(gs[0, 3], sharey=ax3)
 
-    ax4.plot(rcd, mean_model_gains, label='Model (N={})'.format(model_n_avg), color='b')
-    ax4.fill_between(
-        rcd,
-        mean_model_gains - std_model_gains,
-        mean_model_gains + std_model_gains,
-        alpha=0.2, color='b')
-    ax4.plot(rcd, mean_control_gains, label='Control (N={})'.format(control_n_avg), color='r')
-    ax4.fill_between(
-        rcd,
-        mean_control_gains - std_control_gains,
-        mean_control_gains + std_control_gains,
-        alpha=0.2, color='r')
+    ax4.plot(rcd, mean_m_gains, label='Model (N={})'.format(m_n_avg), color='b')
+    ax4.fill_between(rcd, mean_m_gains - std_m_gains, mean_m_gains + std_m_gains, alpha=0.2, color='b')
+    ax4.plot(rcd, mean_c_gains, label='Control (N={})'.format(c_n_avg), color='r')
+    ax4.fill_between(rcd, mean_c_gains - std_c_gains, mean_c_gains + std_c_gains, alpha=0.2, color='r')
 
     ax4.set_xlabel("RCD")
     # ax4.set_ylabel("Gain")
-    # ax2.legend()
+    # ax4.legend()
 
-    # ----------------------------------------------------------------------------------
     # histogram Gain vs Length - Model
+    # --------------------------------
     ax5 = fig.add_subplot(gs[1, 0:2])
     ax5.set_ylabel("Freq")
+    # TODO
 
     # histogram Gain Vs length - Control
+    # ----------------------------------
     ax6 = fig.add_subplot(gs[2, 0:2], sharex=ax5)
     ax6.set_xlabel("Gradient Linear Fit - Gain vs Length")
     ax6.set_ylabel("Freq")
+    # TODO
 
     # histogram Gain Vs Spacing - Model
-    model_m = get_gradients_of_linear_fits(rcd, model_ch_outs)
+    # ---------------------------------
+    m_grads = get_gradients_of_linear_fits(rcd, m_ch_outs)
 
     ax7 = fig.add_subplot(gs[1, 2:4], sharey=ax5)
-    ax7.hist(model_m, label="Model (N={})".format(model_n_avg))
+    ax7.hist(m_grads, label="Model (N={})".format(m_n_avg))
     ax7.legend()
 
     # histogram Gain Vs Spacing - control
-    control_m = get_gradients_of_linear_fits(rcd, control_ch_outs)
+    # -----------------------------------
+    c_grads = get_gradients_of_linear_fits(rcd, c_ch_outs)
 
     ax8 = fig.add_subplot(gs[2, 2:4], sharey=ax6, sharex=ax7)
-    ax8.hist(control_m, label="control (N={})".format(control_n_avg), color='r')
+    ax8.hist(c_grads, label="control (N={})".format(c_n_avg), color='r')
     ax8.set_xlabel("Gradient Linear Fit - Gain vs Spacing")
     ax8.legend()
 
+
+if __name__ == '__main__':
+    plt.ion()
+
+    frag_tile_size = np.array([7, 7])
+    bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15], [17, 17]])
+
+    # Relative co-linear distance =  spacing / fragment length
+    relative_co_linear_dist = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
+
+    plot_combined_figure(
+        relative_co_linear_dist,
+        model_ch_predicts,
+        model_ch_outs,
+        control_ch_predicts,
+        control_ch_outs
+    )
+
     # -----------------------------------------------------------------------------------
     print('End')
-    import pdb
 
+    import pdb
     pdb.set_trace()
