@@ -427,8 +427,8 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
         'biped_dataset_type': 'train',
-        'n_biped_imgs': 1,
-        'n_epochs': 20000  # Total images = n_epochs * n_biped_images
+        'n_biped_imgs': 20000,
+        'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
     experiment_gain_vs_spacing_natural_images.main(
