@@ -442,7 +442,18 @@ def plot_activations(x, in_mean, in_std, out_mean, out_std, title=None):
     return fig, axis
 
 
-def plot_out_all_vs_out_0_gains(x, out_acts, epsilon, title=None):
+def get_oo_gains(out_acts, epsilon):
+    """ Gain = Output various / (Output x @ index 0 + epsilon).
+        NOTE: function expects filtered out_acts
+    """
+
+    rcd_1_responses = np.mean(out_acts[:, 0])  # Average Response to a rcd 1 condition
+    gains = out_acts / (rcd_1_responses + epsilon)
+
+    return gains
+
+
+def plot_oo_gains(x, out_acts, epsilon, title=None):
     """
     plot gain vs RCD
     Gain = Output various / (Output x @ index 0 + epsilon).
@@ -450,10 +461,7 @@ def plot_out_all_vs_out_0_gains(x, out_acts, epsilon, title=None):
     """
     fig, axis = plt.subplots(figsize=(11, 11))
 
-    # Output response to RCD = 1
-    rcd_1_responses = out_acts[:, 0]
-    rcd_1_responses = np.expand_dims(rcd_1_responses, axis=1)
-    gain = out_acts/(rcd_1_responses + epsilon)
+    gain = get_oo_gains(out_acts, epsilon)
 
     mean_gain = np.mean(gain, axis=0)
     std_gain = np.std(gain, axis=0)
@@ -575,13 +583,14 @@ def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
     return f, ax_arr
 
 
-def plot_tiled_out_all_vs_out_0_gains(x, mean_out_acts, epsilon):
+def plot_tiled_oo_gains(x, mean_out_acts, epsilon):
     """
     Plot gain individually for each channel in a tiled image.
-    Gain = Output various / (Output x @ index 0 + epsilon).
-    Assumes results for RCD=1 are in the first column
 
-    mean_out_acts = [n_channels x n_RCD]
+    Gain = Output various / (Output x @ index 0 + epsilon).
+    NOTE: Assumes results for RCD=1 are in the first column
+    NOTE: expects mean out acts.
+    NOTE: mean_out_acts = [n_channels x n_RCD]
     """
     n_channels = len(mean_out_acts)
     tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
@@ -707,10 +716,15 @@ def plot_population_average_results(
     ax_arr[0].grid()
 
     # Plot output vs output Gains
-    oo_gains = filtered_mean_out_acts / (pop_mean_out_act[0] + epsilon_oo_gain)
+    noise_resp = filtered_mean_out_acts[:, 0]
+    noise_resp = np.expand_dims(noise_resp, axis=1)
+
+    oo_gains = filtered_mean_out_acts / (noise_resp + epsilon_oo_gain)
+
     # TODO: Check if the STD of population gain is correct
     pop_mean_gains = np.mean(oo_gains, axis=0)
     pop_std_gains = np.std(oo_gains, axis=0)
+
     ax_arr[1].plot(x, pop_mean_gains)
     ax_arr[1].fill_between(
         x, pop_mean_gains - pop_std_gains, pop_mean_gains + pop_std_gains, alpha=0.2)
@@ -1042,7 +1056,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
                 epsilon_gain_oi, ch_idx, n_images))
         f.savefig(os.path.join(idv_oi_gains_dir, 'oi_gains_channel_{}.png'.format(ch_idx)))
 
-        f, ax = plot_out_all_vs_out_0_gains(
+        f, ax = plot_oo_gains(
             rcd, tgt_n_out_act_mat, epsilon_gain_oo,
             title="Gain = Output / (Output RCD=1 + {}).\n Channel {}. Number of images {}".format(
                 epsilon_gain_oo, ch_idx, n_images))
@@ -1078,7 +1092,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f, ax_arr = plot_tiled_out_vs_in_gains(rcd, mean_in_acts, mean_out_acts, epsilon_gain_oi)
     f.savefig(os.path.join(results_dir, 'individual_channel_oi_gains.jpg'), format='jpg')
     # Tiled Output Output Gains
-    f, ax_arr = plot_tiled_out_all_vs_out_0_gains(rcd, mean_out_acts, epsilon_gain_oo)
+    f, ax_arr = plot_tiled_oo_gains(rcd, mean_out_acts, epsilon_gain_oo)
     f.savefig(os.path.join(results_dir, 'individual_channel_oo_gains.jpg'), format='jpg')
     # Tiled predictions
     f, ax_arr = plot_tiled_predictions(rcd, mean_preds, std_preds)
