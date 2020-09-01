@@ -8,6 +8,7 @@ mpl.rcParams.update({
 )
 
 INVALID_RESULT = -1000
+MIN_N_IMGS_PER_CHANNEL = 10
 
 # ---------------------------------------------------------------------------------------
 # Results
@@ -145,6 +146,14 @@ model_no_max_pool_ch_outs = np.array([
     [6.196e+00, 6.159e+00, 6.126e+00, 6.117e+00, 6.140e+00, 6.155e+00],
     [2.042e+00, 2.039e+00, 2.035e+00, 2.034e+00, 2.032e+00, 2.026e+00],
     [5.292e+00, 5.275e+00, 5.193e+00, 5.132e+00, 5.087e+00, 4.995e+00]])
+model_no_max_pool_n_images = [
+    49, 50, 50, 49, 49, 49, 49, 50, 49, 50,
+    49, 50, 50, 50, 50, 50, 49, 50, 49, 49,
+    49, 49, 49,  0, 49, 49, 50, 49, 50, 50,
+    49, 50, 50, 50, 50, 50, 50, 50, 50, 50,
+    50, 42, 50, 50, 49, 49, 49, 50, 49, 50,
+    50, 50, 49, 49, 50, 50,  2, 49, 49,  8,
+    50, 50, 50, 50]
 
 # ./results/pathfinder/
 # BinaryClassifierResnet50_ControlMatchParametersLayer_20200826_231032_no_max_pooling
@@ -278,6 +287,14 @@ control_no_max_pool_ch_outs = np.array([
     [0.922, 0.912, 0.905, 0.893, 0.891, 0.878],
     [0.34, 0.34, 0.337, 0.337, 0.335, 0.331],
     [0.574, 0.581, 0.584, 0.586, 0.584, 0.579]])
+control_no_max_pool_n_images = [
+    50, 49,  0, 49, 49, 49, 49, 50, 50, 50,
+    50,  0, 50, 49, 49, 49,  0, 50, 49, 50,
+    49, 50, 50,  0, 49, 49, 50,  0, 50, 50,
+    50, 49, 49, 49, 50, 50, 49, 49, 50, 50,
+    49,  9, 50, 50,  0,  0, 50, 50, 41, 50,
+    49, 49, 50, 49, 50, 50, 50, 50, 10, 49,
+     0, 50, 50, 50]
 
 # ---------------------------------------------------------------------------------------
 # ./results/pathfinder/
@@ -412,6 +429,14 @@ model_base_ch_predicts = np.array([
     [0.781, 0.773, 0.767, 0.755, 0.739, 0.735],
     [-1000., -1000., -1000., -1000., -1000., -1000.],
     [0.7, 0.692, 0.675, 0.676, 0.668, 0.656]])
+model_base_n_images = [
+    50, 49, 50, 50, 50, 50, 49, 50, 49, 50,
+    50, 50, 50, 50, 49, 50, 50, 50, 49, 49,
+    50, 49, 50, 50, 50, 50, 49, 50, 49, 50,
+    50, 50, 49, 50, 49, 50, 50, 50, 50, 49,
+    49, 49, 50, 50, 49, 50, 49, 50, 50, 49,
+    50, 49, 50, 49, 50, 50, 49, 50,  1, 50,
+    50, 50,  0, 50]
 
 # ./results/pathfinder/
 # BinaryClassifierResnet50_ControlMatchParametersLayer_20200829_002204_base_new
@@ -545,36 +570,24 @@ control_base_ch_predicts = np.array([
     [0.415, 0.408, 0.402, 0.394, 0.391, 0.391],
     [0.808, 0.806, 0.798, 0.797, 0.786, 0.776],
     [0.481, 0.479, 0.474, 0.472, 0.458, 0.45]])
+control_base_n_images = [
+    50, 49, 50, 50, 49, 50, 50, 50, 49, 49,
+    50, 50,  0, 50, 50, 49, 49, 50, 50, 49,
+    49, 50, 50, 50, 50, 50, 50, 50, 18, 50,
+    49, 50, 49, 50, 50, 50, 29, 50,  0, 49,
+    50,  0, 49, 50, 50,  0, 50, 50, 49, 50,
+     1, 49, 50, 49, 50,  0, 49, 49, 49, 50,
+    49, 50, 50, 49]
 
 
 # ---------------------------------------------------------------------------------------
-def get_pop_mean_std(in_arr):
-    valid_idx_arr = \
-        [idx for idx, ch_resp in enumerate(in_arr) if ch_resp[0] != INVALID_RESULT]
+def get_oo_gains(out_arr, epsilon=1e-4):
+    """ gain = output multiple RCD, output rcd=1 (first column) """
+    noise_resp_arr = out_arr[:, 0]
+    noise_resp_arr = np.expand_dims(noise_resp_arr, axis=1)
 
-    filtered_in_arr = in_arr[valid_idx_arr, ]
-    mean_in_arr = np.mean(filtered_in_arr, axis=0)
-    std_in_arr = np.std(filtered_in_arr, axis=0)
-    n_ch = len(valid_idx_arr)
-
-    return mean_in_arr, std_in_arr, n_ch
-
-
-def get_pop_mean_std_oo_gain(out_arr, epsilon=1e-4):
-    """ gain = output multiple RCD, output rcd=1 (first column)"""
-    valid_idx_arr = \
-        [idx for idx, ch_resp in enumerate(out_arr) if ch_resp[0] != INVALID_RESULT]
-
-    filtered_out_arr = out_arr[valid_idx_arr, ]
-    noise_resp_arr = np.expand_dims(filtered_out_arr[:, 0], axis=1)
-
-    gains = filtered_out_arr / (noise_resp_arr + epsilon)
-
-    mean_gains = np.mean(gains, axis=0)
-    std_gains = np.std(gains, axis=0)
-    n_ch = len(valid_idx_arr)
-
-    return mean_gains, std_gains, n_ch
+    gains = out_arr / (noise_resp_arr + epsilon)
+    return gains
 
 
 def get_gradients_of_linear_fits(x, out_arr):
@@ -591,9 +604,11 @@ def get_gradients_of_linear_fits(x, out_arr):
     return out_acts_gradients
 
 
-def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
+def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, m_imgs_ch, c_ch_preds, c_ch_outs, c_imgs_ch):
     """
 
+    :param c_imgs_ch:
+    :param m_imgs_ch:
     :param rcd:
     :param m_ch_preds:  model sigmodied outputs [ch x n_rcd]
     :param m_ch_outs:   model activations at the output of contour integration layer
@@ -602,7 +617,24 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
 
     :return:
     """
+    # Results
+    # -----------------------------------------------------------------------------------
+    # excludes all invalid RESULTS as well
+    m_valid_idx_arr = [idx for idx, n_imgs in enumerate(m_imgs_ch) if n_imgs >= MIN_N_IMGS_PER_CHANNEL]
+    c_valid_idx_arr = [idx for idx, n_imgs in enumerate(c_imgs_ch) if n_imgs >= MIN_N_IMGS_PER_CHANNEL]
 
+    filtered_m_ch_preds = m_ch_preds[m_valid_idx_arr, ]
+    filtered_m_ch_outs = m_ch_outs[m_valid_idx_arr, ]
+    filtered_m_gains = get_oo_gains(filtered_m_ch_outs)
+    m_n_avg = len(filtered_m_ch_outs)
+
+    filtered_c_ch_preds = c_ch_preds[c_valid_idx_arr, ]
+    filtered_c_ch_outs = c_ch_outs[c_valid_idx_arr, ]
+    filtered_c_gains = get_oo_gains(filtered_c_ch_outs)
+    c_n_avg = len(filtered_c_ch_outs)
+
+    # Figure
+    # -----------------------------------------------------------------------------------
     f = plt.figure(constrained_layout=True, figsize=(12, 9))
     gs = f.add_gridspec(3, 4)
 
@@ -616,8 +648,10 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
 
     # Predictions vs Spacing
     # ----------------------
-    mean_m_preds, std_m_preds, m_n_avg = get_pop_mean_std(m_ch_preds)
-    mean_c_preds, std_c_preds, c_n_avg = get_pop_mean_std(c_ch_preds)
+    mean_m_preds = np.mean(filtered_m_ch_preds, axis=0)
+    std_m_preds = np.std(filtered_m_ch_preds, axis=0)
+    mean_c_preds = np.mean(filtered_c_ch_preds, axis=0)
+    std_c_preds = np.std(filtered_c_ch_preds, axis=0)
 
     ax2 = f.add_subplot(gs[0, 1], sharey=ax1)
 
@@ -640,8 +674,10 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
 
     # Gain vs Spacing
     # ----------------
-    mean_m_gains, std_m_gains, m_n_avg = get_pop_mean_std_oo_gain(m_ch_outs)
-    mean_c_gains, std_c_gains, c_n_avg = get_pop_mean_std_oo_gain(c_ch_outs)
+    mean_m_gains = np.mean(filtered_m_gains, axis=0)
+    std_m_gains = np.std(filtered_m_gains, axis=0)
+    mean_c_gains = np.mean(filtered_c_gains, axis=0)
+    std_c_gains = np.std(filtered_c_gains, axis=0)
 
     ax4 = f.add_subplot(gs[0, 3], sharey=ax3)
 
@@ -663,7 +699,7 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
     # histogram Gain Vs length - Control
     # ----------------------------------
     ax6 = f.add_subplot(gs[2, 0:2], sharex=ax5)
-    ax6.set_xlabel("Gradient Linear Fit - Gain vs Length")
+    ax6.set_xlabel("Gradient Linear Fit - Out Act vs Length")
     ax6.set_ylabel("Freq")
     # TODO
 
@@ -681,7 +717,7 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, c_ch_preds, c_ch_outs):
 
     ax8 = f.add_subplot(gs[2, 2:4], sharey=ax6, sharex=ax7)
     ax8.hist(c_grads, label="control (N={})".format(c_n_avg), color='r')
-    ax8.set_xlabel("Gradient Linear Fit - Gain vs Spacing")
+    ax8.set_xlabel("Gradient Linear Fit - Out Act vs Spacing")
     ax8.legend()
 
 
@@ -698,8 +734,10 @@ if __name__ == '__main__':
         relative_co_linear_dist,
         model_no_max_pool_ch_predicts,
         model_no_max_pool_ch_outs,
+        model_no_max_pool_n_images,
         control_no_max_pool_ch_predicts,
-        control_no_max_pool_ch_outs
+        control_no_max_pool_ch_outs,
+        control_no_max_pool_n_images
     )
     fig = plt.gcf()
     fig.suptitle("Model with Max Pooling Layer removed")
@@ -708,8 +746,10 @@ if __name__ == '__main__':
         relative_co_linear_dist,
         model_base_ch_predicts,
         model_base_ch_outs,
+        model_base_n_images,
         control_base_ch_predicts,
-        control_base_ch_outs
+        control_base_ch_outs,
+        control_base_n_images,
     )
     fig = plt.gcf()
     fig.suptitle("Base Model Edge Extraction->MaxPooling->ContourIntegration->Classification Head")
