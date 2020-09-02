@@ -601,7 +601,7 @@ def get_gradients_of_linear_fits(x, out_arr):
 
             out_acts_gradients.append(m_out)
 
-    return out_acts_gradients
+    return np.array(out_acts_gradients)
 
 
 def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, m_imgs_ch, c_ch_preds, c_ch_outs, c_imgs_ch):
@@ -705,10 +705,14 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, m_imgs_ch, c_ch_preds, c_ch
 
     # histogram Gain Vs Spacing - Model
     # ---------------------------------
+    bin_max = 1
+    bin_min = -15
+    bins = np.arange(bin_min, bin_max, 0.5)
     m_grads = get_gradients_of_linear_fits(rcd, m_ch_outs)
 
     ax7 = f.add_subplot(gs[1, 2:4], sharey=ax5)
-    ax7.hist(m_grads, label="Model (N={})".format(m_n_avg))
+    # Include all data points
+    ax7.hist(m_grads.clip(min=bin_min, max=bin_max), label="Model (N={})".format(m_n_avg), bins=bins)
     ax7.legend()
 
     # histogram Gain Vs Spacing - control
@@ -716,7 +720,7 @@ def plot_combined_figure(rcd, m_ch_preds, m_ch_outs, m_imgs_ch, c_ch_preds, c_ch
     c_grads = get_gradients_of_linear_fits(rcd, c_ch_outs)
 
     ax8 = f.add_subplot(gs[2, 2:4], sharey=ax6, sharex=ax7)
-    ax8.hist(c_grads, label="control (N={})".format(c_n_avg), color='r')
+    ax8.hist(c_grads.clip(min=bin_min, max=bin_max), label="control (N={})".format(c_n_avg), color='r', bins=bins)
     ax8.set_xlabel("Gradient Linear Fit - Out Act vs Spacing")
     ax8.legend()
 
