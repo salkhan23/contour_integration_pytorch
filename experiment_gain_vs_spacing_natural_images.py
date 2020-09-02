@@ -28,6 +28,7 @@ cont_int_in_act = []
 cont_int_out_act = []
 
 INVALID_RESULT = -1000
+MIN_N_IMGS_PER_CHANNEL = 10
 
 
 def disable_print():
@@ -1084,7 +1085,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     print("Finding Optimal Stimulus took {}".format(opt_stim_find_duration), file=f_handle)
     print("Getting Results took {}".format(datetime.now() - calc_results_start_time), file=f_handle)
 
-    # Overall Plots
+    # Plot tiled individual channel results across the population
+    # -----------------------------------------------------------
     # Tiled Individual channels Activations
     f, ax_arr = plot_tiled_activations(rcd, mean_in_acts, mean_out_acts)
     f.savefig(os.path.join(results_dir, 'individual_channel_activations.jpg'), format='jpg')
@@ -1098,17 +1100,29 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     f, ax_arr = plot_tiled_predictions(rcd, mean_preds, std_preds)
     f.savefig(os.path.join(results_dir, 'individual_channel_predictions.jpg'), format='jpg')
 
-    # Population Average Results
+    # Plot population Average Results
+    # --------------------------------
+    # Only consider neurons for whom at least 10 optimal images were found.
+    valid_idx_arr = [idx for idx, n_imgs in enumerate(n_images_list) if n_imgs >= MIN_N_IMGS_PER_CHANNEL]
+
+    filtered_mean_in_acts = mean_in_acts[valid_idx_arr, ]
+    filtered_std_in_acts = std_in_acts[valid_idx_arr, ]
+    filtered_mean_out_acts = mean_out_acts[valid_idx_arr, ]
+    filtered_std_out_acts = std_out_acts[valid_idx_arr, ]
+    filtered_mean_preds = mean_preds[valid_idx_arr, ]
+    filtered_std_preds = std_preds[valid_idx_arr, ]
+
     # Population Avg activations and gains
     f, ax_arr = plot_population_average_results(
-        rcd, mean_in_acts, std_in_acts, mean_out_acts, std_out_acts,
-        epsilon_gain_oi, epsilon_gain_oo)
+        rcd, filtered_mean_in_acts, filtered_std_in_acts, filtered_mean_out_acts,
+        filtered_std_out_acts, epsilon_gain_oi, epsilon_gain_oo)
     f.savefig(os.path.join(results_dir, 'population_results.jpg'), format='jpg')
     # Population average predictions
-    f, ax_arr = plot_population_average_predictions(rcd, mean_preds, std_preds)
+    f, ax_arr = plot_population_average_predictions(rcd, filtered_mean_preds, filtered_std_preds)
     f.savefig(os.path.join(results_dir, 'population_predictions.jpg'), format='jpg')
     # Distribution of gradients of gain vs rcd curves
-    f, ax_arr = plot_histogram_of_linear_fit_gradients(rcd, mean_in_acts, mean_out_acts)
+    f, ax_arr = plot_histogram_of_linear_fit_gradients(
+        rcd, filtered_mean_in_acts, filtered_mean_out_acts)
     f.savefig(os.path.join(results_dir, 'histogram_of_gradient_fits.jpg'), format='jpg')
 
     plt.close('all')
