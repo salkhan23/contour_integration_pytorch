@@ -881,6 +881,8 @@ def generate_contour_image(
             )
     else:
         c_frag_starts = []
+        final_acc_angle_start = 0
+        final_acc_angle_end = 0
         # For all other cases, c_len ==1 and beta !=0, just add background tiles.
         # which move around within the full tile.
         # No contour integration for single contour fragments
@@ -1419,9 +1421,9 @@ if __name__ == "__main__":
     #     raise Exception("Unknown pickle file type")
     #
     # for idx in range(64):
-    #     contour_len = 9
+    #     contour_len = 1
     #     beta_rotation = 15
-    #     alpha_rotation = 15
+    #     alpha_rotation = 0
     #
     #     fragment = gabor_fits.get_gabor_fragment(gabor_parameters_list[idx], fragment_size)
     #
@@ -1458,10 +1460,6 @@ if __name__ == "__main__":
     #     plt.figure()
     #     plt.imshow(image)
     #     plt.title("Input Image")
-    #
-    #     import pdb
-    #
-    #     pdb.set_trace()
     #
     #     plot_label_on_image(
     #         image, image_label, full_tile_size, edge_color=(250, 0, 0), edge_width=1)
