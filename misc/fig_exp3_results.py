@@ -970,12 +970,12 @@ def plot_combined_figure(
 
     # histogram Gain Vs Spacing - Model
     # ---------------------------------
-    bin_max = 1
+    bin_max = 2
     bin_min = -15
-    bins = np.arange(bin_min, bin_max, 0.5)
+    bins = np.arange(bin_min, bin_max, 1)
 
     m_out_grads = get_gradients_of_linear_fits(rcd, filtered_m_ch_outs)
-    m_in_grads = get_gradients_of_linear_fits(rcd, filtered_c_ch_ins)
+    m_in_grads = get_gradients_of_linear_fits(rcd, filtered_m_ch_ins)
 
     ax7 = f.add_subplot(gs[1, 2:4], sharey=ax5)
     ax7.hist(
