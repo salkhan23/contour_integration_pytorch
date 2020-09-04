@@ -490,9 +490,10 @@ def get_contour_gain_vs_spacing(
             tgt_n_out_acts[img_idx, ft_idx] = center_n_acts[tgt_n]
             max_act_n_acts[img_idx, ft_idx] = center_n_acts[max_act_n_idx]
 
-    # ------------------
+    # # ------------------
     # import pdb
     # pdb.set_trace()
+    # plt.close('all')
 
     # -------------------------------------------
     # Gain
@@ -1000,9 +1001,9 @@ if __name__ == "__main__":
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model_resnet_based/' \
-        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200508_222333_baseline/' \
-        'best_accuracy.pth'
+        './results/new_model_resnet_based/Old/' \
+        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+        '/best_accuracy.pth'
 
     plt.ion()
     torch.manual_seed(random_seed)

@@ -475,9 +475,10 @@ def get_contour_gain_vs_length(
 
         iou_arr.append(iou / n_images)
 
-    # ---------------------------------
+    # # ---------------------------------
     # import pdb
     # pdb.set_trace()
+    # plt.close('all')
 
     # IOU
     if iou_results:
