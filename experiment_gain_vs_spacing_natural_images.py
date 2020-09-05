@@ -547,10 +547,17 @@ def plot_histogram_of_linear_fit_gradients(x, mean_in_acts, mean_out_acts):
 
     f, ax_arr = plt.subplots(2, 1, figsize=(11, 7), sharex=True)
 
-    ax_arr[0].hist(in_acts_gradients)
+    in_acts_gradients = np.array(in_acts_gradients)
+    out_acts_gradients = np.array(out_acts_gradients)
+
+    bin_max = 2
+    bin_min = -15
+    bins = np.arange(bin_min, bin_max, 1)
+
+    ax_arr[0].hist(in_acts_gradients.clip(min=bin_min, max=bin_max), bins=bins)
     ax_arr[0].set_title("Gradients of linear fits to Input act vs RCD")
 
-    ax_arr[1].hist(out_acts_gradients)
+    ax_arr[1].hist(out_acts_gradients.clip(min=bin_min, max=bin_max), bins=bins)
     ax_arr[1].set_xlabel("Linear fit Gradient")
     ax_arr[1].set_title("Gradients of linear fits to Output Act vs RCD")
 
@@ -1120,6 +1127,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     # Population average predictions
     f, ax_arr = plot_population_average_predictions(rcd, filtered_mean_preds, filtered_std_preds)
     f.savefig(os.path.join(results_dir, 'population_predictions.jpg'), format='jpg')
+
     # Distribution of gradients of gain vs rcd curves
     f, ax_arr = plot_histogram_of_linear_fit_gradients(
         rcd, filtered_mean_in_acts, filtered_mean_out_acts)
