@@ -1,7 +1,25 @@
 # ---------------------------------------------------------------------------------------
-# Scatter plot predictions of model vs control.
-# This is a new metric to check how well the model is doing compared to control at
-# predicting edges and non edges.
+# Scatter plot predictions of model (y-axis) vs control (x_axis)
+# (After sigmoid but before thresholding)
+#
+# New metric to highlight differences between model & control in edge detection
+# in natural images. Edge predictions are binned according to control (x_axis) edge strength
+#
+# The diagonal line indicates both the model and control are predicting equally.
+#  Points above the diagonal indicate the model is better at detecting them
+# compared to the control and visa versa.
+#
+# The analysis is also done for non-edges. Here the model is doing better if there
+# are more points below the diagonal that above it.
+#
+# A summary plot for each bin is presented for all edge pints to show population trends.
+#
+# Requires:
+#     1. Ground truth for all images
+#     2. Model predictions
+#     3. Control predictions
+#
+# See script validate_biped_dataset to get them
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -18,21 +36,21 @@ mpl.rcParams.update({
 })
 
 
-def get_above_below_on_diagonal_counts(x_axis, y_axis, l_th, h_th):
+def get_above_below_on_diagonal_counts(x_axis, y_axis, mask, l_th, h_th):
     """
 
     """
 
     below_h_th = x_axis < h_th
     above_l_th = x_axis >= l_th
-    bin_mask = below_h_th * above_l_th
+    bin_mask = below_h_th * above_l_th * mask
 
     x_axis_in_bin = x_axis * bin_mask
     y_axis_for_bin = y_axis * bin_mask
 
     above = np.count_nonzero(y_axis_for_bin > x_axis_in_bin)
     below = np.count_nonzero(y_axis_for_bin < x_axis_in_bin)
-    total = np.count_nonzero(x_axis_in_bin)
+    total = np.count_nonzero(bin_mask)
 
     # print("bin [{:0.1f}, {:0.1f}]: Above {},below {}, total {}".format(
     #     l_th, h_th, above, below, total))
@@ -122,7 +140,7 @@ if __name__ == "__main__":
             high_th = th_arr[bin_idx + 1]
 
             above_diag, below_diag, on_diag, x_in_bin, y_in_bin = \
-                get_above_below_on_diagonal_counts(edges_control, edges_model, low_th, high_th)
+                get_above_below_on_diagonal_counts(edges_control, edges_model, gt.flatten(), low_th, high_th)
 
             edges_count[bin_idx, 0] += above_diag
             edges_count[bin_idx, 1] += below_diag
@@ -144,7 +162,7 @@ if __name__ == "__main__":
 
             above_diag, below_diag, on_diag, x_in_bin, y_in_bin = \
                 get_above_below_on_diagonal_counts(
-                    non_edges_control, non_edges_model, low_th, high_th)
+                    non_edges_control, non_edges_model,  non_edges_mask.flatten(), low_th, high_th)
 
             non_edges_count[bin_idx, 0] += above_diag
             non_edges_count[bin_idx, 1] += below_diag
