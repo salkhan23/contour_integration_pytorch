@@ -13,14 +13,14 @@ mpl.rcParams.update({
 })
 
 
-def get_above_below_on_diagonal_counts(x_axis, y_axis, l_th, h_th):
+def get_above_below_on_diagonal_counts(x_axis, y_axis, mask, l_th, h_th):
     """
 
     """
 
     below_h_th = x_axis < h_th
     above_l_th = x_axis >= l_th
-    bin_mask = below_h_th * above_l_th
+    bin_mask = below_h_th * above_l_th * mask
 
     x_axis_in_bin = x_axis * bin_mask
     y_axis_for_bin = y_axis * bin_mask
@@ -130,7 +130,7 @@ if __name__ == "__main__":
                 high_th = th_arr[bin_idx + 1]
 
                 above_diag, below_diag, on_diag, x_in_bin, y_in_bin = \
-                    get_above_below_on_diagonal_counts(edges_control, edges_model, low_th, high_th)
+                    get_above_below_on_diagonal_counts(edges_control, edges_model, gt.flatten(), low_th, high_th)
 
                 edges_count[bin_idx, 0] += above_diag
                 edges_count[bin_idx, 1] += below_diag
