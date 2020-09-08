@@ -24,10 +24,9 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 7
 
-    input_data_imgs_dir = './data/BIPED/edges/imgs/test/rgbr'
-    input_data_labels_dir = './data/BIPED/edges/edge_maps/test/rgbr'
+    data_set_type = 'train'
 
-    data_store_dir = './data/single_contour_natural_images_4'
+    data_store_dir = './data/single_contour_natural_images_test'
     print("Dataset will be stored @ {}".format(data_store_dir))
 
     contour_lengths_bins = [20, 50, 100, 150, 200]
@@ -41,9 +40,22 @@ if __name__ == "__main__":
     plt.ion()
     np.random.seed(random_seed)
 
-    # validate start data dir
-    list_of_imgs = sorted(os.listdir(input_data_imgs_dir))
-    list_of_labels = sorted(os.listdir(input_data_labels_dir))
+    # -----------------------------------------------------------------------------------
+    # List of Images/Labels
+    # -----------------------------------------------------------------------------------
+    data_dir = './data/BIPED/edges'
+    data_key_file = os.path.join(data_dir, '{}_rgb.lst'.format(data_set_type))
+
+    with open(data_key_file, 'r+') as f_handle:
+        data_key = f_handle.readlines()
+    data_key = [line.split(' ')[0] for line in data_key]
+
+    img_dir = os.path.join(data_dir, 'imgs', data_set_type)
+    label_dir = os.path.join(data_dir, 'edge_maps', data_set_type)
+
+    list_of_imgs = [os.path.join(img_dir, file) for file in data_key]
+    list_of_labels = [os.path.join(label_dir, file.split('.')[0] + '.png') for file in data_key]
+    print("Number of images in data set {}".format(len(data_key)))
 
     if len(list_of_imgs) != len(list_of_labels):
         raise Exception("Number of Source images {} and labels {} do not match".format(
@@ -102,8 +114,8 @@ if __name__ == "__main__":
             # Randomly choose an image from the start database to search for contours
             data_idx = np.random.randint(0, len(list_of_imgs))
 
-            img_file = os.path.join(input_data_imgs_dir, list_of_imgs[data_idx])
-            label_file = os.path.join(input_data_labels_dir, list_of_labels[data_idx])
+            img_file = list_of_imgs[data_idx]
+            label_file = list_of_labels[data_idx]
 
             img = Image.open(img_file).convert('RGB')
             img = img.resize((256, 256))
@@ -142,10 +154,8 @@ if __name__ == "__main__":
                         single_contour_label[point[0], point[1]] = 1
 
                     # save the image and label
-                    img_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
-                        list_of_imgs[data_idx]
-                    label_name = 'img_{}_clen_{}_'.format(bin_img_count, len_single_contour) +\
-                        list_of_labels[data_idx]
+                    img_name = 'img_{}_clen_{}.jpg'.format(bin_img_count, len_single_contour)
+                    label_name = 'img_{}_clen_{}.png'.format(bin_img_count, len_single_contour)
 
                     plt.imsave(fname=os.path.join(bin_imgs_dir, img_name), arr=img)
                     plt.imsave(fname=os.path.join(bin_labels_dir, label_name),
@@ -178,11 +188,23 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
-    print("Script Duration {}".format(datetime.now() - script_start_time))
+    # Write a summary File
+    summary_file = os.path.join(data_store_dir, 'summary.txt')
+    file_handle = open(summary_file, 'w+')
+
+    file_handle.write("Data Set Parameters {}\n".format('-' * 60))
+    print("Script Duration {}".format(datetime.now() - script_start_time), file=file_handle)
+    file_handle.write("Source : {}\n".format(img_dir))
+    file_handle.write("Lengths bins : {}\n".format(contour_lengths_bins))
+    file_handle.write("Min pixels per bin : {}\n".format(min_pixels_per_bin))
+    file_handle.write("{}\n".format('-'*80))
 
     for bin_idx, bin_len in enumerate(contour_lengths_bins):
         print("Bin [{}], Len {}, Num Images {}, Num Pixels {}".format(
-            bin_idx, bin_len, images_per_bin_arr[bin_idx], pixels_per_bin_arr[bin_idx]))
+            bin_idx, bin_len, images_per_bin_arr[bin_idx],
+            pixels_per_bin_arr[bin_idx]), file=file_handle)
+
+    file_handle.close()
 
     input("Press any Key to End")
     pdb.set_trace()
