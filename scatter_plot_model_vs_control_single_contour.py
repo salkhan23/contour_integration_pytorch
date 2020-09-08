@@ -17,9 +17,12 @@ def get_above_below_on_diagonal_counts(x_axis, y_axis, mask, l_th, h_th):
     """
 
     """
-
-    below_h_th = x_axis < h_th
+    if h_th == 1:
+        below_h_th = x_axis <= h_th
+    else:
+        below_h_th = x_axis < h_th
     above_l_th = x_axis >= l_th
+
     bin_mask = below_h_th * above_l_th * mask
 
     x_axis_in_bin = x_axis * bin_mask
