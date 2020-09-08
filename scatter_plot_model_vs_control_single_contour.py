@@ -30,7 +30,7 @@ def get_above_below_on_diagonal_counts(x_axis, y_axis, mask, l_th, h_th):
 
     above = np.count_nonzero(y_axis_for_bin > x_axis_in_bin)
     below = np.count_nonzero(y_axis_for_bin < x_axis_in_bin)
-    total = np.count_nonzero(x_axis_in_bin)
+    total = np.count_nonzero(bin_mask)
 
     # print("bin [{:0.1f}, {:0.1f}]: Above {},below {}, total {}".format(
     #     l_th, h_th, above, below, total))
@@ -127,6 +127,7 @@ if __name__ == "__main__":
             # -------------------------------------------------------------------------------
             edges_model = (model_out * gt).flatten()
             edges_control = (control_out * gt).flatten()
+            previous_sum = edges_count.sum()
 
             for bin_idx in range(len(th_arr) - 1):
                 low_th = th_arr[bin_idx]
@@ -140,6 +141,13 @@ if __name__ == "__main__":
                 edges_count[bin_idx, 2] += on_diag
 
                 # scat_edges_ax.scatter(x_in_bin, y_in_bin)
+
+            gt_pixels = np.count_nonzero(gt)
+            pixels_added = edges_count.sum() - previous_sum
+            if gt_pixels != pixels_added:
+                print("Counts updated {} does not match number of GT pixels {}".format(pixels_added, gt_pixels))
+                import pdb
+                pdb.set_trace()
 
             # # ------------------------------
             # # Debug
