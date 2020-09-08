@@ -195,6 +195,7 @@ if __name__ == "__main__":
     file_handle.write("Data Set Parameters {}\n".format('-' * 60))
     print("Script Duration {}".format(datetime.now() - script_start_time), file=file_handle)
     file_handle.write("Source : {}\n".format(img_dir))
+    file_handle.write("Random seed : {}\n".format(random_seed))
     file_handle.write("Lengths bins : {}\n".format(contour_lengths_bins))
     file_handle.write("Min pixels per bin : {}\n".format(min_pixels_per_bin))
     file_handle.write("{}\n".format('-'*80))
