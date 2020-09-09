@@ -69,7 +69,7 @@ if __name__ == "__main__":
     list_of_edge_counts = []
 
     for sb_dir_idx, sb_dir in enumerate(list_of_sub_dirs):
-        print("[{}] Processing contours of length {} {}".format(sb_dir_idx, sb_dir, '*' * 40))
+        print("[{}] Processing contours of length {}".format(sb_dir_idx, sb_dir))
 
         sb_dir_model = os.path.join(model_predictions_dir, sb_dir)
         sb_dir_control = os.path.join(control_predictions_dir, sb_dir)
@@ -197,6 +197,7 @@ if __name__ == "__main__":
     # Process Results
     # -----------------------------------------------------------------------------------
     edge_counts_sums = np.zeros((len(list_of_sub_dirs), 3))
+    bin_counts_sum = np.zeros((len(th_arr)-1, 3))
 
     for sb_dir_idx, sb_dir in enumerate(list_of_sub_dirs):
         # Edge Count sums
@@ -222,6 +223,8 @@ if __name__ == "__main__":
         plt.grid()
         plt.legend()
 
+        bin_counts_sum += list_of_edge_counts[sb_dir_idx]
+
     # -----------------------------------------------------------------------------------
     # PLots of Total Counts
     # -----------------------------------------------------------------------------------
@@ -236,6 +239,7 @@ if __name__ == "__main__":
     plt.grid()
     plt.xlabel("Contour Length")
     plt.ylabel("Counts")
+    plt.title("Population: Per Contour Length")
 
     # [2] Bar graph
     # -------------
@@ -271,6 +275,29 @@ if __name__ == "__main__":
     ax.set_ylabel("Pixel Counts")
     ax.set_title("Total Edge Counts")
     ax.legend()
+
+    # [3] Plot the results a function of bin counts
+    # ---------------------------------------------
+    # Plot Above, below and On diagonal counts for each threshold bin
+    plt.figure()
+    plt.plot(th_arr[1:], bin_counts_sum[:, 0], label='above_diagonal', marker='x', markersize=10)
+    plt.plot(th_arr[1:], bin_counts_sum[:, 1], label='below_diagonal', marker='x', markersize=10)
+    plt.plot(th_arr[1:], bin_counts_sum[:, 2], label='on_diagonal', marker='x', markersize=10)
+    plt.xlabel("bin")
+    plt.xlim([0, 1])
+    plt.ylabel("Count")
+    plt.title("Population per Edge Strength. Total Diagonal: Above {}, Below {}, On {}".format(
+        bin_counts_sum[:, 0].sum(), bin_counts_sum[:, 1].sum(), bin_counts_sum[:, 2].sum()))
+    plt.grid()
+    plt.legend()
+
+    # print important results
+    print("Results {}".format("*"*60))
+    print("Contour Length Bins: {}".format(len_arr))
+    print(repr(edge_counts_sums))
+
+    print("Contour Strength bins {}".format(th_arr[1:]))
+    print(repr(bin_counts_sum))
 
     # -----------------------------------------------------------------------------------
     # End
