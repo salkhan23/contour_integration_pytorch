@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     random_seed = 7
 
-    data_set_type = 'train'
+    data_set_type = 'train_no_aug'
 
     data_store_dir = './data/single_contour_natural_images_test'
     print("Dataset will be stored @ {}".format(data_store_dir))
@@ -46,12 +46,23 @@ if __name__ == "__main__":
     data_dir = './data/BIPED/edges'
     data_key_file = os.path.join(data_dir, '{}_rgb.lst'.format(data_set_type))
 
+    valid_data_set_type = ['test', 'train', 'train_no_aug']
+    data_set_type = data_set_type.lower()
+
+    if data_set_type not in valid_data_set_type:
+        raise Exception("Invalid Dataset type {}. Must be one of {}".format(
+            data_set_type, valid_data_set_type))
+
     with open(data_key_file, 'r+') as f_handle:
         data_key = f_handle.readlines()
     data_key = [line.split(' ')[0] for line in data_key]
 
-    img_dir = os.path.join(data_dir, 'imgs', data_set_type)
-    label_dir = os.path.join(data_dir, 'edge_maps', data_set_type)
+    if data_set_type == 'train_no_aug':
+        img_dir = os.path.join(data_dir, 'imgs', 'train')
+        label_dir = os.path.join(data_dir, 'edge_maps', 'train')
+    else:
+        img_dir = os.path.join(data_dir, 'imgs', data_set_type)
+        label_dir = os.path.join(data_dir, 'edge_maps', data_set_type)
 
     list_of_imgs = [os.path.join(img_dir, file) for file in data_key]
     list_of_labels = [os.path.join(label_dir, file.split('.')[0] + '.png') for file in data_key]
@@ -195,6 +206,7 @@ if __name__ == "__main__":
     file_handle.write("Data Set Parameters {}\n".format('-' * 60))
     print("Script Duration {}".format(datetime.now() - script_start_time), file=file_handle)
     file_handle.write("Source : {}\n".format(img_dir))
+    file_handle.write("Dataset Type: {}\n".format(data_set_type))
     file_handle.write("Random seed : {}\n".format(random_seed))
     file_handle.write("Lengths bins : {}\n".format(contour_lengths_bins))
     file_handle.write("Min pixels per bin : {}\n".format(min_pixels_per_bin))
