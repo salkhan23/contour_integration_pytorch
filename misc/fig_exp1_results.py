@@ -568,6 +568,7 @@ if __name__ == "__main__":
     ax1.plot(c_len_arr, model_c_len_iou, label='model', color='b')
     ax1.plot(c_len_arr, control_c_len_iou, label='control', color='r')
 
+    ax1.text(1, 0.1, 'A', fontsize=30)
     ax1.set_yticks([0, 0.5, 1])
     ax1.set_ylabel('IoU')
     ax1.set_xticks(c_len_arr)
@@ -599,6 +600,7 @@ if __name__ == "__main__":
         pop_mean_control_c_len_gain + pop_std_control_c_len_gain,
         alpha=0.2, color='r')
 
+    ax2.text(1, 2.8, 'B', fontsize=30)
     ax2.set_xticks(c_len_arr)
     ax2.set_xlabel("Length (fragments)")
     ax2.set_ylabel("Gain")
@@ -630,6 +632,7 @@ if __name__ == "__main__":
         pop_mean_control_spacing_gain + pop_std_control_spacing_gain,
         alpha=0.2, color='r')
 
+    ax3.text(1, 2.8, 'C', fontsize=30)
     ax3.set_xlabel("Spacing (RCD)")
     ax3.set_ylabel("Gain")
     ax3.set_ylim([0, 3.5])
@@ -649,6 +652,7 @@ if __name__ == "__main__":
         model_c_len_grads.clip(min=c_len_bin_min, max=c_len_bin_max),  # Include all data points
         label="Contour Int. (N={})".format(model_c_len_n_avg), color='blue', bins=c_len_bins)
 
+    ax4.text(-0.25, 22, 'D', fontsize=30)
     ax4.set_ylabel("Freq")
     ax4.legend()
 
@@ -662,6 +666,7 @@ if __name__ == "__main__":
         control_c_len_grads.clip(min=c_len_bin_min, max=c_len_bin_max),  # Include all data points
         label="Control (N={})".format(control_c_len_n_avg), color='red', bins=c_len_bins)
 
+    ax5.text(-0.25, 4.2, 'F', fontsize=30)
     ax5.set_ylabel("Freq")
     ax5.legend()
     ax5.set_xlabel("Gradients - gain vs length")
@@ -680,8 +685,9 @@ if __name__ == "__main__":
         model_spacing_grads.clip(min=spacing_bin_min, max=spacing_bin_max),  # Include all data points
         label="Contour Int. (N={})".format(model_spacing_n_avg), color='blue', bins=spacing_bins)
 
+    ax6.text(-8, 24, 'E', fontsize=30)
     ax6.set_ylabel("Freq")
-    ax6.legend()
+    # ax6.legend()
 
     # histogram Gain vs Length - Control
     # --------------------------------
@@ -693,8 +699,9 @@ if __name__ == "__main__":
         control_spacing_grads.clip(min=spacing_bin_min, max=spacing_bin_max),  # Include all data points
         label="Control (N={})".format(control_spacing_n_avg), color='red', bins=spacing_bins)
 
+    ax7.text(-8, 0.1, 'G', fontsize=30)
     ax7.set_ylabel("Freq")
-    ax7.legend()
+    # ax7.legend()
     ax7.set_xlabel("Gradients - gain vs spacing")
 
     # -----------------------------------------------------------------------------------

@@ -138,23 +138,23 @@ non_edge_counts_base = np.array([
     [3.51400e+03, 6.73000e+03, 2.11000e+02],
     [4.51000e+02, 1.73500e+03, 8.10000e+01]])
 contour_len_edge_counts_base = np.array([
-    [17310, 20372,  1017],
-    [22547, 26369,  1160],
-    [23419, 25570,  1079],
-    [21667, 23529,  1032],
-    [25720, 23437,  1045],
+    [22113., 26548.,  1350.],
+    [23101., 25775.,  1132.],
+    [23600., 25312.,  1205.],
+    [23413., 25705.,  1037.],
+    [24899., 23976.,  1152.]
 ])
 contour_len_edge_strength_counts = np.array([
-    [ 8646.,  4911.,  1092.],
-    [ 8384.,  6010.,   326.],
-    [ 9903.,  8162.,   267.],
-    [10223.,  9251.,   238.],
-    [11726., 10594.,   222.],
-    [11903., 12048.,   243.],
-    [12689., 13199.,   264.],
-    [13627., 14901.,   360.],
-    [14030., 17731.,   500.],
-    [ 9532., 22470.,  1821.]])
+    [ 9478.,  5130.,  1186.],
+    [ 9132.,  6484.,   349.],
+    [10631.,  8750.,   298.],
+    [11081., 10121.,   249.],
+    [12192., 11276.,   271.],
+    [12804., 12836.,   265.],
+    [13089., 14131.,   321.],
+    [14036., 15712.,   386.],
+    [14922., 19096.,   590.],
+    [ 9761., 23780.,  1961.]])
 
 model_3x3_vs_time = [
     [1, 0.3417, ['0.19', '0.26', '0.31', '0.33', '0.30', '0.13', '0.04', '0.01'], 0.2647, ['0.33', '0.40', '0.41', '0.40', '0.35', '0.25', '0.10', '0.02'], 0.001],
@@ -314,6 +314,7 @@ if __name__ == '__main__':
     ax1.plot(model_3x3_time_results[:, 0], model_3x3_time_results[:, 1], label='model_3x3')
     ax1.plot(control_3x3_time_results[:, 0], control_3x3_time_results[:, 1], label='control_3x3')
 
+    ax1.text(5, 0.28, 'A', fontsize=30)
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("Loss")
     # ax1.legend()
@@ -327,6 +328,7 @@ if __name__ == '__main__':
     ax2.plot(model_3x3_time_results[:, 0], model_3x3_time_results[:, 2], label='model_3x3')
     ax2.plot(control_3x3_time_results[:, 0], control_3x3_time_results[:, 2], label='control_3x3')
 
+    ax2.text(0, 0.445, 'B', fontsize=30)
     ax2.set_xlabel("Epoch")
     ax2.set_ylabel("IoU")
     ax2.legend()
@@ -341,6 +343,7 @@ if __name__ == '__main__':
     ax3.plot(edge_strength_bins, edge_counts_base[:, 1]/1000., label='below', marker='x')
     ax3.plot(edge_strength_bins, edge_counts_base[:, 2]/1000., label='equal', marker='x')
 
+    ax3.text(0.1, 24, 'C', fontsize=30)
     ax3.set_title("Edges")
     ax3.set_xlabel('Prediction')
     ax3.set_ylabel('Count (10K)')
@@ -364,6 +367,7 @@ if __name__ == '__main__':
     ax4.set_ylabel('Count (10K)')
     ax4.legend()
     ax4.set_ylim([0, 500])
+    ax4.text(0.1, 50, 'D', fontsize=30)
 
     # Summary of scatter plot edges model vs control per contour length
     # -----------------------------------------------------------------
@@ -383,6 +387,7 @@ if __name__ == '__main__':
 
     ax5.set_xlabel("Contour Length (pixels)")
     ax5.set_ylabel("Counts (10K)")
+    ax5.text(20, 5, 'E', fontsize=30)
 
     # Summary of scatter plot edges model vs control per contour length
     # presented as prediction strength
@@ -399,6 +404,8 @@ if __name__ == '__main__':
     ax6.plot(
         edge_strength_bins, contour_len_edge_strength_counts[:, 2] / 1000.0,
         label='equal', marker='x')
+
+    ax6.text(0.05, 20, 'F', fontsize=30)
     ax6.set_xlabel("Predictions")
     ax6.set_xlim([0, 1])
     ax6.set_ylabel("Count (10K)")
