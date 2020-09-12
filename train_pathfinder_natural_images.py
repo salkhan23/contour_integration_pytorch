@@ -289,6 +289,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     #     val_set.data_set_mean, train_set.data_set_std))
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
+    file_handle.write("Random Seed      : {}\n".format(random_seed))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
     file_handle.write("Val images       : {}\n".format(len(val_set.images)))
     file_handle.write("Train batch size : {}\n".format(train_batch_size))
