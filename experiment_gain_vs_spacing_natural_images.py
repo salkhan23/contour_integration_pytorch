@@ -297,7 +297,7 @@ def plot_channel_responses(
 
 
 def find_best_stimuli_for_each_channel(
-        model, data_loader, top_n, n_channels, ch_mean, ch_std, n_epochs, cont_int_scale):
+        model, data_loader, top_n, n_channels, ch_mean, ch_std, n_epochs, cont_int_scale, max_sep_dist=3.0):
     """
     Parse the data loader n_epochs times storing the top n images and other
     details (max activeElement) for each channel of the contour integration layer
@@ -362,7 +362,7 @@ def find_best_stimuli_for_each_channel(
                         d_ep2 = data_loader.dataset.get_distance_between_two_points(
                             curr_max_act_idx * cont_int_scale, end_point)
 
-                        if min_d_to_contour < 3.0 and \
+                        if min_d_to_contour < np.float(max_sep_dist) and \
                                 d_ep1.item() >= float(data_loader.dataset.end_stop_radius) and \
                                 d_ep2.item() >= float(data_loader.dataset.end_stop_radius):
 
@@ -814,7 +814,23 @@ def debug_plot_contour_and_bubble_locations(
 # ---------------------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------------------
-def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_channels=64):
+def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_channels=64, max_sep_dist=3.0):
+    """
+    Find the optimal stimuli set for each channel, storing the top_n for each channel and
+    the position of the max active neuron
+    For each channel monitor hows the gain/output of the contour integration layer changes
+    as the spacing between fragment increases
+
+    :param model:
+    :param base_results_dir:
+    :param data_set_params:
+    :param cont_int_scale:
+    :param top_n:
+    :param n_channels:
+    :param max_sep_dist: Max pixel distance the max active neuron can be from the contour when finding
+    the optimal stimuli
+    :return:
+    """
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
@@ -858,7 +874,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     #           predictions
 
     results_dir = os.path.join(
-        base_results_dir, 'experiment_gain_vs_frag_size_natural_images_test')
+        base_results_dir,
+        'experiment_gain_vs_frag_size_natural_images_max_sep_dist_{}_test'.format(np.int(max_sep_dist)))
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 
@@ -909,7 +926,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     opt_stim_find_start_time = datetime.now()
     top_n_per_channel_trackers = find_best_stimuli_for_each_channel(
         model, data_loader, top_n, n_channels, ch_mean, ch_std,
-        data_set_params['n_epochs'], cont_int_scale)
+        data_set_params['n_epochs'], cont_int_scale, max_sep_dist)
     opt_stim_find_duration = datetime.now() - opt_stim_find_start_time
     print("Finding Optimal stimuli took {}".format(opt_stim_find_duration))
 
@@ -927,6 +944,8 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
         print("{}: {}".format(k, v), file=f_handle)
     f_handle.write("Fragment Length {}\n".format(frag_tile_size[0]))
     f_handle.write("Bubble Lengths  {}\n".format([x[0] for x in bubble_tile_sizes]))
+    f_handle.write("Scale contour integration layer to input {}\n".format(cont_int_scale))
+    f_handle.write("max distance max active neuron to contour {}\n".format(max_sep_dist))
     f_handle.write("Results {}\n".format('-' * 80))
 
     # Variables to track across all channels
@@ -1163,7 +1182,7 @@ if __name__ == '__main__':
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
         './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20200807_214306_base/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_base_20200826_220913/' \
         'best_accuracy.pth'
     scale_down_input_to_contour_integration_layer = 4
 
