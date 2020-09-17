@@ -1203,11 +1203,21 @@ if __name__ == '__main__':
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
+
     main(
         net,
         results_store_dir,
         data_set_params=dataset_parameters,
-        cont_int_scale=scale_down_input_to_contour_integration_layer
+        cont_int_scale=scale_down_input_to_contour_integration_layer,
+        max_sep_dist=2.0
+    )
+
+    main(
+        net,
+        results_store_dir,
+        data_set_params=dataset_parameters,
+        cont_int_scale=scale_down_input_to_contour_integration_layer,
+        max_sep_dist=1.0
     )
 
     # -----------------------------------------------------------------------------------
