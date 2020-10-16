@@ -1315,8 +1315,8 @@ def plot_combined_figure(
 
     # Figure
     # -----------------------------------------------------------------------------------
-    f = plt.figure(constrained_layout=True, figsize=(12, 9))
-    gs = f.add_gridspec(2, 2)
+    f = plt.figure(constrained_layout=True, figsize=(14, 3))
+    gs = f.add_gridspec(1, 4)
 
     # Predictions vs Spacing
     # ----------------------
@@ -1368,27 +1368,33 @@ def plot_combined_figure(
     m_out_grads = get_gradients_of_linear_fits(rcd, filtered_m_ch_outs)
     m_in_grads = get_gradients_of_linear_fits(rcd, filtered_m_ch_ins)
 
-    ax3 = f.add_subplot(gs[1, 0])
+    ax3 = f.add_subplot(gs[0, 2])
     ax3.hist(
         m_out_grads.clip(min=bin_min, max=bin_max),    # Include all data points
-        label="Out".format(m_n_avg), bins=bins, color='blue')
+        label="Model",
+        bins=bins, color='blue',
+        edgecolor='black', linewidth=1.2,
+    )
 
     ax3a = inset_axes(
         ax3,
         width="50%",  # width = 30% of parent_bbox
         height=1.,  # height : 1 inch
         loc='center left',
-        bbox_to_anchor=(.15, .3, .6, .6),
+        bbox_to_anchor=(.2, .2, .6, .6),
         bbox_transform=ax3.transAxes
     )
     # ax3a.set_xlim([-10, 0])
-    ax3a.set_title('In')
+    ax3a.set_title('Inputs')
     ax3a.hist(
         m_in_grads.clip(min=bin_min, max=bin_max),
-        label="In ", bins=bins,  color='blue')
+        label="In ", bins=bins,  color='blue',
+        edgecolor = 'black', linewidth = 1.2
+    )
 
-    # ax3.legend()
-    ax3.set_xlabel("Contour Integration \ngradients activations vs spacing")
+    ax3.legend()
+    # ax3.set_xlabel("Contour Integration \ngradients activations vs spacing")
+    ax3.set_xlabel('gradients')
     ax3.set_ylabel('Freq')
     ax3.set_xticks(np.arange(-15, 1, 5))
     # ax3.set_title('Out')
@@ -1399,31 +1405,38 @@ def plot_combined_figure(
     c_out_grads = get_gradients_of_linear_fits(rcd, filtered_c_ch_outs)
     c_in_grads = get_gradients_of_linear_fits(rcd, filtered_c_ch_ins)
 
-    ax4 = f.add_subplot(gs[1, 1], sharey=ax3)
+    ax4 = f.add_subplot(gs[0, 3], sharey=ax3)
     ax4.hist(
         c_out_grads.clip(min=bin_min, max=bin_max),
-        label="Control Out \n(N={})".format(c_n_avg), color='r', bins=bins)
+        # label="Control Out \n(N={})".format(c_n_avg),
+        label='Control',
+        color='r', bins=bins,
+        edgecolor='black', linewidth=1.2
+    )
 
     ax4a = inset_axes(
         ax4,
         width="50%",  # width = 30% of parent_bbox
         height=1.,  # height : 1 inch
         loc='center left',
-        bbox_to_anchor=(.15, .3, .6, .6),
+        bbox_to_anchor=(.2, .2, .6, .6),
         bbox_transform=ax4.transAxes
     )
     # ax4a.set_xlim([-10, 0])
-    ax4a.set_title('In')
+    ax4a.set_title('Inputs')
     ax4a.hist(
         c_in_grads.clip(min=bin_min, max=bin_max),
-        label="In ", bins=bins, color='red')
+        label="In ", bins=bins, color='red',
+        edgecolor='black', linewidth=1.2
+    )
 
-    ax4.set_xlabel("Control \ngradients activations vs spacing")
-    # ax4.legend()
-    ax4.set_ylabel('Freq')
+    # ax4.set_xlabel("Control \ngradients activations vs spacing")
+    ax4.set_xlabel('gradients')
+    ax4.legend()
+    # ax4.set_ylabel('Freq')
     # ax4.set_title('Out')
     ax4.set_xticks(np.arange(-15, 1, 5))
-    ax4.text(-15, 125, 'D', fontsize=30)
+    ax4.text(-15, 5, 'D', fontsize=30)
 
     import pdb
     pdb.set_trace()
