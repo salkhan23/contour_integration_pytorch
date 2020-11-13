@@ -114,6 +114,7 @@ control_base_vs_time = [
     [49, 0.2019, ['0.36', '0.42', '0.43', '0.42', '0.37', '0.29', '0.19', '0.08'], 0.2368, ['0.39', '0.44', '0.46', '0.45', '0.41', '0.34', '0.23', '0.10'], 0.0001],
     [50, 0.2019, ['0.36', '0.42', '0.43', '0.42', '0.37', '0.29', '0.19', '0.08'], 0.2393, ['0.39', '0.44', '0.46', '0.44', '0.39', '0.31', '0.20', '0.08'], 0.0001],
 ]
+
 # Edges from entire validation set (50 images)
 edge_counts_base = np.array([  # above, below, on diagonal
     [20317., 15157., 3291.],
@@ -137,6 +138,9 @@ non_edge_counts_base = np.array([
     [7.96100e+03, 1.33390e+04, 3.74000e+02],
     [3.51400e+03, 6.73000e+03, 2.11000e+02],
     [4.51000e+02, 1.73500e+03, 8.10000e+01]])
+
+# Edges single contour selection per len bin
+contour_len_bins = [20, 50, 100, 150, 200]
 contour_len_edge_counts_base = np.array([
     [22113., 26548.,  1350.],
     [23101., 25775.,  1132.],
@@ -371,8 +375,6 @@ if __name__ == '__main__':
 
     # Summary of scatter plot edges model vs control per contour length
     # -----------------------------------------------------------------
-    contour_len_bins = [20, 50, 100, 150, 200]
-
     ax5 = f.add_subplot(gs[2, 0])
 
     ax5.plot(
