@@ -384,7 +384,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Train Duration       : {}\n".format(training_time))
-    file_handle.close()
 
     # -----------------------------------------------------------------------------------
     # Plots
@@ -428,6 +427,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     f.savefig(os.path.join(results_store_dir, 'iou_vs_len.jpg'), format='jpg')
     plt.close(f)
 
+    file_handle.write("{}\n".format('-' * 80))
+    file_handle.write("Contour Length vs IoU (Validation) : {}\n".format(c_len_iou_arr))
+
     # f = plt.figure()
     # plt.plot(c_len_arr, c_len_loss_arr)
     # plt.grid()
@@ -443,6 +445,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("====> Running Experiments")
     experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
     experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+
+    file_handle.close()
 
 
 if __name__ == '__main__':
