@@ -24,7 +24,8 @@ import matplotlib.pyplot as plt   # for viewing images
 # from matplotlib import pyplot as plt  # for storing images
 
 import pickle
-pickle_file = 'channel_wise_optimal_stimuli.pickle'
+# pickle_file = 'channel_wise_optimal_stimuli.pickle'
+pickle_file = './data/channel_wise_optimal_full14_frag7/dataset_metadata.pickle'
 with open(pickle_file, 'rb') as handle:
     data = pickle.load(handle)
 train_gabor_parameters = data['list_of_optimal_stimuli']
