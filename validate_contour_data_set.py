@@ -166,11 +166,15 @@ if __name__ == "__main__":
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = "./results/new_model_resnet_based/" \
-                  "ContourIntegrationCSIResnet50_20200306_214633_sigmoided_ie_ei_connections" \
+                  "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_run_1_20200924_183734" \
                   "/best_accuracy.pth"
 
     data_set_dir = "./data/channel_wise_optimal_full14_frag7"
 
+    results_dir = os.path.dirname(saved_model)
+    results_dir = os.path.join(results_dir, 'validation')
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
     # ---------------------------------------------------
     plt.ion()
     np.random.seed(random_seed)
@@ -201,6 +205,7 @@ if __name__ == "__main__":
     plt.ylim([0, 1])
     plt.title("IoU vs Length")
     plt.legend()
+    plt.savefig(os.path.join(results_dir, 'iou_straight.png'))
 
     plt.figure('loss_fig')
     plt.plot(c_length_arr, st_contours_c_len_loss_arr, label='straight contours')
@@ -231,6 +236,7 @@ if __name__ == "__main__":
     plt.ylim([0, 1])
     plt.title("IoU vs Length")
     plt.legend()
+    plt.savefig(os.path.join(results_dir, 'iou_curved.png'))
 
     plt.figure('loss_fig')
     plt.plot(c_length_arr, curve_contours_c_len_loss_arr, label='curved contours')
@@ -261,6 +267,7 @@ if __name__ == "__main__":
     plt.ylim([0, 1])
     plt.title("IoU vs Length")
     plt.legend()
+    plt.savefig(os.path.join(results_dir, 'iou_full.png'))
 
     plt.figure('loss_fig')
     plt.plot(c_length_arr, full_c_len_arr_loss_arr, label='all')
