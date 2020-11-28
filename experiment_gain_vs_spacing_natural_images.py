@@ -1043,7 +1043,13 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
                 #     'Punctured Image {}\n'.format(bubble_tile_size[0]) +
                 #     plt.gcf()._suptitle.get_text())
 
-            # -----------------------------
+                # # Debug: View the punctured image individually
+                # # ------------------------------------------
+                # plt.figure(figsize=(11, 11))
+                # plt.imshow(np.transpose(punctured_img, axes=(1, 2, 0)))
+                # plt.title("Spacing {}".format(bubble_tile_size[0]))
+
+            # # -----------------------------
             # import pdb
             # pdb.set_trace()
             # plt.close('all')
@@ -1169,8 +1175,8 @@ if __name__ == '__main__':
     # Dataset Parameters
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
-        'biped_dataset_type': 'train',
-        'n_biped_imgs': 20000,
+        'biped_dataset_type': 'test',
+        'n_biped_imgs': 50,
         'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
