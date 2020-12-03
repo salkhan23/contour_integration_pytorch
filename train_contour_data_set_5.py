@@ -408,6 +408,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # ----------------------------------------------------------------------------------
     # Track some variables across training
     # ----------------------------------------------------------------------------------
+    def sigmoid(x):
+        return 1. / (1+np.exp(-x))
+
     np.set_printoptions(precision=3, linewidth=100, suppress=True)
     file_handle.write("{}\n".format('-' * 80))
 
@@ -418,7 +421,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(torch.sigmoid(b_track_list[ch_idx, ]))
+        ax_arr[r_idx, c_idx].plot(sigmoid(b_track_list[ch_idx, ]))
     f1.suptitle("Sigmoid (b)")
     f1.savefig(os.path.join(results_store_dir, 'sigma_b.jpg'), format='jpg')
 
