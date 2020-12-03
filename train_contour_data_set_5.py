@@ -492,12 +492,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # f.savefig(os.path.join(results_store_dir, 'loss_vs_len.jpg'), format='jpg')
     # plt.close(f)
 
-    # -----------------------------------------------------------------------------------
-    # Run Li 2006 experiments
-    # -----------------------------------------------------------------------------------
-    print("====> Running Experiments")
-    experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
-    experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    # # -----------------------------------------------------------------------------------
+    # # Run Li 2006 experiments
+    # # -----------------------------------------------------------------------------------
+    # print("====> Running Experiments")
+    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
+    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
 
     file_handle.close()
 
