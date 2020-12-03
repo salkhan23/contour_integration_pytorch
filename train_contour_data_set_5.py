@@ -421,7 +421,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(sigmoid(b_track_list[ch_idx, ]))
+        ax_arr[r_idx, c_idx].plot(sigmoid(b_track_list[:, ch_idx]))
     f1.suptitle("Sigmoid (b)")
     f1.savefig(os.path.join(results_store_dir, 'sigma_b.jpg'), format='jpg')
 
@@ -433,7 +433,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(b_track_list[ch_idx, ])
+        ax_arr[r_idx, c_idx].plot(b_track_list[:, ch_idx])
     f1.suptitle("J_xy")
     f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
     plt.close(f1)
