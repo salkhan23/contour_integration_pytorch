@@ -221,8 +221,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             total_loss.backward()
             optimizer.step()
 
-
-
             e_loss += total_loss.item()
 
             preds = (torch.sigmoid(label_out) > detect_thres)
@@ -350,6 +348,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
+    b_track_list = []
+    j_xy_track_list = []
+
     for epoch in range(0, num_epochs):
 
         epoch_start_time = datetime.now()
@@ -359,6 +360,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
+
+        b_track_list.append(model.contour_integration_layer.b.detach().cpu().numpy())
+        j_xy_track_list.append(model.contour_integration_layer.j_xy.detach().cpu().numpy())
 
         # Clip all negative lateral weights
         # ----------------------------------------------------------------------------------
@@ -400,6 +404,36 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Train Duration       : {}\n".format(training_time))
+
+    # ----------------------------------------------------------------------------------
+    # Track some variables across training
+    # ----------------------------------------------------------------------------------
+    np.set_printoptions(precision=3, linewidth=100, suppress=True)
+    file_handle.write("{}\n".format('-' * 80))
+
+    b_track_list = np.array(b_track_list)
+    print("b : \n" + 'np.' + repr(b_track_list), file=file_handle)
+
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(torch.sigmoid(b_track_list[ch_idx, ]))
+    f1.suptitle("Sigmoid (b)")
+    f1.savefig(os.path.join(results_store_dir, 'sigma_b.jpg'), format='jpg')
+
+    j_xy_track_list = np.array(j_xy_track_list)
+    print("Jxy : \n" + 'np.' + repr(j_xy_track_list), file=file_handle)
+    plt.close(f1)
+
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(b_track_list[ch_idx, ])
+    f1.suptitle("J_xy")
+    f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
+    plt.close(f1)
 
     # -----------------------------------------------------------------------------------
     # Plots
