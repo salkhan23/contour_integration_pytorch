@@ -423,7 +423,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     def sigmoid(x):
         return 1. / (1+np.exp(-x))
 
-    np.set_printoptions(precision=3, linewidth=100, suppress=True)
+    np.set_printoptions(precision=3, linewidth=100, suppress=True, threshold=np.inf)
     file_handle.write("{}\n".format('-' * 80))
 
     b_track_list = np.array(b_track_list)
@@ -445,7 +445,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(b_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].plot(j_xy_track_list[:, ch_idx])
     f1.suptitle("J_xy")
     f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
     plt.close(f1)
