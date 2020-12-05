@@ -387,8 +387,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
+        a_track_list.append(model.contour_integration_layer.a.detach().cpu().numpy())
         b_track_list.append(model.contour_integration_layer.b.detach().cpu().numpy())
         j_xy_track_list.append(model.contour_integration_layer.j_xy.detach().cpu().numpy())
+        j_yx_track_list.append(model.contour_integration_layer.j_yx.detach().cpu().numpy())
+        i_bias_track_list.append(model.contour_integration_layer.i_bias.detach().cpu().numpy())
+        e_bias_track_list.append(model.contour_integration_layer.e_bias.detach().cpu().numpy())
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. "
               "Time {}".format(
