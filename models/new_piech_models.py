@@ -255,13 +255,11 @@ class CurrentSubtractInhibitLayer(nn.Module):
         # self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
         # init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
 
-        # self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
-        # init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
-        self.j_xy = torch.ones(edge_out_ch)
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
 
-        # self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
-        # init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
-        self.j_yx = torch.ones(edge_out_ch)
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
 
         self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
         self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
