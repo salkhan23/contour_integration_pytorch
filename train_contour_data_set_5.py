@@ -348,8 +348,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
+    a_track_list = []
     b_track_list = []
+
     j_xy_track_list = []
+    j_yx_track_list = []
+
+    i_bias_track_list = []
+    e_bias_track_list = []
 
     for epoch in range(0, num_epochs):
 
@@ -414,28 +420,95 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     np.set_printoptions(precision=3, linewidth=100, suppress=True, threshold=np.inf)
     file_handle.write("{}\n".format('-' * 80))
 
+    a_track_list = np.array(a_track_list)
+    print("a : \n" + 'np.' + repr(a_track_list), file=file_handle)
+
     b_track_list = np.array(b_track_list)
     print("b : \n" + 'np.' + repr(b_track_list), file=file_handle)
 
+    j_xy_track_list = np.array(j_xy_track_list)
+    print("Jxy : \n" + 'np.' + repr(j_xy_track_list), file=file_handle)
+
+    j_yx_track_list = np.array(j_yx_track_list)
+    print("Jyx : \n" + 'np.' + repr(j_yx_track_list), file=file_handle)
+
+    i_bias_track_list = np.array(i_bias_track_list)
+    print("i_bias : \n" + 'np.' + repr(i_bias_track_list), file=file_handle)
+
+    e_bias_track_list = np.array(e_bias_track_list)
+    print("e_bias : \n" + 'np.' + repr(e_bias_track_list), file=file_handle)
+
+    # plot Tracked Variables
+    # Sigma(a)
+    # ---------
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(sigmoid(a_track_list[:, ch_idx]))
+        ax_arr[r_idx, c_idx].set_ylim([0, 1])
+    f1.suptitle("Sigmoid (a)")
+    f1.savefig(os.path.join(results_store_dir, 'sigma_a.jpg'), format='jpg')
+    plt.close(f1)
+
+    # Sigma(b)
+    # ---------
     f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(sigmoid(b_track_list[:, ch_idx]))
+        ax_arr[r_idx, c_idx].set_ylim([0, 1])
     f1.suptitle("Sigmoid (b)")
     f1.savefig(os.path.join(results_store_dir, 'sigma_b.jpg'), format='jpg')
-
-    j_xy_track_list = np.array(j_xy_track_list)
-    print("Jxy : \n" + 'np.' + repr(j_xy_track_list), file=file_handle)
     plt.close(f1)
 
+    # J_xy
+    # ----
     f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(j_xy_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].set_limit([-1, 1])
     f1.suptitle("J_xy")
     f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
+    plt.close(f1)
+
+    # J_yx
+    # ----
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(j_yx_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+    f1.suptitle("J_yx")
+    f1.savefig(os.path.join(results_store_dir, 'j_yx.jpg'), format='jpg')
+    plt.close(f1)
+
+    # i_bias
+    # ------
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(i_bias_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+    f1.suptitle("i_bias")
+    f1.savefig(os.path.join(results_store_dir, 'i_bias.jpg'), format='jpg')
+    plt.close(f1)
+
+    # e_bias
+    # ------
+    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
+    for ch_idx in range(64):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+        ax_arr[r_idx, c_idx].plot(e_bias_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+    f1.suptitle("e_bias")
+    f1.savefig(os.path.join(results_store_dir, 'e_bias.jpg'), format='jpg')
     plt.close(f1)
 
     # -----------------------------------------------------------------------------------
@@ -518,7 +591,7 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 3e-5,
-        'num_epochs': 50,
+        'num_epochs': 4,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
     }
