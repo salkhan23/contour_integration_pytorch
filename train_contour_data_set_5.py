@@ -474,7 +474,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(j_xy_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
     f1.suptitle("J_xy")
     f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
     plt.close(f1)
@@ -486,7 +486,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(j_yx_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
     f1.suptitle("J_yx")
     f1.savefig(os.path.join(results_store_dir, 'j_yx.jpg'), format='jpg')
     plt.close(f1)
@@ -498,7 +498,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(i_bias_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
     f1.suptitle("i_bias")
     f1.savefig(os.path.join(results_store_dir, 'i_bias.jpg'), format='jpg')
     plt.close(f1)
@@ -510,7 +510,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
         ax_arr[r_idx, c_idx].plot(e_bias_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_limit([-1, 1])
+        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
     f1.suptitle("e_bias")
     f1.savefig(os.path.join(results_store_dir, 'e_bias.jpg'), format='jpg')
     plt.close(f1)
