@@ -676,13 +676,16 @@ def get_filtered_idx_arr(noise_resp_arr, noise_th):
 
 def get_filtered_idx_arr_max_gain(gains_arr, max_gain=20.0):
     """
+    Get all gain results that are less than 20 and also all unresponsive
+    neurons (have all zero gains)
+
     :param
     :return:
     """
     idx_arr = []
 
     for idx, gains in enumerate(gains_arr):
-        if np.all(gains <= max_gain):
+        if np.all(gains <= max_gain) and not np.all(gains == 0):
             idx_arr.append(idx)
             # print(idx, gains)
 
@@ -1081,17 +1084,6 @@ if __name__ == "__main__":
     # ----------------------
     ax2 = f.add_subplot(gs[0, 4:8])
 
-    ax2.plot(
-        c_len_arr, model_pop_c_len_means,
-        # label='Model (N={})'.format(model_pop_c_len_n),
-        color='b', marker='x'
-    )
-    ax2.fill_between(
-        c_len_arr,
-        model_pop_c_len_means - model_pop_c_len_stds,
-        model_pop_c_len_means + model_pop_c_len_stds,
-        alpha=0.2, color='b')
-
     if model_pop_c_len_n > 0:
         ax2.plot(
             c_len_arr, control_pop_c_len_means,
@@ -1103,6 +1095,17 @@ if __name__ == "__main__":
             control_pop_c_len_means - control_pop_c_len_stds,
             control_pop_c_len_means + control_pop_c_len_stds,
             alpha=0.2, color='r')
+
+    ax2.plot(
+        c_len_arr, model_pop_c_len_means,
+        # label='Model (N={})'.format(model_pop_c_len_n),
+        color='b', marker='x'
+    )
+    ax2.fill_between(
+        c_len_arr,
+        model_pop_c_len_means - model_pop_c_len_stds,
+        model_pop_c_len_means + model_pop_c_len_stds,
+        alpha=0.2, color='b')
 
     ax2.plot(monkey_ma['c_len'], neuro_c_len_results, color='black', marker='s', markersize=5, label='Measured')
 
@@ -1117,17 +1120,6 @@ if __name__ == "__main__":
     # ------------------------
     ax3 = f.add_subplot(gs[0, 8:12], sharey=ax2)
 
-    ax3.plot(
-        spacing_arr, model_pop_space_means,
-        label='Model (N={})'.format(model_pop_space_n),
-        color='b', marker='x'
-    )
-    ax3.fill_between(
-        spacing_arr,
-        model_pop_space_means - model_pop_space_stds,
-        model_pop_space_means + model_pop_space_stds,
-        alpha=0.2, color='b')
-
     if control_pop_space_n > 0:
         ax3.plot(
             spacing_arr,
@@ -1140,6 +1132,18 @@ if __name__ == "__main__":
             control_pop_space_means - control_pop_space_stds,
             control_pop_space_means + control_pop_space_stds,
             alpha=0.2, color='r')
+
+    ax3.plot(
+        spacing_arr, model_pop_space_means,
+        label='Model (N={})'.format(model_pop_space_n),
+        color='b', marker='x'
+    )
+
+    ax3.fill_between(
+        spacing_arr,
+        model_pop_space_means - model_pop_space_stds,
+        model_pop_space_means + model_pop_space_stds,
+        alpha=0.2, color='b')
 
     ax3.plot(monkey_ma['rcd'], neuro_space_results, color='black', marker='s', markersize=5)
 
