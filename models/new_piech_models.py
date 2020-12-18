@@ -217,52 +217,47 @@ class CurrentSubtractInhibitLayer(nn.Module):
         e_bias = Leakage, bias terms of excitatory neuron
         i_bias = Leakage, bias term of inhibitory neuron
 
-        :param edge_out_ch:
-        :param n_iters:
+        :param edge_out_ch: Number of input and output channels.
+        :param n_iters: Number of recurrent steps
         :param lateral_e_size:
         :param lateral_i_size:
+        :param a: Excitatory mixing with previous activation. Note that a sigmoid is applied on
+                  a before it interacts with the rest of the model. sigma(a) = 1/tau_a in the original equation.
+                  If not specified [Default]. Random values between 0 and 1 are chosen.
+        :param b: Inhibitory mixing with previous activation. Note that a sigmoid is applied on
+                  b before it interacts with the rest of the model. sigma(b) = 1/tau_b in the original equation.
+                  If not specified [Default]. Random values between 0 and 1 are chosen.
         """
         super(CurrentSubtractInhibitLayer, self).__init__()
 
         self.lateral_e_size = lateral_e_size
         self.lateral_i_size = lateral_i_size
         self.edge_out_ch = edge_out_ch
-        self.n_iters = n_iters  # Number of recurrent steps
+        self.n_iters = n_iters
 
         # Parameters
-
         if a is not None:
-            assert type(a) == float, 'a must be an float'
-            assert 0 <= a <= 1.0, 'a must be between [0, 1]'
-
-            self.a = nn.Parameter(torch.ones(edge_out_ch) * a)
-            self.a.requires_grad = False
-            self.fixed_a = a
+            self.a = nn.Parameter(torch.ones(edge_out_ch) * a, requires_grad=False)
         else:
-            self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+            self.a = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)  # RV between [0, 1]
 
         if b is not None:
-            assert type(b) == float, 'b must be an float'
-            assert 0 <= b <= 1.0, 'b must be between [0, 1]'
-
-            self.b = nn.Parameter(torch.ones(edge_out_ch) * b)
-            self.b.requires_grad = False
-            self.fixed_b = b
+            self.b = nn.Parameter(torch.ones(edge_out_ch) * b, requires_grad=False)
         else:
-            self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+            self.b = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)  # RV between [0, 1]
 
         # Remove self excitation, a form is already included in the lateral connections
         # self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
         # init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
 
-        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
         init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
 
-        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
         init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
 
-        self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
-        self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01)
+        self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
+        self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
 
         # Components
         self.lateral_e = nn.Conv2d(
@@ -371,21 +366,21 @@ class CurrentDivisiveInhibitLayer(nn.Module):
         self.n_iters = n_iters  # Number of recurrent steps
 
         # Parameters
-        self.a = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
-        self.b = nn.Parameter(torch.rand(edge_out_ch))  # RV between [0, 1]
+        self.a = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)  # RV between [0, 1]
+        self.b = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)  # RV between [0, 1]
 
         # # Remove self excitation, a form is already included in the lateral connections
         # self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
         # init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
 
-        self.j_xy = nn.Parameter(torch.rand(edge_out_ch))
+        self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
         init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
 
-        self.j_yx = nn.Parameter(torch.rand(edge_out_ch))
+        self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
         init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
 
-        self.e_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01)
-        self.i_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01)
+        self.e_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01, requires_grad=True)
+        self.i_bias = nn.Parameter(torch.ones(edge_out_ch) * 0.01, requires_grad=True)
 
         # Components
         self.lateral_e = nn.Conv2d(
@@ -662,9 +657,6 @@ class BinaryClassifierResnet50(nn.Module):
             n_in_channels=self.num_edge_extract_chan, final_conv_dim=22)
 
     def forward(self, in_img):
-
-        img_size = in_img.shape[2:]
-
         # Edge Extraction
         x = self.edge_extract(in_img)
         x = self.bn1(x)
