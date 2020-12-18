@@ -173,7 +173,8 @@ class ClassifierHead(nn.Module):
 # ---------------------------------------------------------------------------------------
 
 class CurrentSubtractInhibitLayer(nn.Module):
-    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None):
+    def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
+                 j_xy=None, j_yx=None):
         """
         Contour Integration Layer - Current based with Subtractive Inhibition
 
@@ -202,6 +203,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
         J_{xx} = connection strength of the recurrent self connection of the excitatory neuron.
         J_{xy} = connection strength from the inhibitory neuron to the excitatory neuron
         J_{yx} = connection strength from the excitatory neuron to the inhibitory neuron
+        (Note see param notes to details on how they are actually used. A sigmoid is applied on their
+        value before applying)
 
         f_x(x) = Activation function of the excitatory neuron, Relu. It is the output of the same neuron
         f_y(y) = Activation function of the inhibitory neuron, Relu. It is the output of the same neuron
@@ -227,6 +230,9 @@ class CurrentSubtractInhibitLayer(nn.Module):
         :param b: Inhibitory mixing with previous activation. Note that a sigmoid is applied on
                   b before it interacts with the rest of the model. sigma(b) = 1/tau_b in the original equation.
                   If not specified [Default]. Random values between 0 and 1 are chosen.
+
+        :param j_xy: Connection Strength from inhibitory to Excitatory
+        :param j_yx: Connection Strength from excitatory to Inhibitory Node
         """
         super(CurrentSubtractInhibitLayer, self).__init__()
 
@@ -250,11 +256,17 @@ class CurrentSubtractInhibitLayer(nn.Module):
         # self.j_xx = nn.Parameter(torch.rand(edge_out_ch))
         # init.xavier_normal_(self.j_xx.view(1, edge_out_ch))
 
-        self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
-        init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+        if j_xy is not None:
+            self.j_xy = nn.Parameter(torch.ones(edge_out_ch) * j_xy, requires_grad=False)
+        else:
+            self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
+            init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
 
-        self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
-        init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+        if j_yx is not None:
+            self.j_yx = nn.Parameter(torch.ones(edge_out_ch) * j_yx, requires_grad=False)
+        else:
+            self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
+            init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
 
         self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
         self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
