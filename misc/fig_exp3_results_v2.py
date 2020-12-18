@@ -1335,7 +1335,7 @@ def plot_combined_figure(
     ax1.fill_between(rcd, mean_c_preds - std_c_preds, mean_c_preds + std_c_preds, alpha=0.2, color='r')
 
     ax1.set_xlabel("Spacing(RCD)")
-    ax1.set_ylabel("Prediction")
+    ax1.set_ylabel("Accuracy")
     ax1.legend()
     ax1.set_yticks([0, 0.5, 1])
     ax1.text(1, 0.9, 'A', fontsize=30)
