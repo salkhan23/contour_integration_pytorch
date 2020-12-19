@@ -692,7 +692,7 @@ def plot_individual_neurons_separately(
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
          c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=True, embedded_layer_identifier=None,
-         frag_size=np.array([7, 7])):
+         frag_size=np.array([7, 7]), optimal_stim_dict=None):
     """
 
     :param frag_size:
@@ -703,8 +703,10 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     :param base_results_dir:
     :param optimal_stim_extract_point:  Find optimal Stimulus @ which point. Can be:
         'edge_extract_layer_out', 'contour_integration_layer_in', 'contour_integration_layer_out'
+    :param optimal_stim_dict: List of optimal stimuli for each channel. If present will not find optimal
+        stimulus for each channel but just use the list. [Default is it is not provided]
 
-    :return:
+    :return: optimal_param_dict for each channel, indexed by key = channel
     """
 
     # Contour Data Set Normalization (channel_wise_optimal_full14_frag7)
@@ -745,6 +747,9 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     if not os.path.exists(individual_neuron_results_store_dir):
         os.makedirs(individual_neuron_results_store_dir)
 
+    # Track optimal stimuli for each channel
+    tracked_optimal_stim_dict = {}
+
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
@@ -766,20 +771,28 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
 
         # (1) Find optimal stimulus
         # -----------------------------------
-        print(">>>> Finding optimal stimulus")
-        gabor_params = find_optimal_stimulus(
-            model=model,
-            device_to_use=device,
-            k_idx=ch_idx,
-            extract_point=optimal_stim_extract_point,
-            ch_mus=chan_means,
-            ch_sigmas=chan_stds,
-            frag_size=frag_size,
-        )
+        if optimal_stim_dict is None:
+            print(">>>> Finding optimal stimulus")
+            gabor_params = find_optimal_stimulus(
+                model=model,
+                device_to_use=device,
+                k_idx=ch_idx,
+                extract_point=optimal_stim_extract_point,
+                ch_mus=chan_means,
+                ch_sigmas=chan_stds,
+                frag_size=frag_size,
+            )
+
+        else:
+            print(">>>> Using stored optimal stimulus")
+            gabor_params = optimal_stim_dict.get(ch_idx, None)
 
         if gabor_params is None:
-            print("Optimal Stimulus for kernel @ {} Not found".format(ch_idx))
+            print("No optimal stimulus for channel {}".format(ch_idx))
             continue
+
+        # Optimal stimulus tracking
+        tracked_optimal_stim_dict[ch_idx] = gabor_params
 
         # Save Tuning Curve and Gabor fit params:
         n_results_dir = os.path.join(
@@ -1014,8 +1027,10 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         f_name='tgt_n_indv_out_vs_c_len'
     )
 
-    import pdb
-    pdb.set_trace()
+    if optimal_stim_dict is not None:
+        tracked_optimal_stim_dict = optimal_stim_dict
+
+    return tracked_optimal_stim_dict
 
 
 if __name__ == "__main__":

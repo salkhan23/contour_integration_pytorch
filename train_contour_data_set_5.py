@@ -421,7 +421,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     def sigmoid(x):
         return 1. / (1+np.exp(-x))
 
-    np.set_printoptions(precision=3, linewidth=100, suppress=True, threshold=np.inf)
+    np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
     file_handle.write("{}\n".format('-' * 80))
 
     a_track_list = np.array(a_track_list)
@@ -572,9 +572,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # # -----------------------------------------------------------------------------------
     # # Run Li 2006 experiments
     # # -----------------------------------------------------------------------------------
-    # print("====> Running Experiments")
-    # experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
-    # experiment_gain_vs_spacing.main(model, base_results_dir=results_store_dir)
+    print("====> Running Experiments")
+    optim_stim_dict = experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
+    experiment_gain_vs_spacing.main(
+        model, base_results_dir=results_store_dir, optimal_stim_dict=optim_stim_dict)
 
     file_handle.close()
 
@@ -587,8 +588,8 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir':  "./data/channel_wise_optimal_full14_frag7",
-        'train_subset_size': 20000,
-        'test_subset_size': 2000
+        # 'train_subset_size': 20000,
+        # 'test_subset_size': 2000
     }
 
     train_parameters = {
