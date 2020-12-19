@@ -242,7 +242,7 @@ def find_optimal_stimulus(
                 tgt_n_max_act = tgt_n_act
                 tgt_n_opt_params = copy.deepcopy(g_params)
 
-                max_active_n = np.argmax(center_n_acts)
+                max_active_n = int(np.argmax(center_n_acts))
 
                 extra_info = {
                     'optim_stim_act_value': tgt_n_max_act,
@@ -728,9 +728,14 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     if not os.path.exists(individual_neuron_results_store_dir):
         os.makedirs(individual_neuron_results_store_dir)
 
-    tgt_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
-    tgt_neuron_std_gain_mat = []  # [n_channels, n_lengths]
+    # -----------------------------------------------------------------------------------
+    # Main Loop
+    # -----------------------------------------------------------------------------------
+    tgt_neuron_mean_gain_mat = []   # [n_channels, n_lengths]
+    tgt_neuron_std_gain_mat = []    # [n_channels, n_lengths]
     tgt_neuron_noise_resp_arr = []  # [n_channels]
+    tgt_neuron_mean_out_acts = np.ones((n_channels, len(c_len_arr))) * -1000  # invalid values
+    tgt_neuron_std_out_acts = np.ones((n_channels, len(c_len_arr))) * -1000
 
     max_active_neuron_mean_gain_mat = []  # [n_channels, n_lengths]
     max_active_neuron_std_gain_mat = []  # [n_channels, n_lengths]
@@ -738,9 +743,6 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
 
     iou_per_len_mat = []  # [n_channels, n_lengths]
     skipped_neurons = []  # neurons for which the optimal stimulus could not be found
-
-    tgt_neuron_mean_out_acts = np.ones((n_channels, len(c_len_arr))) * -1000  # invalid values
-    tgt_neuron_std_out_acts = np.ones((n_channels, len(c_len_arr))) * -1000
 
     for ch_idx in range(n_channels):
         print("{0} processing channel {1} {0}".format("*" * 20, ch_idx))
@@ -810,15 +812,14 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         tgt_neuron_mean_gain_mat.append(tgt_mean_gains)
         tgt_neuron_std_gain_mat.append(tgt_std_gain)
         tgt_neuron_noise_resp_arr.append(tgt_n_noise_resp)
+        tgt_neuron_mean_out_acts[ch_idx, ] = tgt_n_mean_out_acts
+        tgt_neuron_std_out_acts[ch_idx, ] = tgt_n_std_out_acts
 
         max_active_neuron_mean_gain_mat.append(max_active_mean_gains)
         max_active_neuron_std_gain_mat.append(max_active_std_gains)
         max_active_neuron_noise_resp_arr.append(max_active_n_noise_resp)
 
         iou_per_len_mat.append(ious)
-
-        tgt_neuron_mean_out_acts[ch_idx, ] = tgt_n_mean_out_acts
-        tgt_neuron_std_out_acts[ch_idx, ] = tgt_n_std_out_acts
 
     tgt_neuron_mean_gain_mat = np.array(tgt_neuron_mean_gain_mat)
     tgt_neuron_std_gain_mat = np.array(tgt_neuron_std_gain_mat)
@@ -835,8 +836,8 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     summary_file = os.path.join(results_store_dir, 'results.txt')
     file_handle = open(summary_file, 'w+')
 
+    file_handle.write("Experiment: Contour Gain vs. Contour Lengths\n{}\n".format('-' * 80))
     file_handle.write("Contour Lengths: {}\n".format(c_len_arr))
-
     file_handle.write("Optimal Stimulus not found for {} neurons:\n {}\n".format(
         len(skipped_neurons), skipped_neurons))
 
@@ -907,17 +908,17 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     # Detailed Results
     # -----------------------------------------------------------------------------------
     file_handle.write('\n\n{0} Detailed  Results {0}\n'.format("-" * 30))
-    file_handle.write('Value -1000 = No Result\n'.format("-" * 30))
+    file_handle.write('Value -1000 = No Result\n')
+    file_handle.write('{}\n'.format("-" * 80))
 
     np.set_printoptions(precision=3)
 
-    # Mean Output activations
-    print("Raw Mean Out Activations: \n" + 'np.' +
-          repr(tgt_neuron_mean_out_acts), file=file_handle)
-    print("Raw Std Out Activations: \n" + 'np.' +
-          repr(tgt_neuron_std_out_acts), file=file_handle)
-
     # Target Neuron Gains
+    file_handle.write("Target Neurons\n")
+    print("Target Neuron mean Out Activations: \n" + 'np.' +
+          repr(tgt_neuron_mean_out_acts), file=file_handle)
+    print("Target Neuron std Out Activations: \n" + 'np.' +
+          repr(tgt_neuron_std_out_acts), file=file_handle)
     print("Target Neuron Noise (single fragment) Response: \n" + 'np.' +
           repr(np.array(tgt_neuron_noise_resp_arr)), file=file_handle)
     print("Target Neuron Mean Gains: \n" + 'np.' +
