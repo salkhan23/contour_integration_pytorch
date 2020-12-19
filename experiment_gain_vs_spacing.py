@@ -830,7 +830,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     file_handle.write("Experiment: Contour Gain vs. Fragment Spacing\n{}\n".format('-' * 80))
     file_handle.write("Full tile sizes: {}\n".format(full_tile_size_arr))
     rcd_string = ','.join('{:0.2f}'.format(item) for item in relative_colinear_dist_arr)
-    file_handle.write("Fragment spacing (relative co-linear distance {})\n".format(rcd_string))
+    file_handle.write("Fragment spacing (relative co-linear distance): {}\n".format(rcd_string))
     file_handle.write("Optimal Stimulus not found for {} neurons:\n {}\n".format(
         len(skipped_neurons), skipped_neurons))
 
@@ -863,7 +863,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         "{1} Filtered with noise (single fragment) response >= {0} {1}\n".format(
             min_clen_1_resp, '-' * 20))
 
-    file_handle.write("Target Neurons\n")
+    file_handle.write("{0} Target Neurons {0}\n".format('-' * 30))
     tgt_n_outliers = [idx for idx, item in enumerate(tgt_neuron_noise_resp_arr) if item < min_clen_1_resp]
     file_handle.write("Removed {} MORE neurons @ new indexes {}\n".format(
         len(tgt_n_outliers), tgt_n_outliers))
@@ -880,7 +880,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     write_population_avg_results(
         None, filt_tgt_n_pop_mean_gain, filt_tgt_n_pop_gain_std, file_handle)
 
-    file_handle.write("Max Active Neurons\n")
+    file_handle.write("{0} Mac Active Neurons {0}\n".format('-' * 30))
     max_active_n_outliers = \
         [idx for idx, item in enumerate(max_active_neuron_noise_resp_arr) if item < min_clen_1_resp]
     file_handle.write("Removed {} MORE neurons @ new indexes {}\n".format(
