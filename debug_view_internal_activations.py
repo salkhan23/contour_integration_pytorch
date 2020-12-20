@@ -1,6 +1,33 @@
 # ---------------------------------------------------------------------------------------
 # View Internal inhibitory/excitatory activations of a trained contour integration Model
 #
+# NOTE: The following temp code needs to be added to models/new_piech_models.py
+#
+#   >> # # Debug
+#   >> # idx = ff.argmax()  # This is the index in the flattened array
+#   import matplotlib.pyplot as plt
+#   import numpy as np
+#   f, ax_arr = plt.subplots(2, 5, figsize=(15, 5))
+#   ax_arr[0, 0].set_ylabel("f(x)")
+#   ax_arr[0, 1].set_ylabel("f(y)")
+#   >> ...
+#
+#   >> for i in range(self.n_iters):
+#   >> ..
+#   >> f_x = nn.functional.relu(x)
+#   >> f_y = nn.functional.relu(y)
+#   disp_x = f_x.detach().cpu().numpy()
+#   disp_x = np.squeeze(disp_x)
+#   disp_x = np.sum(disp_x, axis=0)  # some across channels
+#
+#   disp_y = f_y.detach().cpu().numpy()
+#   disp_y = np.squeeze(disp_y)
+#   disp_y = np.sum(disp_y, axis=0)  # some across channels
+#
+#   im_x = ax_arr[0, i].imshow(disp_x)
+#   plt.colorbar(im_x, ax=ax_arr[0, i], orientation='horizontal')
+#   im_y = ax_arr[1, i].imshow(disp_y)
+#   plt.colorbar(im_y, ax=ax_arr[1, i], orientation='horizontal')
 # ---------------------------------------------------------------------------------------
 
 import numpy as np
