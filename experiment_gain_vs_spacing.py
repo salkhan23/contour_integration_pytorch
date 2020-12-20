@@ -667,12 +667,11 @@ def plot_individual_neurons_separately(
             ax_arr[r_idx, c_idx].axis('off')
             continue
         elif ch_idx in below_th_n:
-            ax_arr[r_idx, c_idx].annotate(
-                'BTH', (0.1, 0.5), xycoords='axes fraction', va='bottom', ha='right')
+            ax_arr[r_idx, c_idx].annotate('BTH', (0.1, 0.5), xycoords='axes fraction', va='bottom')
 
         ax_arr[r_idx, c_idx].plot(spacing_arr, mu_mat[ch_idx, ])
         ax_arr[r_idx, c_idx].locator_params(axis='y', nbins=2)
-        ax_arr[r_idx, c_idx].locator_params(axis='x', nbins=2)
+        ax_arr[r_idx, c_idx].set_xticks([])
 
     if f_title is not None:
         plt.suptitle("{}".format(f_title))
@@ -963,17 +962,21 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         tgt_pop_gain_std,
         results_store_dir,
         f_name='tgt_n_pop_gain_vs_spacing_unfiltered',
-        f_title='Target Neurons population contour gain vs spacing\n(unfiltered)'
+        f_title='Target neuron population contour gain vs fragment spacing\n'
+                '[Unfiltered]. Avg over {} neurons. Remove {} neurons - no optimal stimulus'.format(
+                    n_channels - len(no_optim_stim_neurons), len(no_optim_stim_neurons))
     )
 
-    plot_gain_vs_fragment_spacing(
-        relative_colinear_dist_arr,
-        max_active_n_pop_mean_gain,
-        max_active_n_pop_gain_std,
-        results_store_dir,
-        f_name='max_active_n_pop_gain_vs_spacing_unfiltered',
-        f_title='Max Active Neurons population Contour gain vs Spacing\n(unfiltered)'
-    )
+    # plot_gain_vs_fragment_spacing(
+    #     relative_colinear_dist_arr,
+    #     max_active_n_pop_mean_gain,
+    #     max_active_n_pop_gain_std,
+    #     results_store_dir,
+    #     f_name='max_active_n_pop_gain_vs_spacing_unfiltered',
+    #     f_title='Max Active neuron population contour gain vs fragment spacing\n'
+    #             '[Unfiltered]. Avg over {} neurons. Remove {} neurons - no optimal stimulus'.format(
+    #                 n_channels - len(no_optim_stim_neurons), len(no_optim_stim_neurons))
+    # )
 
     plot_gain_vs_fragment_spacing(
         relative_colinear_dist_arr,
@@ -981,22 +984,33 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         filt_tgt_n_pop_gain_std,
         results_store_dir,
         f_name='tgt_n_pop_gain_vs_spacing_filtered',
-        f_title='Target Neurons population contour gain vs spacing\n(filtered noise response > {})'
-                '\nRemoved {} Neurons'.format(min_clen_1_resp, len(tgt_n_below_th_neurons))
+        f_title='Target neuron population contour gain vs fragment spacing\n'
+                '[filtered noise response > {}], Avg over {} neurons\n'
+                'Removed {} neurons - No optimal stimulus {}, Below noise Th {}'.format(
+                    min_clen_1_resp,
+                    n_channels - len(tgt_n_below_th_neurons),
+                    len(tgt_n_below_th_neurons),
+                    len(no_optim_stim_neurons),
+                    len(tgt_n_below_th_neurons) - len(no_optim_stim_neurons))
     )
 
-    plot_gain_vs_fragment_spacing(
-        relative_colinear_dist_arr,
-        filt_max_active_pop_mean_gain,
-        filt_max_active_pop_gain_std,
-        results_store_dir,
-        f_name='max_active_n_pop_gain_vs_spacing_filtered',
-        f_title='Max Active Neurons population contour gain vs length\n'
-                '(filtered noise response > {})\nRemoved {} Neurons'.format(
-                    min_clen_1_resp, len(max_active_below_th_neurons))
-    )
+    # plot_gain_vs_fragment_spacing(
+    #     relative_colinear_dist_arr,
+    #     filt_max_active_pop_mean_gain,
+    #     filt_max_active_pop_gain_std,
+    #     results_store_dir,
+    #     f_name='max_active_n_pop_gain_vs_spacing_filtered',
+    #     f_title='Max active neuron population contour gain vs fragment spacing\n'
+    #             '[filtered noise response > {}], Avg over {} neurons\n'
+    #             'Removed {} neurons - No optimal stimulus {}, Below noise Th {}'.format(
+    #                 min_clen_1_resp,
+    #                 n_channels - len(max_active_below_th_neurons),
+    #                 len(max_active_below_th_neurons),
+    #                 len(no_optim_stim_neurons),
+    #                 len(max_active_below_th_neurons) - len(no_optim_stim_neurons))
+    # )
 
-    # Individual gains in a single tiled figure
+    # Individual GAINS in a single tiled figure
     plot_individual_neurons_separately(
         mu_mat=tgt_neuron_mean_gain_mat,
         spacing_arr=relative_colinear_dist_arr,
