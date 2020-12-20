@@ -174,7 +174,7 @@ class ClassifierHead(nn.Module):
 
 class CurrentSubtractInhibitLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
-                 j_xy=None, j_yx=None):
+                 j_xy=None, j_yx=None, store_recurrent_acts=False):
         """
         Contour Integration Layer - Current based with Subtractive Inhibition
 
@@ -233,6 +233,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
         :param j_xy: Connection Strength from inhibitory to Excitatory
         :param j_yx: Connection Strength from excitatory to Inhibitory Node
+        :param store_recurrent_acts: If true store, recurrent X and Y activations per iteration.
+                  Only for debugging
         """
         super(CurrentSubtractInhibitLayer, self).__init__()
 
@@ -240,6 +242,12 @@ class CurrentSubtractInhibitLayer(nn.Module):
         self.lateral_i_size = lateral_i_size
         self.edge_out_ch = edge_out_ch
         self.n_iters = n_iters
+
+        # Only for Debugging
+        self.store_recurrent_acts = store_recurrent_acts
+        if self.store_recurrent_acts:
+            self.x_per_iteration = []
+            self.y_per_iteration = []
 
         # Parameters
         if a is not None:
@@ -340,6 +348,10 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             f_x = nn.functional.relu(x)
             f_y = nn.functional.relu(y)
+
+            if self.store_recurrent_acts:
+                self.x_per_iteration.append(f_x)
+                self.y_per_iteration.append(f_y)
 
             # # Debug
             # print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(

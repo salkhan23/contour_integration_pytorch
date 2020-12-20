@@ -1,107 +1,69 @@
 # ---------------------------------------------------------------------------------------
-# View Internal inhibitory/excitatory activations of a trained contour integration Model
+#  Debug: For a trained model, plot histograms of excitatory and inhibitory activations
+#  values over individual recurrent steps
 #
-# NOTE: The following temp code needs to be added to models/new_piech_models.py
-#
-#   >> # # Debug
-#   >> # idx = ff.argmax()  # This is the index in the flattened array
-#   import matplotlib.pyplot as plt
-#   import numpy as np
-#   f, ax_arr = plt.subplots(2, 5, figsize=(15, 5))
-#   ax_arr[0, 0].set_ylabel("f(x)")
-#   ax_arr[0, 1].set_ylabel("f(y)")
-#   >> ...
-#
-#   >> for i in range(self.n_iters):
-#   >> ..
-#   >> f_x = nn.functional.relu(x)
-#   >> f_y = nn.functional.relu(y)
-#   disp_x = f_x.detach().cpu().numpy()
-#   disp_x = np.squeeze(disp_x)
-#   disp_x = np.sum(disp_x, axis=0)  # some across channels
-#
-#   disp_y = f_y.detach().cpu().numpy()
-#   disp_y = np.squeeze(disp_y)
-#   disp_y = np.sum(disp_y, axis=0)  # some across channels
-#
-#   im_x = ax_arr[0, i].imshow(disp_x)
-#   plt.colorbar(im_x, ax=ax_arr[0, i], orientation='horizontal')
-#   im_y = ax_arr[1, i].imshow(disp_y)
-#   plt.colorbar(im_y, ax=ax_arr[1, i], orientation='horizontal')
+#  Can also be used to view the Excitatory and inhibitory activations of the model for
+#  a single image
 # ---------------------------------------------------------------------------------------
-
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-import pickle
 
 import torch
-import torch.nn as nn
+import pickle
+import dataset
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
-import dataset
 import models.new_piech_models as new_piech_models
-import models.new_control_models as new_control_models
-import utils
-
-edge_extract_act = []
-cont_int_in_act = []
-cont_int_out_act = []
 
 
-def edge_extract_cb(self, layer_in, layer_out):
-    """ Attach at Edge Extract layer
-        Callback to retrieve the activations output of Edge Extract layer
-    """
-    global edge_extract_act
-    edge_extract_act = layer_out.cpu().detach().numpy()
+def display_image(input_img, label1, label_out1):
+    label_out1 = np.squeeze(label_out1)
+    label1 = np.squeeze(label1)
+    display_img = np.squeeze(input_img)
+    display_img = np.transpose(display_img, axes=(1, 2, 0))
 
+    plt.figure()
+    plt.imshow(label_out1)
+    plt.title("Prediction")
 
-def contour_integration_cb(self, layer_in, layer_out):
-    """ Attach at Contour Integration layer
-        Callback to retrieve the input & output activations of the contour Integration layer
-    """
-    global cont_int_in_act
-    global cont_int_out_act
+    plt.figure()
+    plt.imshow(label1)
+    plt.title("Label")
 
-    cont_int_in_act = layer_in[0].cpu().detach().numpy()
-    cont_int_out_act = layer_out.cpu().detach().numpy()
+    plt.figure()
+    plt.imshow(display_img)
+    plt.title("Input")
 
 
 if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
-    # Initialization
+    # Init
     # -----------------------------------------------------------------------------------
+    random_seed = 10
     plt.ion()
-    random_seed = 5
+    torch.manual_seed(random_seed)
+    np.random.seed(random_seed)
     data_dir = "./data/channel_wise_optimal_full14_frag7"
 
-    save_predictions = True
-
-    # Model
-    # -----
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5, b=0.847)
-    # saved_model =\
-    #     "./results/new_model_resnet_based/" \
-    #     "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_run_1_20200924_183734" \
-    #     "/best_accuracy.pth"
-    saved_model = \
-        '/home/salman/Desktop/' \
-        'ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20201208_093455_postive weights_clip_every_timestep_150_epochs/' \
-        'best_accuracy.pth'
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, store_recurrent_acts=True)
 
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
+    saved_model = \
+        './results/new_model_resnet_based/Old/' \
+        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+        '/best_accuracy.pth'
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    net = net.to(device)
-    net.load_state_dict(torch.load(saved_model, map_location=device))
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.load_state_dict(torch.load(saved_model, map_location=dev))
 
-    print("Model Loaded")
+    device = dev
 
     # -----------------------------------------------------------------------------------
-    # Setup the data loader
+    # Data Loader
+    # -----------------------------------------------------------------------------------
     print("Setting up data loaders")
 
     metadata_file = os.path.join(data_dir, 'dataset_metadata.pickle')
@@ -111,7 +73,6 @@ if __name__ == "__main__":
     # Pre-processing
     pre_process_transforms = transforms.Compose([
         transforms.Normalize(mean=metadata['channel_mean'], std=metadata['channel_std']),
-        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
     ])
 
     val_data_set = dataset.Fields1993(
@@ -119,7 +80,7 @@ if __name__ == "__main__":
         bg_tile_size=metadata["full_tile_size"],
         transform=pre_process_transforms,
         subset_size=None,
-        c_len_arr=[9],
+        c_len_arr=[7, 9],
         beta_arr=None,
         alpha_arr=[0],
         gabor_set_arr=None
@@ -134,59 +95,63 @@ if __name__ == "__main__":
     )
 
     # -----------------------------------------------------------------------------------
-    # Loss Function
-    # -----------------------------------------------------------------------------------
-    criterion = nn.BCEWithLogitsLoss().to(device)
-    detect_thres = 0.5
-
-    # -----------------------------------------------------------------------------------
-    # Main Loop
+    # Main
     # -----------------------------------------------------------------------------------
     print("Starting Main Loop")
+
     net.eval()
-    e_loss = 0
-    e_iou = 0
+    n_iters = net.contour_integration_layer.n_iters
 
-    # Where to save predictions
-    if save_predictions:
-        list_of_files = val_data_loader.dataset.labels
+    # Collect activations over all images
+    x_activations_per_iter = {}
+    y_activations_per_iter = {}
+    for iter_idx in range(n_iters):
+        x_activations_per_iter[iter_idx] = np.array([])
+        y_activations_per_iter[iter_idx] = np.array([])
 
-        with torch.no_grad():
-            for iteration, (img, label) in enumerate(val_data_loader, 0):
-                img = img.to(device)
-                label = label.to(device)
+    with torch.no_grad():
+        for iteration, (img, label) in enumerate(val_data_loader, 0):
 
-                label_out = net(img)
-                batch_loss = criterion(label_out, label.float())
+            img = img.to(device)
+            label = label.to(device)
+            label_out = net(img)
 
-                preds = (torch.sigmoid(label_out) > detect_thres)
-                iou = utils.intersection_over_union(
-                    preds.float(), label.float()).cpu().detach().numpy()
-                e_iou += iou
+            # display_image(img, label, label_out)
 
-                # Before visualizing Sigmoid the output. This is already done in the loss function
-                label_out = torch.sigmoid(label_out)
+            # f, ax_arr = plt.subplots(2, n_iters, figsize=(15, 5))
 
-                # Display Image Prediction and Labels
-                # --------------------------------------------------------------------
-                label_out = np.squeeze(label_out)
-                plt.figure()
-                plt.imshow(label_out)
-                plt.title("Prediction")
+            for iter_idx in range(n_iters):
+                excite_act = net.contour_integration_layer.x_per_iteration[iter_idx].detach().cpu().numpy()
+                excite_act = np.squeeze(excite_act)
+                inhibit_act = net.contour_integration_layer.y_per_iteration[iter_idx].detach().cpu().numpy()
+                inhibit_act = np.squeeze(inhibit_act)
 
-                label = np.squeeze(label)
-                plt.figure()
-                plt.imshow(label)
-                plt.title("Label")
+                # # Plot the activations
+                # ax_arr[0, iter_idx].imshow(excite_act.sum(axis=0))
+                # ax_arr[1, iter_idx].imshow(inhibit_act.sum(axis=0))
 
-                display_img = np.squeeze(img)
-                display_img = np.transpose(display_img, axes=(1, 2, 0))
-                plt.imshow(display_img)
-                plt.title("Input")
+                x_activations_per_iter[iter_idx] = \
+                    np.append(x_activations_per_iter[iter_idx], excite_act.flatten())
 
-                import pdb
-                pdb.set_trace()
+                y_activations_per_iter[iter_idx] = \
+                    np.append(y_activations_per_iter[iter_idx], inhibit_act.flatten())
 
+            if iteration == 100:
+                break
+
+        # Plot Histograms of activations (non-rectified)
+        f_x, x_ax_arr = plt.subplots(1, n_iters, figsize=(15, 5))
+        f_y, y_ax_arr = plt.subplots(1, n_iters, figsize=(15, 5))
+
+        for iter_idx in range(n_iters):
+            x_ax_arr[iter_idx].hist(x_activations_per_iter[iter_idx], density=True, bins=20)
+            y_ax_arr[iter_idx].hist(y_activations_per_iter[iter_idx], density=True, bins=20)
+
+        f_x.suptitle("X Activations per recurrent step")
+        f_y.suptitle("Y Activations per recurrent step")
+
+    # -----------------------------------------------------------------------------------
+    # End
     # -----------------------------------------------------------------------------------
     print("End")
     import pdb
