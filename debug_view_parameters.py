@@ -20,8 +20,8 @@ if __name__ == "__main__":
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5)
     saved_model = \
-        "./results/new_model_resnet_based/" \
-        "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_run_1_20200924_183734" \
+        "./results/new_model_resnet_based/svhrm_2020_paper" \
+        "/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_run_1_20200924_183734" \
         "/best_accuracy.pth"
     # saved_model = \
     #     '/home/salman/Desktop/' \
@@ -38,19 +38,21 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # [1] Jxy
     j_xy = net.contour_integration_layer.j_xy.data
+    sigma_j_xy = sigmoid(j_xy)
     plt.figure()
-    plt.plot(j_xy)
-    plt.title('J_xy')
+    plt.plot(sigma_j_xy)
+    plt.title('sigma(J_xy)')
     plt.xlabel("Channel")
-    plt.ylabel('J_xy')
+    plt.ylabel('sigma(J_xy)')
 
     # [2] Jyx
     j_yx = net.contour_integration_layer.j_yx.data
+    sigma_j_yx = sigmoid(j_yx)
     plt.figure()
-    plt.plot(j_yx)
-    plt.title('J_yx')
+    plt.plot(sigma_j_yx)
+    plt.title('sigma(J_yx)')
     plt.xlabel("Channel")
-    plt.ylabel('J_yx')
+    plt.ylabel('sigma(J_yx)')
 
     # [3] sigma(a)
     a = net.contour_integration_layer.a.data
@@ -91,8 +93,8 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Single Plot of all parameters for each Channel
     plt.figure()
-    plt.plot(j_xy, label='J_xy', marker='x')
-    plt.plot(j_yx, label='J_yx', marker='o')
+    plt.plot(sigma_j_xy, label='sigma(J_xy)', marker='x')
+    plt.plot(sigma_j_yx, label='sigma(J_yx)', marker='o')
     plt.plot(sigma_a, label='sigma(a)', marker='s')
     plt.plot(sigma_b, label='sigma(b)', marker='d')
     plt.plot(e_bias, label='e_bias', marker='v')
