@@ -940,7 +940,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
     print("Target Neuron Mean Gains: \n" + 'np.' +
           repr(tgt_neuron_mean_gain_mat), file=file_handle)
     print("Target Neuron Std Gains: \n" + 'np.' +
-          repr(tgt_neuron_mean_gain_mat), file=file_handle)
+          repr(tgt_neuron_std_gain_mat), file=file_handle)
 
     # Max Active Neuron
     file_handle.write("Max Active Neurons\n")
