@@ -473,10 +473,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(j_xy_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].plot(sigmoid(j_xy_track_list[:, ch_idx]))
         ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("J_xy")
-    f1.savefig(os.path.join(results_store_dir, 'j_xy.jpg'), format='jpg')
+    f1.suptitle("sigma(J_xy)")
+    f1.savefig(os.path.join(results_store_dir, 'sigma_j_xy.jpg'), format='jpg')
     plt.close(f1)
 
     # J_yx
@@ -485,10 +485,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for ch_idx in range(64):
         r_idx = ch_idx // 8
         c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(j_yx_track_list[:, ch_idx])
+        ax_arr[r_idx, c_idx].plot(sigmoid(j_yx_track_list[:, ch_idx]))
         ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("J_yx")
-    f1.savefig(os.path.join(results_store_dir, 'j_yx.jpg'), format='jpg')
+    f1.suptitle("sigma(J_yx)")
+    f1.savefig(os.path.join(results_store_dir, 'sigma_j_yx.jpg'), format='jpg')
     plt.close(f1)
 
     # i_bias
