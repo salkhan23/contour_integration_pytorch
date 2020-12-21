@@ -1019,7 +1019,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         below_th_n=tgt_n_below_th_neurons,
         store_dir=results_store_dir,
         f_title='Target Neurons Individual Gains',
-        f_name='tgt_n_indv_gain_vs_c_len'
+        f_name='tgt_n_indv_gain_vs_spacing'
     )
 
     # Individual OUTPUTS in a single tiled figure
@@ -1030,7 +1030,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         below_th_n=tgt_n_below_th_neurons,
         store_dir=results_store_dir,
         f_title='Target Neurons Individual Outputs',
-        f_name='tgt_n_indv_out_vs_c_len'
+        f_name='tgt_n_indv_out_vs_spacing'
     )
 
     if optimal_stim_dict is not None:
