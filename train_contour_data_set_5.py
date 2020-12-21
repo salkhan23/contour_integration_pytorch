@@ -573,9 +573,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # # Run Li 2006 experiments
     # # -----------------------------------------------------------------------------------
     print("====> Running Experiments")
-    optim_stim_dict = experiment_gain_vs_len.main(model, base_results_dir=results_store_dir)
+    optim_stim_dict = experiment_gain_vs_len.main(
+        model, base_results_dir=results_store_dir, n_images=100)
     experiment_gain_vs_spacing.main(
-        model, base_results_dir=results_store_dir, optimal_stim_dict=optim_stim_dict)
+        model, base_results_dir=results_store_dir, optimal_stim_dict=optim_stim_dict, n_images=100)
 
     file_handle.close()
 

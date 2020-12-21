@@ -682,9 +682,10 @@ def plot_individual_neurons_separately(
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
          full_tile_size_arr=np.array(
              [[14, 14], [15, 15], [16, 16], [17, 17], [18, 18], [19, 19], [20, 20], [21, 21]]),
-         frag_size=np.array([7, 7]), embedded_layer_identifier=None, optimal_stim_dict=None):
+         frag_size=np.array([7, 7]), embedded_layer_identifier=None, optimal_stim_dict=None, n_images=50):
     """
 
+    :param n_images:
     :param embedded_layer_identifier:
     :param model:
     :param base_results_dir:
@@ -828,7 +829,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
                 full_tile_s_arr=full_tile_size_arr,
                 frag_tile_s=frag_size,
                 c_len=7,
-                n_images=50
+                n_images=n_images
             )
 
         tgt_neuron_mean_gain_mat[ch_idx, ] = tgt_mean_gains

@@ -691,9 +691,10 @@ def plot_individual_neurons_separately(
 
 def main(model, base_results_dir, optimal_stim_extract_point='contour_integration_layer_out',
          c_len_arr=np.array([1, 3, 5, 7, 9]), iou_results=True, embedded_layer_identifier=None,
-         frag_size=np.array([7, 7]), optimal_stim_dict=None):
+         frag_size=np.array([7, 7]), optimal_stim_dict=None, n_images=50):
     """
 
+    :param n_images:
     :param frag_size:
     :param embedded_layer_identifier:
     :param iou_results:
@@ -832,7 +833,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
                 ch_sigmas=chan_stds,
                 rslt_dir=n_results_dir,
                 c_len_arr=c_len_arr,
-                n_images=50,
+                n_images=n_images,
                 iou_results=iou_results,
                 frag_size=frag_size
             )
