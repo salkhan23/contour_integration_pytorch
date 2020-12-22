@@ -52,8 +52,8 @@ if __name__ == "__main__":
 
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model_resnet_based/Old/' \
-        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+        './results/positive_weights' \
+        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20201220_194703_baseline' \
         '/best_accuracy.pth'
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Data Loader
     # -----------------------------------------------------------------------------------
-    print("Setting up data loaders")
+    print(">>>> Setting up data loaders")
 
     metadata_file = os.path.join(data_dir, 'dataset_metadata.pickle')
     with open(metadata_file, 'rb') as h:
@@ -97,7 +97,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Main
     # -----------------------------------------------------------------------------------
-    print("Starting Main Loop")
+    print(">>>> Starting Main Loop")
 
     net.eval()
     n_iters = net.contour_integration_layer.n_iters
@@ -144,8 +144,8 @@ if __name__ == "__main__":
         f_y, y_ax_arr = plt.subplots(1, n_iters, figsize=(15, 5))
 
         for iter_idx in range(n_iters):
-            x_ax_arr[iter_idx].hist(x_activations_per_iter[iter_idx], density=True, bins=20)
-            y_ax_arr[iter_idx].hist(y_activations_per_iter[iter_idx], density=True, bins=20)
+            x_ax_arr[iter_idx].hist(x_activations_per_iter[iter_idx], bins=20)
+            y_ax_arr[iter_idx].hist(y_activations_per_iter[iter_idx], bins=20)
 
         f_x.suptitle("X Activations per recurrent step")
         f_y.suptitle("Y Activations per recurrent step")
