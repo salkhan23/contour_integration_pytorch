@@ -8,6 +8,7 @@ mpl.rcParams.update({
     'lines.markeredgewidth': 3
 })
 
+INVALID_RESULTS = -1000
 # -------------------------------------------------------------------------------------------------
 # Neurophysiological Data
 # -------------------------------------------------------------------------------------------------
@@ -685,7 +686,7 @@ def get_filtered_idx_arr_max_gain(gains_arr, max_gain=20.0):
     idx_arr = []
 
     for idx, gains in enumerate(gains_arr):
-        if np.all(gains <= max_gain) and not np.all(gains == 0):
+        if np.all(gains <= max_gain) and not np.all(gains == 0) and not np.any(gains == INVALID_RESULTS):
             idx_arr.append(idx)
             # print(idx, gains)
 
