@@ -33,6 +33,62 @@ def get_lr(opt):
         return param_group['lr']
 
 
+def sigmoid(x):
+    return 1. / (1+np.exp(-x))
+
+
+def store_tracked_variables(var_dict, store_dir, n_ch=64):
+    """ Store and Plot Variables tracked during Training """
+
+    track_v_store_dir = os.path.join(store_dir, 'tracked_variables')
+    if not os.path.exists(track_v_store_dir):
+        os.makedirs(track_v_store_dir)
+
+    # Store all variables in a file
+    track_v_store_file = os.path.join(track_v_store_dir, 'tracked_variables.txt')
+    f_handle = open(track_v_store_file, 'w+')
+
+    f_handle.write("Variables Tracked Over Training\n")
+    f_handle.write("{}\n".format('-' * 80))
+
+    for key, value in var_dict.items():
+        value = np.array(value)
+        print("{}:\nnp.{}".format(key, repr(value)), file=f_handle)
+
+    f_handle.close()
+
+    # Plot tracked variables
+    var_requiring_sigmoid = ['a', 'b', 'j_xy', 'j_yx']
+    single_dim = np.int(np.ceil(np.sqrt(n_ch)))
+
+    for key, value in var_dict.items():
+        f1, ax_arr = plt.subplots(single_dim, single_dim, figsize=(9, 9))
+
+        value = np.array(value)
+
+        sigmoid_required = False
+        if key in var_requiring_sigmoid:
+            sigmoid_required = True
+
+        for ch_idx in range(n_ch):
+            r_idx = ch_idx // single_dim
+            c_idx = ch_idx - r_idx * single_dim
+
+            if sigmoid_required:
+                ax_arr[r_idx, c_idx].plot(sigmoid(value[:, ch_idx]))
+            else:
+                ax_arr[r_idx, c_idx].plot(value[:, ch_idx])
+
+        if sigmoid_required:
+            f1.suptitle("Sigmoid ({})".format(key))
+            f1.savefig(os.path.join(track_v_store_dir, 'sigma_{}.jpg'.format(key)), format='jpg')
+        else:
+            f1.suptitle("{}".format(key))
+            f1.savefig(os.path.join(track_v_store_dir, '{}.jpg'.format(key)), format='jpg')
+
+        plt.close()
+
+
 def main(model, train_params, data_set_params, base_results_store_dir='./results'):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -348,14 +404,15 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     print("train_batch_size={}, test_batch_size={}, lr={}, epochs={}".format(
         train_batch_size, test_batch_size, learning_rate, num_epochs))
 
-    a_track_list = []
-    b_track_list = []
-
-    j_xy_track_list = []
-    j_yx_track_list = []
-
-    i_bias_track_list = []
-    e_bias_track_list = []
+    # track evolution of these variables during training
+    track_var_dict = {
+        'a': [],
+        'b': [],
+        'j_xy': [],
+        'j_yx': [],
+        'i_bias': [],
+        'e_bias': []
+    }
 
     for epoch in range(0, num_epochs):
 
@@ -367,12 +424,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         lr_history.append(get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        a_track_list.append(model.contour_integration_layer.a.detach().cpu().numpy())
-        b_track_list.append(model.contour_integration_layer.b.detach().cpu().numpy())
-        j_xy_track_list.append(model.contour_integration_layer.j_xy.detach().cpu().numpy())
-        j_yx_track_list.append(model.contour_integration_layer.j_yx.detach().cpu().numpy())
-        i_bias_track_list.append(model.contour_integration_layer.i_bias.detach().cpu().numpy())
-        e_bias_track_list.append(model.contour_integration_layer.e_bias.detach().cpu().numpy())
+        track_var_dict['a'].append(model.contour_integration_layer.a.detach().cpu().numpy())
+        track_var_dict['b'].append(model.contour_integration_layer.b.detach().cpu().numpy())
+        track_var_dict['j_xy'].append(model.contour_integration_layer.j_xy.detach().cpu().numpy())
+        track_var_dict['j_yx'].append(model.contour_integration_layer.j_yx.detach().cpu().numpy())
+        track_var_dict['i_bias'].append(model.contour_integration_layer.i_bias.detach().cpu().numpy())
+        track_var_dict['e_bias'].append(model.contour_integration_layer.e_bias.detach().cpu().numpy())
 
         # Clip all negative lateral weights
         # ----------------------------------------------------------------------------------
@@ -418,102 +475,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # ----------------------------------------------------------------------------------
     # Track some variables across training
     # ----------------------------------------------------------------------------------
-    def sigmoid(x):
-        return 1. / (1+np.exp(-x))
-
     np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
-    file_handle.write("{}\n".format('-' * 80))
-
-    a_track_list = np.array(a_track_list)
-    print("a : \n" + 'np.' + repr(a_track_list), file=file_handle)
-
-    b_track_list = np.array(b_track_list)
-    print("b : \n" + 'np.' + repr(b_track_list), file=file_handle)
-
-    j_xy_track_list = np.array(j_xy_track_list)
-    print("Jxy : \n" + 'np.' + repr(j_xy_track_list), file=file_handle)
-
-    j_yx_track_list = np.array(j_yx_track_list)
-    print("Jyx : \n" + 'np.' + repr(j_yx_track_list), file=file_handle)
-
-    i_bias_track_list = np.array(i_bias_track_list)
-    print("i_bias : \n" + 'np.' + repr(i_bias_track_list), file=file_handle)
-
-    e_bias_track_list = np.array(e_bias_track_list)
-    print("e_bias : \n" + 'np.' + repr(e_bias_track_list), file=file_handle)
-
-    # plot Tracked Variables
-    # Sigma(a)
-    # ---------
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(sigmoid(a_track_list[:, ch_idx]))
-        ax_arr[r_idx, c_idx].set_ylim([0, 1])
-    f1.suptitle("Sigmoid (a)")
-    f1.savefig(os.path.join(results_store_dir, 'sigma_a.jpg'), format='jpg')
-    plt.close(f1)
-
-    # Sigma(b)
-    # ---------
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(sigmoid(b_track_list[:, ch_idx]))
-        ax_arr[r_idx, c_idx].set_ylim([0, 1])
-    f1.suptitle("Sigmoid (b)")
-    f1.savefig(os.path.join(results_store_dir, 'sigma_b.jpg'), format='jpg')
-    plt.close(f1)
-
-    # J_xy
-    # ----
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(sigmoid(j_xy_track_list[:, ch_idx]))
-        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("sigma(J_xy)")
-    f1.savefig(os.path.join(results_store_dir, 'sigma_j_xy.jpg'), format='jpg')
-    plt.close(f1)
-
-    # J_yx
-    # ----
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(sigmoid(j_yx_track_list[:, ch_idx]))
-        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("sigma(J_yx)")
-    f1.savefig(os.path.join(results_store_dir, 'sigma_j_yx.jpg'), format='jpg')
-    plt.close(f1)
-
-    # i_bias
-    # ------
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(i_bias_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("i_bias")
-    f1.savefig(os.path.join(results_store_dir, 'i_bias.jpg'), format='jpg')
-    plt.close(f1)
-
-    # e_bias
-    # ------
-    f1, ax_arr = plt.subplots(8, 8, figsize=(9, 9))
-    for ch_idx in range(64):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-        ax_arr[r_idx, c_idx].plot(e_bias_track_list[:, ch_idx])
-        ax_arr[r_idx, c_idx].set_ylim([-1, 1])
-    f1.suptitle("e_bias")
-    f1.savefig(os.path.join(results_store_dir, 'e_bias.jpg'), format='jpg')
-    plt.close(f1)
+    store_tracked_variables(
+        track_var_dict, results_store_dir, n_ch=model.contour_integration_layer.edge_out_ch)
 
     # -----------------------------------------------------------------------------------
     # Plots
