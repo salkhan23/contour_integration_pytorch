@@ -350,8 +350,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
             f_y = nn.functional.relu(y)
 
             if self.store_recurrent_acts:
-                self.x_per_iteration.append(f_x)
-                self.y_per_iteration.append(f_y)
+                self.x_per_iteration.append(x)
+                self.y_per_iteration.append(y)
 
             # # Debug
             # print("Final iter {} x {:0.4f}, f_x {:0.4f}, y {:0.4f}, f_y {:0.4f}".format(
