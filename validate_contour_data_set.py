@@ -96,7 +96,8 @@ def get_full_data_set_performance(model, data_dir, device_to_use, beta_arr=None)
     return iou, loss
 
 
-def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([1, 3, 5, 7, 9]), beta_arr=None):
+def get_performance_per_len(
+        model, data_dir, device_to_use, c_len_arr=np.array([1, 3, 5, 7, 9]), beta_arr=None):
     """
 
     :param beta_arr:
@@ -152,6 +153,62 @@ def get_performance_per_len(model, data_dir, device_to_use, c_len_arr=np.array([
     return c_len_ious, c_len_loss
 
 
+def plot_iou_per_contour_length(c_len_arr, iou_arr, f_title="IoU vs Contour length", file_name=None):
+    """
+    Plot the results of get_performance_per_len.
+
+    :param c_len_arr: contours lengths over which the results were run
+    :param iou_arr: iou per len array
+    :param file_name:  if provided, will store a figure in that location
+    :param f_title:
+
+    :return:
+    """
+    f = plt.figure()
+
+    # PLot IoU
+    plt.plot(c_len_arr, iou_arr)
+    plt.xlabel("Contour length")
+    plt.ylabel("IoU")
+    plt.grid(True)
+    plt.ylim([0, 1])
+    plt.axhline(np.mean(iou_arr), label='average_iou = {:0.2f}'.format(
+        np.mean(iou_arr)), color='red', linestyle=':')
+    plt.legend()
+    plt.title(f_title)
+
+    if file_name is not None:
+        f.savefig(file_name)
+        plt.close(f)
+
+
+def plot_loss_per_contour_length(c_len_arr, loss_arr, f_title="Loss vs Contour Length", file_name=None):
+    """
+    Plots the results of get_performance_per_len.
+
+    :param c_len_arr: contours lengths over which the results were run
+    :param loss_arr: Plot loss oer contour length. Separate Figure
+    :param file_name:  if provided, will store a figure in that location
+    :param f_title:
+
+    :return:
+    """
+    f = plt.figure()
+
+    # PLot IoU
+    plt.plot(c_len_arr, loss_arr)
+    plt.xlabel("Contour length")
+    plt.ylabel("Loss")
+    plt.grid(True)
+    plt.ylim([0, 1])
+    plt.legend()
+    plt.title(f_title)
+
+    if file_name is not None:
+        f.savefig(file_name)
+        plt.close(f)
+
+
 if __name__ == "__main__":
     random_seed = 5
 
@@ -197,23 +254,14 @@ if __name__ == "__main__":
     st_contours_c_len_iou_arr, st_contours_c_len_loss_arr = get_performance_per_len(
         net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
 
-    plt.figure('iou_fig')
-    plt.plot(c_length_arr, st_contours_c_len_iou_arr, label='straight contours')
-    plt.xlabel("Contour length")
-    plt.ylabel("IoU")
-    plt.grid()
-    plt.ylim([0, 1])
-    plt.title("IoU vs Length")
-    plt.legend()
-    plt.savefig(os.path.join(results_dir, 'iou_straight.png'))
+    plot_iou_per_contour_length(
+        c_length_arr,
+        st_contours_c_len_iou_arr,
+        f_title='Straight Contours',
+        file_name=os.path.join(results_dir, 'iou_straight.png'))
 
-    plt.figure('loss_fig')
-    plt.plot(c_length_arr, st_contours_c_len_loss_arr, label='straight contours')
-    plt.grid()
-    plt.xlabel("Contour length")
-    plt.ylabel("Loss")
-    plt.title("Loss vs Length")
-    plt.legend()
+    plot_loss_per_contour_length(
+        c_length_arr, st_contours_c_len_loss_arr, f_title='Straight Contours')
 
     # ----------------------------------------------------------------------------
     # Curved Contours
@@ -228,23 +276,14 @@ if __name__ == "__main__":
     curve_contours_c_len_iou_arr, curve_contours_c_len_loss_arr = get_performance_per_len(
         net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
 
-    plt.figure('iou_fig')
-    plt.plot(c_length_arr, curve_contours_c_len_iou_arr, label='curved contours')
-    plt.xlabel("Contour length")
-    plt.ylabel("IoU")
-    plt.grid()
-    plt.ylim([0, 1])
-    plt.title("IoU vs Length")
-    plt.legend()
-    plt.savefig(os.path.join(results_dir, 'iou_curved.png'))
+    plot_iou_per_contour_length(
+        c_length_arr,
+        curve_contours_c_len_iou_arr,
+        f_title='Curved Contours',
+        file_name=os.path.join(results_dir, 'iou_curved.png'))
 
-    plt.figure('loss_fig')
-    plt.plot(c_length_arr, curve_contours_c_len_loss_arr, label='curved contours')
-    plt.grid()
-    plt.xlabel("Contour length")
-    plt.ylabel("Loss")
-    plt.title("Loss vs Length")
-    plt.legend()
+    plot_loss_per_contour_length(
+        c_length_arr, curve_contours_c_len_loss_arr, f_title='Curved Contours')
 
     # ----------------------------------------------------------------------------
     # Full Dataset
@@ -259,23 +298,14 @@ if __name__ == "__main__":
     full_c_len_iou_arr, full_c_len_arr_loss_arr = get_performance_per_len(
         net, data_set_dir, device_to_use=device, c_len_arr=c_length_arr, beta_arr=beta_rotations_arr)
 
-    plt.figure('iou_fig')
-    plt.plot(c_length_arr, full_c_len_iou_arr, label='all')
-    plt.xlabel("Contour length")
-    plt.ylabel("IoU")
-    plt.grid()
-    plt.ylim([0, 1])
-    plt.title("IoU vs Length")
-    plt.legend()
-    plt.savefig(os.path.join(results_dir, 'iou_full.png'))
+    plot_iou_per_contour_length(
+        c_length_arr,
+        full_c_len_iou_arr,
+        f_title='All Contours',
+        file_name=os.path.join(results_dir, 'iou_all.png'))
 
-    plt.figure('loss_fig')
-    plt.plot(c_length_arr, full_c_len_arr_loss_arr, label='all')
-    plt.grid()
-    plt.xlabel("Contour length")
-    plt.ylabel("Loss")
-    plt.title("Loss vs Length")
-    plt.legend()
+    plot_loss_per_contour_length(
+        c_length_arr, full_c_len_arr_loss_arr, f_title='All Contours')
 
     # -----------------------------------------------------------------------------------
     import pdb
