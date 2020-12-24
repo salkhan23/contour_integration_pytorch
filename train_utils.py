@@ -154,15 +154,21 @@ class InvertedGaussianL1Loss(torch.nn.Module):
         :param i_mask_size:
         :param mask_width: sigma of the Gaussian mask
         """
+        super(InvertedGaussianL1Loss, self).__init__()
+
         self.e_mask_size = e_mask_size
         self.i_mask_size = i_mask_size
         self.mask_width = mask_width
-        self.mask_e = 1 - utils.get_2d_gaussian_kernel(e_mask_size, mask_width)
-        self.mask_i = 1 - utils.get_2d_gaussian_kernel(i_mask_size, mask_width)
 
-        self.mask_e = torch.from_numpy(self.mask_e).float()
-        self.mask_i = torch.from_numpy(self.mask_i).float()
-        super(InvertedGaussianL1Loss, self).__init__()
+        # Register masks as buffers, so they can move to the device when to function is called.
+        # self.mask_e = 1 - utils.get_2d_gaussian_kernel(e_mask_size, mask_width)
+        # self.mask_i = 1 - utils.get_2d_gaussian_kernel(i_mask_size, mask_width)
+        # self.mask_e = torch.from_numpy(self.mask_e).float()
+        # self.mask_i = torch.from_numpy(self.mask_i).float()
+        self.register_buffer(
+            'mask_e', torch.from_numpy(1 - utils.get_2d_gaussian_kernel(e_mask_size, mask_width)))
+        self.register_buffer(
+            'mask_i', torch.from_numpy(1 - utils.get_2d_gaussian_kernel(e_mask_size, mask_width)))
 
     def forward(self, weight_e, weight_i):
         loss1 = (self.mask_e * weight_e).abs().sum() + (self.mask_i * weight_i).abs().sum()

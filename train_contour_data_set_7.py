@@ -212,7 +212,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     loss_function = train_utils.BceAndLateralWeightSparsityLoss(
         lateral_sparsity_loss,
         train_params['gaussian_reg_weight']
-    )
+    ).to(device)
 
     detect_thres = 0.5
 
