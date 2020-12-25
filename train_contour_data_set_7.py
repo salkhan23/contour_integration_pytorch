@@ -463,14 +463,14 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
 if __name__ == '__main__':
 
-    random_seed = 10
+    random_seed = 1
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
     data_set_parameters = {
         'data_set_dir': "./data/channel_wise_optimal_full14_frag7",
-        # 'train_subset_size': 20000,
-        # 'test_subset_size': 2000
+        'train_subset_size': 20000,
+        'test_subset_size': 2000
     }
 
     train_parameters = {
