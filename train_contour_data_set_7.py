@@ -104,6 +104,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     num_epochs = train_params['num_epochs']
 
     gaussian_kernel_sigma = train_params['gaussian_reg_sigma']
+    clip_negative_lateral_weights = train_params.get('clip_negative_lateral_weights', False)
 
     # -----------------------------------------------------------------------------------
     # Model
@@ -240,6 +241,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             total_loss.backward()
             optimizer.step()
 
+            if clip_negative_lateral_weights:
+                model.contour_integration_layer.lateral_e.weight.data = \
+                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_e.weight.data)
+                model.contour_integration_layer.lateral_i.weight.data = \
+                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_i.weight.data)
+
             e_loss += total_loss.item()
 
             preds = (torch.sigmoid(label_out) > detect_thres)
@@ -324,6 +331,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Loss Fcn         : {}\n".format(loss_function.__class__.__name__))
     print(loss_function, file=file_handle)
     file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
+    file_handle.write("clip negative lateral weights: {}\n".format(clip_negative_lateral_weights))
 
     file_handle.write("Model Parameters {}\n".format('-' * 63))
     file_handle.write("Model Name       : {}\n".format(model.__class__.__name__))
@@ -384,13 +392,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         for param in track_var_dict:
             if param in cont_int_layer_params:
                 track_var_dict[param].append(cont_int_layer_params[param].cpu().detach().numpy())
-
-        # Clip all negative lateral weights
-        # ----------------------------------------------------------------------------------
-        model.contour_integration_layer.lateral_e.weight.data = \
-            train_utils.clip_negative_weights(model.contour_integration_layer.lateral_e.weight.data)
-        model.contour_integration_layer.lateral_i.weight.data = \
-            train_utils.clip_negative_weights(model.contour_integration_layer.lateral_i.weight.data)
 
         print("Epoch [{}/{}], Train: loss={:0.4f}, IoU={:0.4f}. Val: loss={:0.4f}, IoU={:0.4f}. "
               "Time {}".format(
@@ -469,8 +470,8 @@ if __name__ == '__main__':
 
     data_set_parameters = {
         'data_set_dir': "./data/channel_wise_optimal_full14_frag7",
-        'train_subset_size': 20000,
-        'test_subset_size': 2000
+        # 'train_subset_size': 20000,
+        # 'test_subset_size': 2000
     }
 
     train_parameters = {
@@ -480,6 +481,7 @@ if __name__ == '__main__':
         'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
+        'clip_negative_lateral_weights': True
     }
 
     # Build Model
