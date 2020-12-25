@@ -30,7 +30,21 @@ import experiment_gain_vs_spacing
 import train_utils
 
 
-def iterate_epoch(model, data_loader, loss_fcn, optimizer1, device, detect_th, is_train=True):
+def iterate_epoch(
+        model, data_loader, loss_fcn, optimizer1, device, detect_th, is_train=True,
+        clip_negative_lateral_weights=False):
+    """
+    :param model:
+    :param data_loader:
+    :param loss_fcn:
+    :param optimizer1:
+    :param device:
+    :param detect_th:
+    :param is_train:
+    :param clip_negative_lateral_weights: If set will clip negative lateral weights after
+       every weight update. Only used when is_train=True
+    :return:
+    """
 
     if is_train:
         model.train()
@@ -62,6 +76,12 @@ def iterate_epoch(model, data_loader, loss_fcn, optimizer1, device, detect_th, i
         if is_train:
             total_loss.backward()
             optimizer1.step()
+
+            if clip_negative_lateral_weights:
+                model.contour_integration_layer.lateral_e.weight.data = \
+                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_e.weight.data)
+                model.contour_integration_layer.lateral_i.weight.data = \
+                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_i.weight.data)
 
     e_loss = e_loss / len(data_loader)
     e_iou = e_iou / len(data_loader)
@@ -218,78 +238,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     detect_thres = 0.5
 
     # -----------------------------------------------------------------------------------
-    #  Training Validation Routines
-    # -----------------------------------------------------------------------------------
-    def train():
-        """ Train for one Epoch over the train data set """
-        model.train()
-        e_loss = 0
-        e_iou = 0
-
-        for iteration, (img, label) in enumerate(train_data_loader, 1):
-            optimizer.zero_grad()  # zero the parameter gradients
-
-            img = img.to(device)
-            label = label.to(device)
-
-            label_out = model(img)
-
-            total_loss = loss_function(
-                label_out, label.float(), model.contour_integration_layer.lateral_e.weight,
-                model.contour_integration_layer.lateral_i.weight)
-
-            total_loss.backward()
-            optimizer.step()
-
-            if clip_negative_lateral_weights:
-                model.contour_integration_layer.lateral_e.weight.data = \
-                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_e.weight.data)
-                model.contour_integration_layer.lateral_i.weight.data = \
-                    train_utils.clip_negative_weights(model.contour_integration_layer.lateral_i.weight.data)
-
-            e_loss += total_loss.item()
-
-            preds = (torch.sigmoid(label_out) > detect_thres)
-            e_iou += utils.intersection_over_union(
-                preds.float(), label.float()).cpu().detach().numpy()
-
-        e_loss = e_loss / len(train_data_loader)
-        e_iou = e_iou / len(train_data_loader)
-
-        # print("Train Epoch {} Loss = {:0.4f}, IoU={:0.4f}".format(epoch, e_loss, e_iou))
-
-        return e_loss, e_iou
-
-    def validate():
-        """ Get loss over validation set """
-        model.eval()
-        e_loss = 0
-        e_iou = 0
-
-        with torch.no_grad():
-            for iteration, (img, label) in enumerate(val_data_loader, 1):
-                img = img.to(device)
-                label = label.to(device)
-
-                label_out = model(img)
-
-                total_loss = loss_function(
-                    label_out, label.float(), model.contour_integration_layer.lateral_e.weight,
-                    model.contour_integration_layer.lateral_i.weight)
-
-                e_loss += total_loss.item()
-                preds = (torch.sigmoid(label_out) > detect_thres)
-                e_iou += utils.intersection_over_union(
-                    preds.float(), label.float()).cpu().detach().numpy()
-
-        e_loss = e_loss / len(val_data_loader)
-        e_iou = e_iou / len(val_data_loader)
-
-        # print("Val Loss = {:0.4f}, IoU={:0.4f}".format(e_loss, e_iou))
-
-        return e_loss, e_iou
-
-    # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
     print("====> Starting Training ")
@@ -381,13 +329,29 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     for epoch in range(0, num_epochs):
         epoch_start_time = datetime.now()
 
-        train_history.append(train())
-        val_history.append(validate())
+        train_history.append(iterate_epoch(
+            model=model,
+            data_loader=train_data_loader,
+            loss_fcn=loss_function,
+            optimizer1=optimizer,
+            device=device,
+            detect_th=detect_thres,
+            is_train=True,
+            clip_negative_lateral_weights=clip_negative_lateral_weights))
+
+        val_history.append(iterate_epoch(
+            model=model,
+            data_loader=val_data_loader,
+            loss_fcn=loss_function,
+            optimizer1=optimizer,
+            device=device,
+            detect_th=detect_thres,
+            is_train=False))
 
         lr_history.append(train_utils.get_lr(optimizer))
         lr_scheduler.step(epoch)
 
-        # Track parameter
+        # Track parameters
         cont_int_layer_params = model.contour_integration_layer.state_dict()
         for param in track_var_dict:
             if param in cont_int_layer_params:
