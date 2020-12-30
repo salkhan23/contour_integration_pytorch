@@ -178,8 +178,24 @@ class InvertedGaussianL1Loss(torch.nn.Module):
         string = "InvertedGaussianL1Loss()\n"
         string += ("  e_mask_size         : {}\n".format(self.e_mask_size))
         string += ("  i_mask_size         : {}\n".format(self.i_mask_size))
-        string += ("  Gaussian mask sigma : {}\n".format(self.mask_width))
+        string += ("  Gaussian mask sigma : {}".format(self.mask_width))
         return string
+
+
+def negative_weights_loss(weight_e, weight_i):
+    """
+    Find the negative weights in the two supplied weights, square them and sum them to get loss
+
+    :param weight_e:
+    :param weight_i:
+    :return:
+    """
+    neg_weight_e = weight_e[weight_e < 0]
+    neg_weight_i = weight_i[weight_i < 0]
+
+    loss1 = torch.pow(neg_weight_e, 2).sum() + torch.pow(neg_weight_i, 2).sum()
+
+    return loss1
 
 
 class BceAndLateralWeightSparsityLoss(torch.nn.Module):
@@ -213,5 +229,52 @@ class BceAndLateralWeightSparsityLoss(torch.nn.Module):
         string = "BceAndLateralWeightSparsityLoss()\n"
         string += "  Criterion Loss       : {}\n".format(self.criterion)
         string += ("  Sparsity Loss        : {}\n".format(self.sparsity_loss))
-        string += ("  Sparsity loss weight : {}\n".format(self.sparsity_loss_weight))
+        string += ("  Sparsity loss weight : {}".format(self.sparsity_loss_weight))
+        return string
+
+
+class BceAndLateralWeightSparsityAndNegativeWeightPenalty(torch.nn.Module):
+    def __init__(
+            self, sparsity_loss_fcn, sparsity_loss_weight,
+            negative_weights_penalty_fcn, negative_weights_penalty_weight):
+        """
+
+         BCEWithLogitsLoss(), specified sparsity loss collectively and specified negative weight loss
+
+        :param sparsity_loss_fcn:
+        :param sparsity_loss_weight:
+        :param negative_weights_penalty_fcn:
+        :param negative_weights_penalty_weight:
+        """
+        super(BceAndLateralWeightSparsityAndNegativeWeightPenalty, self).__init__()
+
+        self.criterion = torch.nn.BCEWithLogitsLoss()
+
+        self.sparsity_loss_fcn = sparsity_loss_fcn
+        self.sparsity_loss_weight = sparsity_loss_weight
+
+        self.negative_weights_penalty_fcn = negative_weights_penalty_fcn
+        self.negative_weights_penalty_weight = negative_weights_penalty_weight
+
+    def forward(self, label_out, label, weight_e, weight_i):
+
+        criteria_loss = self.criterion(label_out, label)
+        w_sparsity_loss = self.sparsity_loss_weight * self.sparsity_loss_fcn(weight_e, weight_i)
+        neg_weights_penalty = \
+            self.negative_weights_penalty_weight * self.negative_weights_penalty_fcn(weight_e, weight_i)
+
+        total_loss = criteria_loss + w_sparsity_loss + neg_weights_penalty
+
+        # print("Total Loss {:0.4f}. Criteria Loss {:0.4f}, Weight Sparsity Loss {:0.4f}. Negative Weights Loss {:0.4f}".format(
+        #     total_loss, criteria_loss, w_sparsity_loss, neg_weights_penalty))
+
+        return total_loss
+
+    def __repr__(self):
+        string = "BceAndLateralWeightSparsityAndNegativeWeightPenalty()\n"
+        string += "  Criterion Loss           : {}\n".format(self.criterion)
+        string += ("  Sparsity Loss            : {}\n".format(self.sparsity_loss_fcn))
+        string += ("  Sparsity loss weight     : {}\n".format(self.sparsity_loss_weight))
+        string += ("  Negative w. Loss         : {}\n".format(self.negative_weights_penalty_fcn.__name__))
+        string += ("  Negative w. Loss weight  : {}\n".format(self.negative_weights_penalty_weight))
         return string

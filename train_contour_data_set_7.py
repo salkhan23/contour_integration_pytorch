@@ -235,6 +235,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         train_params['gaussian_reg_weight']
     ).to(device)
 
+    # loss_function = train_utils.BceAndLateralWeightSparsityAndNegativeWeightPenalty(
+    #     lateral_sparsity_loss,
+    #     train_params['gaussian_reg_weight'],
+    #     negative_weights_penalty_fcn=train_utils.negative_weights_loss,
+    #     negative_weights_penalty_weight=0.05
+    # ).to(device)
+
     detect_thres = 0.5
 
     # -----------------------------------------------------------------------------------
@@ -349,7 +356,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
             is_train=False))
 
         lr_history.append(train_utils.get_lr(optimizer))
-        lr_scheduler.step(epoch)
+        lr_scheduler.step()
 
         # Track parameters
         cont_int_layer_params = model.contour_integration_layer.state_dict()
