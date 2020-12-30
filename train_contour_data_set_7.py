@@ -227,8 +227,9 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     lateral_sparsity_loss = train_utils.InvertedGaussianL1Loss(
         model.contour_integration_layer.lateral_e.weight.shape[2:],
         model.contour_integration_layer.lateral_i.weight.shape[2:],
-        gaussian_kernel_sigma,
-    )
+        gaussian_kernel_sigma)
+    # # Vanilla L1 Loss
+    # lateral_sparsity_loss = train_utils.WeightNormLoss(norm=1)
 
     loss_function = train_utils.BceAndLateralWeightSparsityLoss(
         lateral_sparsity_loss,

@@ -182,6 +182,28 @@ class InvertedGaussianL1Loss(torch.nn.Module):
         return string
 
 
+class WeightNormLoss(torch.nn.Module):
+    def __init__(self, norm=1):
+        """
+        Regular Weight Loss. L1/L2 loss as specified by the norm parameter
+
+        :param norm: [default is 1 (L1 loss)]
+        """
+        super(WeightNormLoss, self).__init__()
+        self.norm = norm
+
+    def forward(self, weight_e, weight_i):
+        loss = \
+            weight_e.norm(p=self.norm) + \
+            weight_i.norm(p=self.norm)
+        return loss
+
+    def __repr__(self):
+        string = "WeightNormLoss()\n"
+        string += ("  Norm : {}".format(self.norm))
+        return string
+
+
 def negative_weights_loss(weight_e, weight_i):
     """
     Find the negative weights in the two supplied weights, square them and sum them to get loss
