@@ -126,6 +126,15 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     gaussian_kernel_sigma = train_params['gaussian_reg_sigma']
     clip_negative_lateral_weights = train_params.get('clip_negative_lateral_weights', False)
 
+    if 'lr_sched_update' not in train_params:
+        train_params['lr_sched_step_size'] = 30
+    if 'lr_sched_gamma' not in train_params:
+        train_params['lr_sched_gamma'] = 0.1
+    if 'random_seed' not in train_params:
+        train_params['random_seed'] = 1
+
+    torch.manual_seed(train_params['random_seed'] )
+    np.random.seed(train_params['random_seed'] )
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
@@ -221,7 +230,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=learning_rate)
 
-    lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    lr_scheduler = optim.lr_scheduler.StepLR(
+        optimizer,
+        step_size=train_params['lr_sched_step_size'],
+        gamma=train_params['lr_sched_gamma'])
+
     detect_thres = 0.5
 
     # -----------------------------------------------------------------------------------
@@ -283,7 +296,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         val_set.data_set_mean, train_set.data_set_std))
 
     file_handle.write("Training Parameters {}\n".format('-' * 60))
-    file_handle.write("Random Seed      : {}\n".format(random_seed))
+    file_handle.write("Random Seed      : {}\n".format(train_params['random_seed']))
     file_handle.write("Train images     : {}\n".format(len(train_set.images)))
     file_handle.write("Val images       : {}\n".format(len(val_set.images)))
     file_handle.write("Train batch size : {}\n".format(train_batch_size))
@@ -291,6 +304,10 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     file_handle.write("Epochs           : {}\n".format(num_epochs))
     file_handle.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
     file_handle.write("learning rate    : {}\n".format(learning_rate))
+    for key in train_params.keys():
+        if 'lr_sched' in key:
+            print("  {}: {}".format(key, train_params[key]), file=file_handle)
+
     file_handle.write("Loss Fcn         : {}\n".format(loss_function.__class__.__name__))
     print(loss_function, file=file_handle)
     file_handle.write("IoU Threshold    : {}\n".format(detect_thres))
@@ -443,10 +460,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
 if __name__ == '__main__':
 
-    random_seed = 1
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
-
     data_set_parameters = {
         'data_set_dir': "./data/channel_wise_optimal_full14_frag7",
         # 'train_subset_size': 20000,
@@ -454,6 +467,7 @@ if __name__ == '__main__':
     }
 
     train_parameters = {
+        'random_seed': 1,
         'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 3e-5,
