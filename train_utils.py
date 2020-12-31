@@ -16,7 +16,11 @@ def get_lr(opt):
 
 
 def sigmoid(x):
-    return 1. / (1+np.exp(-x))
+    return 1. / (1 + np.exp(-x))
+
+
+def inverse_sigmoid(y):
+    return np.log(y / (1 - y))
 
 
 def clip_negative_weights(input_w):
