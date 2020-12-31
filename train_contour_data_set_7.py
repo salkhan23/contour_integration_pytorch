@@ -215,35 +215,42 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     ))
 
     # -----------------------------------------------------------------------------------
-    # Loss / optimizer
+    # Optimizer
     # -----------------------------------------------------------------------------------
     optimizer = optim.Adam(
         filter(lambda p: p.requires_grad, model.parameters()),
-        lr=learning_rate
-    )
+        lr=learning_rate)
 
     lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.1)
+    detect_thres = 0.5
 
+    # -----------------------------------------------------------------------------------
+    # Loss Functions
+    # -----------------------------------------------------------------------------------
+    criterion = torch.nn.BCEWithLogitsLoss()
+    # criterion = train_utils.ClassBalancedCrossEntropy()
+    # criterion = train_utils.ClassBalancedCrossEntropyAttentionLoss()
+    criterion_loss_sigmoid_outputs = False
+
+    # Lateral Weights sparsity constraint
     lateral_sparsity_loss = train_utils.InvertedGaussianL1Loss(
         model.contour_integration_layer.lateral_e.weight.shape[2:],
         model.contour_integration_layer.lateral_i.weight.shape[2:],
         gaussian_kernel_sigma)
-    # # Vanilla L1 Loss
-    # lateral_sparsity_loss = train_utils.WeightNormLoss(norm=1)
+    # lateral_sparsity_loss = train_utils.WeightNormLoss(norm=1) # vanilla L1 Loss
 
-    loss_function = train_utils.BceAndLateralWeightSparsityLoss(
-        lateral_sparsity_loss,
-        train_params['gaussian_reg_weight']
+    # # Penalize Lateral Weights
+    # negative_lateral_weights_penalty = train_utils.NegativeWeightsNormLoss()
+    # negative_lateral_weights_penalty_weight = 0.05
+
+    loss_function = train_utils.CombinedLoss(
+        criterion=criterion,
+        sigmoid_predictions=criterion_loss_sigmoid_outputs,
+        sparsity_loss_fcn=lateral_sparsity_loss,
+        sparsity_loss_weight=train_params['gaussian_reg_weight'],
+        # negative_weights_loss_fcn=negative_lateral_weights_penalty,
+        # negative_weights_loss_weight=negative_lateral_weights_penalty_weight
     ).to(device)
-
-    # loss_function = train_utils.BceAndLateralWeightSparsityAndNegativeWeightPenalty(
-    #     lateral_sparsity_loss,
-    #     train_params['gaussian_reg_weight'],
-    #     negative_weights_penalty_fcn=train_utils.negative_weights_loss,
-    #     negative_weights_penalty_weight=0.05
-    # ).to(device)
-
-    detect_thres = 0.5
 
     # -----------------------------------------------------------------------------------
     # Main Loop
