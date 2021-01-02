@@ -126,7 +126,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     gaussian_kernel_sigma = train_params['gaussian_reg_sigma']
     clip_negative_lateral_weights = train_params.get('clip_negative_lateral_weights', False)
 
-    if 'lr_sched_update' not in train_params:
+    if 'lr_sched_step_size' not in train_params:
         train_params['lr_sched_step_size'] = 30
     if 'lr_sched_gamma' not in train_params:
         train_params['lr_sched_gamma'] = 0.1
@@ -474,7 +474,8 @@ if __name__ == '__main__':
         'num_epochs': 50,
         'gaussian_reg_weight': 0.0001,
         'gaussian_reg_sigma': 10,
-        'clip_negative_lateral_weights': True
+        'clip_negative_lateral_weights': True,
+        'lr_sched_step_size': 40
     }
 
     # Build Model
