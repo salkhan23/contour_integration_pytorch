@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------------
-#  Call contour data set training script on different number of iterations
+#  Call contour data set training script with different learning rates
 # -------------------------------------------------------------------------------------
 import numpy as np
 import torch
@@ -32,10 +32,12 @@ if __name__ == '__main__':
         model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
 
         train_parameters = {
-            'train_batch_size': 16,
+            'train_batch_size': 32,
             'test_batch_size': 1,
             'learning_rate': lr,
             'num_epochs': 50,
+            'lateral_w_reg_weight': 0.0001,
+            'lateral_w_reg_gaussian_sigma': 10,
         }
 
         main(

@@ -1,19 +1,22 @@
 # -------------------------------------------------------------------------------------
-#  Call contour data set training script on different number of iterations
+#  Call contour data set training script with different tau (a, b) values
+# NOTE: a sigmoid is applied on tau before using
 # -------------------------------------------------------------------------------------
 import numpy as np
 import torch
 
 from train_contour_data_set import main
 import models.new_piech_models as new_piech_models
+from train_utils import inverse_sigmoid
 
 
 if __name__ == '__main__':
-    random_seed = 10
+    random_seed = 5
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    lateral_rf_size_arr = [3, 5, 7, 11, 15, 19, 23, 27, 31, 35]
+    sigma_tau_arr = [0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.999]
+    tau_arr = inverse_sigmoid(sigma_tau_arr)
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
@@ -25,17 +28,17 @@ if __name__ == '__main__':
     train_parameters = {
         'train_batch_size': 16,
         'test_batch_size': 1,
-        'learning_rate': 0.00003,
+        'learning_rate': 3e-5,
         'num_epochs': 50,
     }
 
-    for lateral_rf_size in lateral_rf_size_arr:
-        print("Processing lateral rf_size = {} {}".format(lateral_rf_size, '*'*40))
+    for tau in tau_arr:
+        print("Processing tau = {} {}".format(tau, '*'*40))
 
-        base_results_dir = './results/lateral_rf_explore/size_{}'.format(lateral_rf_size)
+        base_results_dir = './results/tau_explore/tau_{}'.format(tau)
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-            lateral_e_size=lateral_rf_size, lateral_i_size=lateral_rf_size, n_iters=5)
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, a=tau, b=tau)
         model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
 
         main(

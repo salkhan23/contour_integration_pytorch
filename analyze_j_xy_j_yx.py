@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------------------
 # Call train contour Data set training script with different Fix Initializations of
-# Jxy and Jyx
+# J_xy and J_yx
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import torch
 
-from train_contour_data_set_7 import main
+from train_contour_data_set import main
 import models.new_piech_models as new_piech_models
 from train_utils import inverse_sigmoid
 

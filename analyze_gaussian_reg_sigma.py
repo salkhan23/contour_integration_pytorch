@@ -1,12 +1,13 @@
 # -------------------------------------------------------------------------------------
-# Calls contour data set training script (v3) with different gaussian regularization
+# Calls contour data set training script with different gaussian regularization
 # mask widths.
 # -------------------------------------------------------------------------------------
 import numpy as np
 import torch
 
-from train_contour_data_set_3 import main
+from train_contour_data_set import main
 import models.new_piech_models as new_piech_models
+
 
 if __name__ == '__main__':
     random_seed = 10
@@ -26,12 +27,12 @@ if __name__ == '__main__':
         print("Processing gaussian regularization with width = {} {}".format(sigma, '*' * 40))
 
         train_parameters = {
-            'train_batch_size': 16,
+            'train_batch_size': 32,
             'test_batch_size': 1,
-            'learning_rate': 0.00003,
+            'learning_rate': 3e-5,
             'num_epochs': 50,
-            'gaussian_reg_weight': 0.0001,
-            'gaussian_reg_sigma': sigma
+            'lateral_w_reg_weight': 0.0001,
+            'lateral_w_reg_gaussian_sigma': sigma,
         }
 
         base_results_dir = './results/gaussian_reg_sigma_explore/sigma_{}'.format(sigma)
