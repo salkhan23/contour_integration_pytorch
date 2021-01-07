@@ -171,6 +171,10 @@ class ClassifierHead(nn.Module):
 # ---------------------------------------------------------------------------------------
 #  Contour Integration Layers
 # ---------------------------------------------------------------------------------------
+def threshold_relu(input1):
+    """ Relu like activation function, but at 0.1 instead of zero. Useful for positive only weights"""
+    return torch.nn.functional.threshold(input1, threshold=0.1, value=0, inplace=True)
+
 
 class CurrentSubtractInhibitLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
@@ -267,14 +271,20 @@ class CurrentSubtractInhibitLayer(nn.Module):
         if j_xy is not None:
             self.j_xy = nn.Parameter(torch.ones(edge_out_ch) * j_xy, requires_grad=False)
         else:
-            self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
-            init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+            # self.j_xy = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
+            # init.xavier_normal_(self.j_xy.view(1, edge_out_ch))
+
+            # Empirically found this initialization, results in good IoU and gain curves
+            self.j_xy = nn.Parameter(torch.ones(edge_out_ch) * -2.2, requires_grad=True)
 
         if j_yx is not None:
             self.j_yx = nn.Parameter(torch.ones(edge_out_ch) * j_yx, requires_grad=False)
         else:
-            self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
-            init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+            # self.j_yx = nn.Parameter(torch.rand(edge_out_ch), requires_grad=True)
+            # init.xavier_normal_(self.j_yx.view(1, edge_out_ch))
+
+            # Empirically found this initialization, results in good IoU and gain curves
+            self.j_yx = nn.Parameter(torch.ones(edge_out_ch)*-2.2, requires_grad=True)
 
         self.e_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
         self.i_bias = nn.Parameter(torch.ones(edge_out_ch)*0.01, requires_grad=True)
@@ -297,6 +307,9 @@ class CurrentSubtractInhibitLayer(nn.Module):
             padding=(self.lateral_i_size - 1) // 2,  # Keep the input dimensions
             bias=False
         )
+
+        self.lateral_activation_fcn = nn.functional.relu
+        # self.lateral_activation_fcn = threshold_relu
 
     def forward(self, ff):
         """
@@ -336,14 +349,14 @@ class CurrentSubtractInhibitLayer(nn.Module):
                     - (sigmoid_j_xy * f_y) +
                     ff +
                     self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    nn.functional.relu(self.lateral_e(f_x))
+                    self.lateral_activation_fcn(self.lateral_e(f_x))
                 )
 
             y = (1 - gated_b) * y + \
                 gated_b * (
                     (sigmoid_j_yx * f_x) +
                     self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    nn.functional.relu(self.lateral_i(f_x))
+                    self.lateral_activation_fcn(self.lateral_i(f_x))
                 )
 
             f_x = nn.functional.relu(x)
