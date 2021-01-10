@@ -171,9 +171,19 @@ class ClassifierHead(nn.Module):
 # ---------------------------------------------------------------------------------------
 #  Contour Integration Layers
 # ---------------------------------------------------------------------------------------
-def threshold_relu(input1):
-    """ Relu like activation function, but at 0.1 instead of zero. Useful for positive only weights"""
-    return torch.nn.functional.threshold(input1, threshold=0.1, value=0, inplace=True)
+def threshold_relu(input1, thres=0.1, below_value=0, above_thres_multiplier=1):
+    """
+    Shift relu with variable slope.
+
+    :param input1: input to the model
+    :param thres: Threshold at which slope becomes non-zero
+    :param below_value: output value if input is below thresh
+    :param above_thres_multiplier: A slop multiplier
+
+    :return:
+    """
+    return torch.nn.functional.threshold(
+        above_thres_multiplier*input1, threshold=thres, value=below_value, inplace=True)
 
 
 class CurrentSubtractInhibitLayer(nn.Module):
@@ -308,9 +318,6 @@ class CurrentSubtractInhibitLayer(nn.Module):
             bias=False
         )
 
-        self.lateral_activation_fcn = nn.functional.relu
-        # self.lateral_activation_fcn = threshold_relu
-
     def forward(self, ff):
         """
 
@@ -349,18 +356,20 @@ class CurrentSubtractInhibitLayer(nn.Module):
                     - (sigmoid_j_xy * f_y) +
                     ff +
                     self.e_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    self.lateral_activation_fcn(self.lateral_e(f_x))
+                    nn.functional.relu(self.lateral_e(f_x))
                 )
 
             y = (1 - gated_b) * y + \
                 gated_b * (
                     (sigmoid_j_yx * f_x) +
                     self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    self.lateral_activation_fcn(self.lateral_i(f_x))
+                    nn.functional.relu(self.lateral_e(f_x))
                 )
 
             f_x = nn.functional.relu(x)
             f_y = nn.functional.relu(y)
+            # f_x = threshold_relu(x, thres=0.1, below_value=0, above_thres_multiplier=1)
+            # f_y = threshold_relu(y, thres=0.1, below_value=0, above_thres_multiplier=2)
 
             if self.store_recurrent_acts:
                 self.x_per_iteration.append(x)
