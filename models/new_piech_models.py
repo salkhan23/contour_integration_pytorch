@@ -363,7 +363,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
                 gated_b * (
                     (sigmoid_j_yx * f_x) +
                     self.i_bias.view(1, self.edge_out_ch, 1, 1) * torch.ones_like(ff) +
-                    nn.functional.relu(self.lateral_e(f_x))
+                    nn.functional.relu(self.lateral_i(f_x))
                 )
 
             f_x = nn.functional.relu(x)
