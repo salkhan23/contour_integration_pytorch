@@ -25,6 +25,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
+import torchvision
 
 import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
@@ -426,11 +427,15 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
 
         # compute output
         output = model(images)
-        loss = criterion(
-            output,
-            target,
-            ci_model.contour_integration_layer.lateral_e.weight,
-            ci_model.contour_integration_layer.lateral_i.weight)
+        if ci_model is not None:
+            loss = criterion(
+                output,
+                target,
+                ci_model.contour_integration_layer.lateral_e.weight,
+                ci_model.contour_integration_layer.lateral_i.weight)
+        else:
+            loss = criterion(
+                output, target, 0, 0)
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -483,11 +488,15 @@ def validate(val_loader, model, criterion, args):
 
             # compute output
             output = model(images)
-            loss = criterion(
-                output,
-                target,
-                ci_model.contour_integration_layer.lateral_e.weight,
-                ci_model.contour_integration_layer.lateral_i.weight)
+            if ci_model is not None:
+                loss = criterion(
+                    output,
+                    target,
+                    ci_model.contour_integration_layer.lateral_e.weight,
+                    ci_model.contour_integration_layer.lateral_i.weight)
+            else:
+                loss = criterion(
+                    output, target, 0, 0)
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -621,21 +630,24 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    # Edge Extract + Contour Integration layers
-    cont_int_model = new_piech_models.ContourIntegrationResnet50(
-        cont_int_layer,
-        pre_trained_edge_extract=True,
-        classifier=new_piech_models.DummyHead
-    )
+    # Check that the code works with standard models as well
+    net = torchvision.models.resnet50(pretrained=True)
 
-    if saved_contour_integration_model is not None:
-        cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
-        # strict = False do not care about loading classifier weights
-
-    net = new_piech_models.embed_into_resnet50(
-        edge_extract_and_contour_integration_layers=cont_int_model,
-        pretrained=False
-    )
+    # # Edge Extract + Contour Integration layers
+    # cont_int_model = new_piech_models.ContourIntegrationResnet50(
+    #     cont_int_layer,
+    #     pre_trained_edge_extract=True,
+    #     classifier=new_piech_models.DummyHead
+    # )
+    #
+    # if saved_contour_integration_model is not None:
+    #     cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
+    #     # strict = False do not care about loading classifier weights
+    #
+    # net = new_piech_models.embed_into_resnet50(
+    #     edge_extract_and_contour_integration_layers=cont_int_model,
+    #     pretrained=False
+    # )
 
     # check_requires_grad(net)
     # import pdb
