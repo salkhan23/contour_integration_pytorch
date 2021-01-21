@@ -12,9 +12,7 @@ import random
 import shutil
 import time
 import warnings
-import pickle
 from datetime import datetime
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -27,7 +25,10 @@ import torch.utils.data
 import torch.utils.data.distributed
 import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-import torchvision.models as torchvision_models
+
+import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
+import train_utils
 
 
 # model_names = sorted(name for name in models.__dict__
@@ -148,7 +149,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
     summary_file = os.path.join(results_store_dir, 'summary.txt')
     f = open(summary_file, 'w+')
 
-    # Write the training setting
+    # Write Training Setting
     f.write("Input Arguments:\n")
     for a_idx, arg in enumerate(vars(args)):
         f.write("\t[{}] {}: {}\n".format(a_idx, arg, getattr(args, arg)))
@@ -162,28 +163,25 @@ def main_worker(model, gpu, ngpus_per_node, args):
 
     # Hyper Parameters of Contour Integration Layer
     temp = vars(model)  # Returns a dictionary.
-    layers = temp['_modules']  # Returns all top level modules (layers)
+    layers = temp['_modules']  # Returns all top level modules (layers) - ordered dictionary
 
-    # First Layer
-    first_layer_key = list(layers)[0]
-    first_layer = layers[first_layer_key]
+    embedded_cont_int_model = None
+    for key in layers:
+        if 'contour' in type(layers[key]).__name__.lower():
+            embedded_cont_int_model = layers[key]
+            continue
 
-    embedded_con_int_model = None
-    # note only checks for contour in the str(type) of the FIRST layer
-    if 'contour' in str(type(first_layer)).lower():
-        embedded_con_int_model = first_layer
-
-    if embedded_con_int_model is not None:
+    if embedded_cont_int_model is not None:
         # print fixed hyper parameters
         f.write("Contour Integration Layer Hyper parameters\n")
         cont_int_layer_vars = \
-            [item for item in vars(embedded_con_int_model.contour_integration_layer) if not item.startswith('_')]
+            [item for item in vars(embedded_cont_int_model.contour_integration_layer) if not item.startswith('_')]
         for var in sorted(cont_int_layer_vars):
-            f.write("\t{}: {}\n".format(var, getattr(embedded_con_int_model.contour_integration_layer, var)))
+            f.write("\t{}: {}\n".format(var, getattr(embedded_cont_int_model.contour_integration_layer, var)))
 
         # print parameter names and whether they are trainable
         f.write("Contour Integration Layer Parameters\n")
-        layer_params = vars(embedded_con_int_model.contour_integration_layer)['_parameters']
+        layer_params = vars(embedded_cont_int_model.contour_integration_layer)['_parameters']
         for k, v in sorted(layer_params.items()):
             f.write("\t{}: requires_grad {}\n".format(k, v.requires_grad))
 
@@ -198,8 +196,8 @@ def main_worker(model, gpu, ngpus_per_node, args):
                                 world_size=args.world_size, rank=args.rank)
 
     f.write("{}\n".format('-' * 80))
-    # -----------------------------------------------------------------------------------
 
+    # -----------------------------------------------------------------------------------
     # create model
     # if args.pretrained:
     #     print("=> using pre-trained model '{}'".format(args.arch))
@@ -239,42 +237,40 @@ def main_worker(model, gpu, ngpus_per_node, args):
         model = torch.nn.DataParallel(model).cuda()
 
     # -----------------------------------------------------------------------------------
-    # define loss function (criterion) and optimizer
+    # Define loss function (criterion) and optimizer
     # -----------------------------------------------------------------------------------
     f.write("Loss Functions and Optimizers\n")
 
-    criterion = nn.CrossEntropyLoss().cuda(args.gpu)
-    f.write("Loss Fcn         : {}\n".format(criterion.__class__.__name__))
+    criterion1 = nn.CrossEntropyLoss().cuda(args.gpu)
+
+    # ***********************************************************************************
+    # Additional loss on contour integration lateral connections
+    gaussian_kernel_sigma = 10
+    reg_loss_weight = 0.0001
+
+    lateral_sparsity_loss = train_utils.InvertedGaussianL1Loss(
+        model.contour_integration_layer.lateral_e.weight.shape[2:],
+        model.contour_integration_layer.lateral_i.weight.shape[2:],
+        gaussian_kernel_sigma)
+
+    loss_function = train_utils.CombinedLoss(
+        criterion=criterion1,
+        sigmoid_predictions=False,
+        sparsity_loss_fcn=lateral_sparsity_loss,
+        sparsity_loss_weight=reg_loss_weight,
+        # negative_weights_loss_fcn=negative_lateral_weights_penalty,
+        # negative_weights_loss_weight=negative_lateral_weights_penalty_weight
+    ).cuda(args.gpu)
+
+    f.write("Loss Fcn         : {}\n".format(loss_function.__class__.__name__))
+    print(loss_function, file=f)
+    # ***********************************************************************************
 
     optimizer = torch.optim.SGD(
         model.parameters(), args.lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay)
     f.write("Optimizer        : {}\n".format(optimizer.__class__.__name__))
-
-    # Lateral Kernels Regularization
-    import utils
-    gaussian_kernel_sigma = 10
-    reg_loss_weight = 0.0001
-
-    gaussian_mask_e = 1 - utils.get_2d_gaussian_kernel(
-        model.conv1.contour_integration_layer.lateral_e.weight.shape[2:], sigma=gaussian_kernel_sigma)
-    gaussian_mask_i = 1 - utils.get_2d_gaussian_kernel(
-        model.conv1.contour_integration_layer.lateral_i.weight.shape[2:], sigma=gaussian_kernel_sigma)
-
-    gaussian_mask_e = torch.from_numpy(gaussian_mask_e).float().to(args.gpu)
-    gaussian_mask_i = torch.from_numpy(gaussian_mask_i).float().to(args.gpu)
-
-    def inverse_gaussian_regularization(weight_e, weight_i):
-        loss1 = (gaussian_mask_e * weight_e).abs().sum() + (gaussian_mask_i * weight_i).abs().sum()
-        # print("Loss1: {:0.4f}".format(loss1))
-
-    # lateral_kernels_reg = None
-    lateral_kernels_reg = inverse_gaussian_regularization
-    f.write("lateral_kernels_reg        :{}\n".format(lateral_kernels_reg.__name__))
-    f.write("Gaussian width (sigma)     :{}\n".format(gaussian_kernel_sigma))
-    f.write("lateral_kernels_weight     :{}\n".format(reg_loss_weight))
-    f.write("{}\n".format('-' * 80))
 
     # optionally resume from a checkpoint
     if args.resume:
@@ -332,7 +328,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
         num_workers=args.workers, pin_memory=True)
 
     if args.evaluate:
-        validate(val_loader, model, criterion, args)
+        validate(val_loader, model, criterion1, args)
         return
 
     f.write("Training\n")
@@ -340,7 +336,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
 
     # Evaluate performance on Validation set before Training - This for for models that start
     # with pre-trained models
-    val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
+    val_loss, val_acc1, val_acc5 = validate(val_loader, model, loss_function, args)
     f.write("[{}, np.nan, np.nan, np.nan, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
         0,
         val_loss, val_acc1, val_acc5
@@ -357,10 +353,10 @@ def main_worker(model, gpu, ngpus_per_node, args):
 
         # train for one epoch
         train_loss, train_acc1, train_acc5 = \
-            train(train_loader, model, criterion, optimizer, epoch, args)
+            train(train_loader, model, loss_function, optimizer, epoch, args)
 
         # evaluate on validation set
-        val_loss, val_acc1, val_acc5 = validate(val_loader, model, criterion, args)
+        val_loss, val_acc1, val_acc5 = validate(val_loader, model, loss_function, args)
 
         f.write("[{}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}, {:0.4f}],\n".format(
             epoch,
@@ -390,7 +386,7 @@ def main_worker(model, gpu, ngpus_per_node, args):
     f.close()
 
 
-def train(train_loader, model, criterion, optimizer, epoch, args, reg_criterion=None, reg_loss_weight=0):
+def train(train_loader, model, criterion, optimizer, epoch, args):
     batch_time = AverageMeter('Time', ':6.3f')
     data_time = AverageMeter('Data', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
@@ -414,15 +410,12 @@ def train(train_loader, model, criterion, optimizer, epoch, args, reg_criterion=
 
         # compute output
         output = model(images)
-        loss = criterion(output, target)
-        if reg_criterion is not None:
-            reg_loss = reg_loss_weight * reg_criterion(
-                model.conv1.contour_integration_layer.lateral_e.weight,
-                model.conv1.contour_integration_layer.lateral_i.weight
-            )
-
-            # print("Criterion Loss {:0.4f}, lateral kernels reg. loss {:0.4f}".format(loss, reg_loss))
-            loss += reg_loss
+        loss = criterion(
+            output,
+            target,
+            model.contour_integration_layer.lateral_e.weight,
+            model.contour_integration_layer.lateral_i.weight,
+        )
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -453,7 +446,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args, reg_criterion=
     return losses.avg, top1.avg, top5.avg
 
 
-def validate(val_loader, model, criterion, args, reg_criterion=None, reg_loss_weight=0):
+def validate(val_loader, model, criterion, args):
     batch_time = AverageMeter('Time', ':6.3f')
     losses = AverageMeter('Loss', ':.4e')
     top1 = AverageMeter('Acc@1', ':6.2f')
@@ -473,15 +466,12 @@ def validate(val_loader, model, criterion, args, reg_criterion=None, reg_loss_we
 
             # compute output
             output = model(images)
-            loss = criterion(output, target)
-            if reg_criterion is not None:
-                reg_loss = reg_loss_weight * reg_criterion(
-                    model.conv1.contour_integration_layer.lateral_e.weight,
-                    model.conv1.contour_integration_layer.lateral_i.weight
-                )
-
-                # print("Criterion Loss {:0.4f}, lateral kernels reg. loss {:0.4f}".format(loss, reg_loss))
-                loss += reg_loss
+            loss = criterion(
+                output,
+                target,
+                model.contour_integration_layer.lateral_e.weight,
+                model.contour_integration_layer.lateral_i.weight,
+            )
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -579,7 +569,8 @@ def check_requires_grad(model):
     for c_idx, child in enumerate(model.children()):
         print("Layer {}. Type: {}".format(c_idx, child.__class__.__name__))
 
-        if child.__class__.__name__ == 'Sequential':
+        expandable = ['ContourIntegrationResnet50', 'ContourIntegrationAlexnet', 'Sequential']
+        if child.__class__.__name__ in expandable:
             for gc_idx, grand_child in enumerate(child.children()):
                 print("\tGrandChild {}. Type: {}".format(gc_idx, grand_child.__class__.__name__))
 
@@ -590,141 +581,67 @@ def check_requires_grad(model):
         else:
             for p_idx, param in enumerate(child.parameters()):
                 if param.requires_grad:
-                    print("\t[{}]. Shape {} Requires Grad = {}".format(p_idx, param.shape, param.requires_grad))
-    import pdb
-    pdb.set_trace()
-
-
-def embed_resnet50(model_to_embed, pretrained=True):
-    """
-
-    :param pretrained:
-    :param model_to_embed:
-    :return:
-    """
-
-    base_model = torchvision_models.resnet50(pretrained=pretrained)
-
-    if not pretrained:
-        # Load the edge Extraction of the original model
-        resnet50_edge_detect_layer = torchvision_models.resnet50(pretrained=True).conv1
-        base_model.features[0].weight.data.copy_(resnet50_edge_detect_layer.weight.data)
-
-    # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
-    model_to_embed.conv1 = base_model.conv1
-
-    # Replace the base models edge extraction layer with edge extraction + contour integration model
-    base_model.conv1 = model_to_embed
-
-    if pretrained:
-        # Only Train the Contour Integration Layer
-        for c_idx, child in enumerate(base_model.children()):
-            if c_idx >= 1:
-                for p_idx, param in enumerate(child.parameters()):
-                    param.requires_grad = False
-
-    # Set the requires gradient parameter of the first edge extraction layer as False
-    base_model.conv1.conv1.weight.requires_grad = False
-
-    return base_model
-
-
-def embed_alexnet(model_to_embed, pretrained=True):
-    """
-
-    :param pretrained:
-    :param model_to_embed:
-    :return:
-    """
-    base_model = torchvision_models.alexnet(pretrained=pretrained)
-
-    if not pretrained:
-        # Load the edge Extraction of the original model
-        alexnet_edge_detect_layer = torchvision_models.alexnet(pretrained=True).features[0]
-        base_model.features[0].weight.data.copy_(alexnet_edge_detect_layer.weight.data)
-
-    # Replace the first edge extraction layer of the contour integration model with the one from base resnet.
-    model_to_embed.conv1 = base_model.features[0]
-    model_to_embed.conv1.bias = None   # Original Alexnet used a bias in the first layer. Turn it off.
-
-    # Replace the edge extraction layer with edge extraction + contour integration model
-    base_model.features[0] = model_to_embed
-
-    if pretrained:
-        # Only Train the Contour Integration Layer
-        for c_idx, child in enumerate(base_model.children()):
-            if c_idx >= 1:
-                for p_idx, param in enumerate(child.parameters()):
-                    param.requires_grad = False
-            elif c_idx == 0:
-                for gc_idx, grand_child in enumerate(child.children()):
-                    if gc_idx != 0:
-                        for p_idx, param in enumerate(grand_child.parameters()):
-                            param.requires_grad = False
-
-    # Set the requires gradient parameter of the first edge extraction layer as False
-    base_model.features[0].conv1.weight.requires_grad = False
-
-    return base_model
+                    print("\t[{}]. Shape {} Requires Grad = {}".format(
+                        p_idx, param.shape, param.requires_grad))
 
 
 if __name__ == '__main__':
+    # -----------------------------------------------------------------------------------
+    # Init
+    # -----------------------------------------------------------------------------------
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    #     lateral_e_size=15, lateral_i_size=15)
+
+    saved_contour_integration_model = None
+    # saved_contour_integration_model = \
+    #     './results/new_model_resnet_based/Old/' \
+    #     '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+    #     '/best_accuracy.pth'
 
     # -----------------------------------------------------------------------------------
     # Model
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    import models.new_piech_models as new_piech_models
+    # Edge Extract + Contour Integration layers
+    cont_int_model = new_piech_models.ContourIntegrationResnet50(
+        cont_int_layer,
+        pre_trained_edge_extract=True,
+        classifier=new_piech_models.DummyHead
+    )
 
-    # saved_model = 'results/new_model_resnet_based/' \
-    #               'ContourIntegrationCSIResnet50_20200131_194615_gaussian_reg_sigma_10_weight_0.0001/' \
-    #               'best_accuracy.pth'
+    if saved_contour_integration_model is not None:
+        cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
+        # strict = False do not care about loading classifier weights
 
-    saved_model = None
-    net = new_piech_models.get_embedded_resnet50_model(saved_contour_integration_model=saved_model, pretrained=False)
-    # print(net)
+    net = new_piech_models.embed_into_resnet50(
+        edge_extract_and_contour_integration_layers=cont_int_model,
+        pretrained=False
+    )
 
     # check_requires_grad(net)
     # import pdb
     # pdb.set_trace()
 
+    # -----------------------------------------------------------------------------------
+    # Main
+    # -----------------------------------------------------------------------------------
     print(">>> Starting main script {}".format('.' * 80))
     main(net)
 
+    # -----------------------------------------------------------------------------------
+    # If want to resume training after interruption
+    # -----------------------------------------------------------------------------------
 
+    # Train_imagenet stores the state of everything, not just the weights. Done this way
+    # so that training can be resumed from any checkpoint.
 
-
-    #
-    # # Contour Integration model
-    # import models.piech_models
-    # cont_int_model = models.piech_models.CurrentSubtractiveInhibition(use_class_head=False)
-    #
-    # # # # Control Model
-    # # # import models.control_models
-    # # # cont_int_model = models.control_models.CmMatchParameters(use_class_head=False)
-    # #
-    # net = embed_resnet50(cont_int_model)
-    # # net = embed_alexnet(cont_int_model, pretrained=False)
-    #
-    # # Train_imagenet stores the not the whole state of everything. Not just the weights.
-    # # this is similar to how resume option is used in the train imagenet script
     # print("Loading model weights")
-    #
     # saved_model = \
     #     './results/imagenet_classification/' \
     #     'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
     #
     # checkpoint = torch.load(saved_model)
     # net.load_state_dict(checkpoint['state_dict'])
-    #
-    # # Allow all layers to be trained:
-    # for c_idx, child in enumerate(net.children()):
-    #     for p_idx, param in enumerate(child.parameters()):
-    #         param.requires_grad = True
-    #
-    # # net = torchvision_models.resnet50(pretrained=True)
-    #
-    # print(">>> Starting main script {}".format('.'*80))
-    # check_requires_grad(net)
-    # main(net)

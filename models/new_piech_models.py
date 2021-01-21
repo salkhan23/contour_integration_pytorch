@@ -542,6 +542,8 @@ class ContourIntegrationAlexnet(nn.Module):
 
         # Edge Extraction
         x = self.edge_extract(in_img)
+
+        # Extra layers between edge extract and contour integration layer. Improves performance
         x = self.bn1(x)
         x = nn.functional.relu(x)
 
@@ -553,12 +555,20 @@ class ContourIntegrationAlexnet(nn.Module):
 
 
 class ContourIntegrationResnet50(nn.Module):
-    """
-    Minimal Model with contour integration layer for the contour dataset
-    This one includes the first layers of a Resnet50
-    """
-
     def __init__(self, contour_integration_layer, pre_trained_edge_extract=True, classifier=ClassifierHead):
+        """
+        Build edge extract + contour integration layer.
+
+        Edge extract layer is the first convolutional layer of a ResNet50. The specified contour
+        integration layer is added on top of it.
+
+        Between Edge Extract and the contour integration layers, an additional Batch Normalization
+        and a max pooling layer are added.
+
+        :param contour_integration_layer:
+        :param pre_trained_edge_extract: if True [default], use pretrained Edge Extract Layer
+        :param classifier: What is added on top the contour integration Layer [default = ClassifierHead]
+        """
         super(ContourIntegrationResnet50, self).__init__()
 
         self.pre_trained_edge_extract = pre_trained_edge_extract
@@ -569,9 +579,9 @@ class ContourIntegrationResnet50(nn.Module):
         else:
             init.xavier_normal_(self.edge_extract.weight)
 
+        # Additional Layers - see forward function for rational.
         self.num_edge_extract_chan = self.edge_extract.weight.shape[0]
         self.bn1 = nn.BatchNorm2d(num_features=self.num_edge_extract_chan)
-
         self.max_pool1 = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
 
         self.contour_integration_layer = contour_integration_layer
@@ -579,15 +589,17 @@ class ContourIntegrationResnet50(nn.Module):
         self.classifier = classifier(self.num_edge_extract_chan)
 
     def forward(self, in_img):
-
         # Edge Extraction
         x = self.edge_extract(in_img)
+
+        # Additional Layers
+        # The following layers, inserted between the edge extract and the contour integration layer,
+        # are directly from ResNet50. Attaching the contour integration layer here (as opposed to
+        # directly after the conv layer) gives the same dimensions as after the first layer of AlexNet
+        # This allows to use the same classification head.
         x = self.bn1(x)
         x = nn.functional.relu(x)
         x = self.max_pool1(x)
-        # The above is directly from Resnet50. Attaching the contour integration layer here (as opposed to
-        # after the conv layer) since this has the same dimensions as alexnet edge extract. Allows to use
-        # the same classification head.
 
         x = self.contour_integration_layer(x)
 
@@ -596,37 +608,47 @@ class ContourIntegrationResnet50(nn.Module):
         return x
 
 
-def get_embedded_resnet50_model(saved_contour_integration_model=None, pretrained=True):
+def embed_into_resnet50(edge_extract_and_contour_integration_layers, pretrained=True):
     """
-    Returns a Full Resnet50 Model with a contour integration layer embedded in it
+    Returns a full ResNet50 Model with a contour integration layer embedded in it
 
-    :param saved_contour_integration_model:
-    :param pretrained:
-    :return:
+    :param edge_extract_and_contour_integration_layers:
+    :param pretrained: Whether the reset of the Model (everything after the contour integration layer)
+       should be loaded with pretrained ImageNet Weights
+
+    :return: ResNet50 model with embedded contour integration Layer
     """
 
     model = torchvision.models.resnet50(pretrained=pretrained)
 
-    cont_int_layer = CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5,)
-
-    # We always want the first layer (edge extraction) to be pre trained
-    cont_int_model = ContourIntegrationResnet50(
-        contour_integration_layer=cont_int_layer,
-        classifier=DummyHead,
-        pre_trained_edge_extract=True
-    )
-
-    if saved_contour_integration_model is not None:
-        cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
-        # strict = False do not care about loading classifier weights
-
-    # The Resnet50 Contour integration Model attaches after the first max pooling layer
-    # of resent. Replace one layer of Resnet50 and force all others to be dummy Heads (pass through as is)
-    model.conv1 = cont_int_model
+    # ContourIntegrationResnet50() attaches after the first max pooling layer of ResNet50.
+    # Replace one layer of Resnet50 with the cont_int_model and force all others
+    # to be dummy Heads (pass through as is)
+    model.conv1 = edge_extract_and_contour_integration_layers
     model.bn1 = DummyHead()
     model.relu = DummyHead()
     model.maxpool = DummyHead()
+
+    return model
+
+
+def embed_into_alexnet(edge_extract_and_contour_integration_layers, pretrained=True):
+    """
+    Returns a full AlexNet Model with a contour integration layer embedded in it
+
+    :param edge_extract_and_contour_integration_layers:
+    :param pretrained: Whether the reset of the Model (everything after the contour integration layer)
+       should be loaded with pretrained ImageNet Weights
+
+    :return: ResNet50 model with embedded contour integration Layer
+    """
+
+    model = torchvision.models.alexnet(pretrained=pretrained)
+
+    # ContourIntegrationResnet50() attaches after the first max pooling layer of ResNet50.
+    # Replace one layer of Resnet50 with the cont_int_model and force all others
+    # to be dummy Heads (pass through as is)
+    model.features[0] = edge_extract_and_contour_integration_layers
 
     return model
 
