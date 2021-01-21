@@ -263,8 +263,8 @@ def main_worker(model, gpu, ngpus_per_node, args):
     lateral_sparsity_loss = None
     if embedded_cont_int_model is not None:
         lateral_sparsity_loss = train_utils.InvertedGaussianL1Loss(
-            embedded_cont_int_model.lateral_e.weight.shape[2:],
-            embedded_cont_int_model.lateral_i.weight.shape[2:],
+            embedded_cont_int_model.contour_integration_layer.lateral_e.weight.shape[2:],
+            embedded_cont_int_model.contour_integration_layer.lateral_i.weight.shape[2:],
             gaussian_kernel_sigma)
 
     loss_function = train_utils.CombinedLoss(
@@ -409,7 +409,7 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
     progress = ProgressMeter(len(train_loader), batch_time, data_time, losses, top1,
                              top5, prefix="Epoch: [{}]".format(epoch))
 
-    ci_layer = get_embedded_cont_int_layer(model)
+    ci_model = get_embedded_cont_int_layer(model)
 
     # switch to train mode
     model.train()
@@ -427,7 +427,10 @@ def train(train_loader, model, criterion, optimizer, epoch, args):
         # compute output
         output = model(images)
         loss = criterion(
-            output, target, ci_layer.lateral_e.weight, ci_layer.lateral_i.weight)
+            output,
+            target,
+            ci_model.contour_integration_layer.lateral_e.weight,
+            ci_model.contour_integration_layer.lateral_i.weight)
 
         # measure accuracy and record loss
         acc1, acc5 = accuracy(output, target, topk=(1, 5))
@@ -466,7 +469,7 @@ def validate(val_loader, model, criterion, args):
     progress = ProgressMeter(len(val_loader), batch_time, losses, top1, top5,
                              prefix='Test: ')
 
-    ci_layer = get_embedded_cont_int_layer(model)
+    ci_model = get_embedded_cont_int_layer(model)
 
     # switch to evaluate mode
     model.eval()
@@ -481,7 +484,10 @@ def validate(val_loader, model, criterion, args):
             # compute output
             output = model(images)
             loss = criterion(
-                output, target, ci_layer.lateral_e.weight, ci_layer.lateral_i.weight)
+                output,
+                target,
+                ci_model.contour_integration_layer.lateral_e.weight,
+                ci_model.contour_integration_layer.lateral_i.weight)
 
             # measure accuracy and record loss
             acc1, acc5 = accuracy(output, target, topk=(1, 5))
