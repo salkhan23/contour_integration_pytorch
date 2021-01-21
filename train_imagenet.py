@@ -630,24 +630,24 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     print(">>> Building the model {}".format('.' * 80))
 
-    # Check that the code works with standard models as well
-    net = torchvision.models.resnet50(pretrained=True)
+    # # Check that the code works with standard models as well
+    # net = torchvision.models.resnet50(pretrained=True)
 
-    # # Edge Extract + Contour Integration layers
-    # cont_int_model = new_piech_models.ContourIntegrationResnet50(
-    #     cont_int_layer,
-    #     pre_trained_edge_extract=True,
-    #     classifier=new_piech_models.DummyHead
-    # )
-    #
-    # if saved_contour_integration_model is not None:
-    #     cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
-    #     # strict = False do not care about loading classifier weights
-    #
-    # net = new_piech_models.embed_into_resnet50(
-    #     edge_extract_and_contour_integration_layers=cont_int_model,
-    #     pretrained=False
-    # )
+    # Edge Extract + Contour Integration layers
+    cont_int_model = new_piech_models.ContourIntegrationResnet50(
+        cont_int_layer,
+        pre_trained_edge_extract=True,
+        classifier=new_piech_models.DummyHead
+    )
+
+    if saved_contour_integration_model is not None:
+        cont_int_model.load_state_dict(torch.load(saved_contour_integration_model), strict=False)
+        # strict = False do not care about loading classifier weights
+
+    net = new_piech_models.embed_into_resnet50(
+        edge_extract_and_contour_integration_layers=cont_int_model,
+        pretrained=False
+    )
 
     # check_requires_grad(net)
     # import pdb
