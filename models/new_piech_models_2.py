@@ -466,7 +466,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             if self.use_recurrent_batch_norm:
                 f_x = nn.functional.relu(self.recurrent_BN_e(x, i))
-                f_y = nn.functional.relu(self.recurrent_BN_i(y, 1))
+                f_y = nn.functional.relu(self.recurrent_BN_i(y, i))
             else:
                 f_x = nn.functional.relu(x)
                 f_y = nn.functional.relu(y)
