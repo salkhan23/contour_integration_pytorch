@@ -100,8 +100,10 @@ def store_tracked_variables(var_dict, store_dir, n_ch=64):
 
             if sigmoid_required:
                 ax_arr[r_idx, c_idx].plot(sigmoid(value[:, ch_idx]))
+                ax_arr[r_idx, c_idx].set_ylim([0, 1])
             else:
                 ax_arr[r_idx, c_idx].plot(value[:, ch_idx])
+                ax_arr[r_idx, c_idx].set_ylim([-1, 1])
 
         if sigmoid_required:
             f1.suptitle("Sigmoid ({})".format(key))
