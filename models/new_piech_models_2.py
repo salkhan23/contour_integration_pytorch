@@ -402,18 +402,19 @@ class CurrentSubtractInhibitLayer(nn.Module):
         )
 
         # Recurrent Batch Normalization Layers
-        self.recurrent_BN_e = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
-        self.recurrent_BN_i = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+        if self.use_recurrent_batch_norm:
+            self.recurrent_BN_e = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+            self.recurrent_BN_i = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
 
-        self.recurrent_BN_e.reset_parameters()
-        self.recurrent_BN_e.weight.data.fill_(0.1)
-        self.recurrent_BN_e.bias.data.fill_(0)
-        self.recurrent_BN_e.bias.requires_grad = False
+            self.recurrent_BN_e.reset_parameters()
+            self.recurrent_BN_e.weight.data.fill_(0.1)
+            self.recurrent_BN_e.bias.data.fill_(0)
+            self.recurrent_BN_e.bias.requires_grad = False
 
-        self.recurrent_BN_i.reset_parameters()
-        self.recurrent_BN_i.weight.data.fill_(0.1)
-        self.recurrent_BN_i.bias.data.fill_(0)
-        self.recurrent_BN_i.bias.requires_grad = False
+            self.recurrent_BN_i.reset_parameters()
+            self.recurrent_BN_i.weight.data.fill_(0.1)
+            self.recurrent_BN_i.bias.data.fill_(0)
+            self.recurrent_BN_i.bias.requires_grad = False
 
     def forward(self, ff):
         """
