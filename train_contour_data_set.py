@@ -460,13 +460,14 @@ if __name__ == '__main__':
     train_parameters = {
         'random_seed': 1,
         'train_batch_size': 32,
-        'test_batch_size': 1,
-        'learning_rate': 3e-5,
-        'num_epochs': 50,
+        'test_batch_size': 32,
+        'learning_rate': 1e-4,
+        'num_epochs': 60,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
         'clip_negative_lateral_weights': True,
-        'lr_sched_step_size': 40
+        'lr_sched_step_size': 50,
+        'lr_sched_gamma': 0.5
     }
 
     # Build Model
