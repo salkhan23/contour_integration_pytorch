@@ -37,7 +37,6 @@ def iterate_epoch(
        every weight update. Only used when is_train=True
     :return:
     """
-
     if is_train:
         model.train()
     else:
@@ -243,7 +242,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         train_params['lateral_w_reg_gaussian_sigma'])
     # lateral_sparsity_loss = train_utils.WeightNormLoss(norm=1) # vanilla L1 Loss
 
-    # # Penalize Lateral Weights
+    # # Penalize Negative Lateral Weights
     # negative_lateral_weights_penalty = train_utils.NegativeWeightsNormLoss()
     # negative_lateral_weights_penalty_weight = 0.05
 
@@ -465,7 +464,7 @@ if __name__ == '__main__':
         'num_epochs': 60,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
-        'clip_negative_lateral_weights': True,
+        'clip_negative_lateral_weights': False,
         'lr_sched_step_size': 50,
         'lr_sched_gamma': 0.5
     }
