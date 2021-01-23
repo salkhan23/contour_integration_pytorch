@@ -375,8 +375,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
                 )
 
             if self.use_recurrent_batch_norm:
-                self.recurrent_e_BN.append(torch.nn.BatchNorm2d[i](num_features=self.edge_out_ch))
-                self.recurrent_i_BN.append(torch.nn.BatchNorm2d[i](num_features=self.edge_out_ch))
+                f_x = nn.functional.relu(self.recurrent_e_BN[i](x))
+                f_y = nn.functional.relu(self.recurrent_i_BN[i](y))
             else:
                 f_x = nn.functional.relu(x)
                 f_y = nn.functional.relu(y)
