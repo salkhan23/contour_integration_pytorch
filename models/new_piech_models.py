@@ -188,7 +188,7 @@ def threshold_relu(input1, thres=0.1, below_value=0, above_thres_multiplier=1):
 
 class CurrentSubtractInhibitLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
-                 j_xy=None, j_yx=None, store_recurrent_acts=False):
+                 j_xy=None, j_yx=None, use_recurrent_batch_norm=False, store_recurrent_acts=False):
         """
         Contour Integration Layer - Current based with Subtractive Inhibition
 
@@ -256,6 +256,7 @@ class CurrentSubtractInhibitLayer(nn.Module):
         self.lateral_i_size = lateral_i_size
         self.edge_out_ch = edge_out_ch
         self.n_iters = n_iters
+        self.use_recurrent_batch_norm = use_recurrent_batch_norm
 
         # Only for Debugging
         self.store_recurrent_acts = store_recurrent_acts
@@ -318,6 +319,13 @@ class CurrentSubtractInhibitLayer(nn.Module):
             bias=False
         )
 
+        if use_recurrent_batch_norm:
+            self.recurrent_e_BN = nn.ModuleList([])
+            self.recurrent_i_BN = nn.ModuleList([])
+            for i in range(self.n_iters):
+                self.recurrent_e_BN.append(torch.nn.BatchNorm2d(num_features=self.edge_out_ch))
+                self.recurrent_i_BN.append(torch.nn.BatchNorm2d(num_features=self.edge_out_ch))
+
     def forward(self, ff):
         """
 
@@ -366,10 +374,14 @@ class CurrentSubtractInhibitLayer(nn.Module):
                     nn.functional.relu(self.lateral_i(f_x))
                 )
 
-            f_x = nn.functional.relu(x)
-            f_y = nn.functional.relu(y)
-            # f_x = threshold_relu(x, thres=0.1, below_value=0, above_thres_multiplier=1)
-            # f_y = threshold_relu(y, thres=0.1, below_value=0, above_thres_multiplier=2)
+            if self.use_recurrent_batch_norm:
+                self.recurrent_e_BN.append(torch.nn.BatchNorm2d[i](num_features=self.edge_out_ch))
+                self.recurrent_i_BN.append(torch.nn.BatchNorm2d[i](num_features=self.edge_out_ch))
+            else:
+                f_x = nn.functional.relu(x)
+                f_y = nn.functional.relu(y)
+                # f_x = threshold_relu(x, thres=0.1, below_value=0, above_thres_multiplier=1)
+                # f_y = threshold_relu(y, thres=0.1, below_value=0, above_thres_multiplier=2)
 
             if self.store_recurrent_acts:
                 self.x_per_iteration.append(x)
