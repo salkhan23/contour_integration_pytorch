@@ -601,10 +601,10 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat, exclude_idxs):
     filt_gains_mu = gain_mu_mat[valid_idxs, ]
     filt_gains_std = gain_std_mat[valid_idxs, ]
 
-    if len(filt_iou) is not 0:
+    if len(filt_iou) != 0:
         pop_iou = np.mean(filt_iou, axis=0)
 
-    if len(filt_gains_mu) is not 0:
+    if len(filt_gains_mu) != 0:
         pop_mean_gains = np.mean(filt_gains_mu, axis=0)
 
     # For Two RVs, X and Y
@@ -614,7 +614,7 @@ def get_averaged_results(iou_mat, gain_mu_mat, gain_std_mat, exclude_idxs):
     # if all samples were from same RV, just average the summed variance. Then sqrt it to
     # get avg std
     # REF: https://stats.stackexchange.com/questions/25848/how-to-sum-a-standard-deviation
-    if len(filt_gains_std) is not 0:
+    if len(filt_gains_std) != 0:
         sum_var = np.sum(filt_gains_std ** 2, axis=0)
         avg_var = sum_var / filt_gains_std.shape[0]
         pop_std_gains = np.sqrt(avg_var)
@@ -635,16 +635,17 @@ def plot_gain_vs_contour_length(
     :param store_dir:
     :return:
     """
-    f = plt.figure()
-    plt.errorbar(c_len_arr, mu_gain_arr, sigma_gain_arr)
-    plt.xlabel("Contour Length")
-    plt.ylabel("Gain")
-    plt.ylim(bottom=0)
-    plt.grid(True)
-    if f_title is not None:
-        plt.title("{}".format(f_title))
-    f.savefig(os.path.join(store_dir, '{}.jpg'.format(f_name)), format='jpg')
-    plt.close()
+    if mu_gain_arr is not None:
+        f = plt.figure()
+        plt.errorbar(c_len_arr, mu_gain_arr, sigma_gain_arr)
+        plt.xlabel("Contour Length")
+        plt.ylabel("Gain")
+        plt.ylim(bottom=0)
+        plt.grid(True)
+        if f_title is not None:
+            plt.title("{}".format(f_title))
+        f.savefig(os.path.join(store_dir, '{}.jpg'.format(f_name)), format='jpg')
+        plt.close()
 
 
 def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle):
@@ -1002,6 +1003,36 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
                     len(tgt_n_below_th_neurons) - len(no_optim_stim_neurons))
     )
 
+    # -----------------------------------------------------------------------------------
+    # Alternative Gain Calculation Method
+    # Filter out anything with unreasonable gains, ie. with gains above a threshold
+    # -----------------------------------------------------------------------------------
+    max_gain = 20
+
+    exclude_neurons = \
+        [g_idx for g_idx, gains in enumerate(tgt_neuron_mean_gain_mat)
+         if (np.any(gains >= max_gain) or np.all(gains == 0) or np.any(gains == INVALID_RESULT))]
+
+    mg_filt_pop_iou, mg_filt_pop_mean_gain, mg_filt_pop_gain_std = get_averaged_results(
+        iou_per_len_mat, tgt_neuron_mean_gain_mat, tgt_neuron_std_gain_mat, exclude_neurons)
+
+    plot_gain_vs_contour_length(
+        c_len_arr,
+        mg_filt_pop_mean_gain,
+        mg_filt_pop_gain_std,
+        results_store_dir,
+        f_name='tgt_n_pop_gain_vs_len_filtered_max_gain',
+        f_title='Target neuron population contour gain vs length\n'
+                '[max gain <= {}], Avg over {} neurons\n'
+                'Removed {} neurons - No optimal stimulus {}, Below noise Th {}'.format(
+                    max_gain,
+                    n_channels - len(exclude_neurons),
+                    len(exclude_neurons),
+                    len(no_optim_stim_neurons),
+                    len(exclude_neurons) - len(no_optim_stim_neurons))
+    )
+    # -----------------------------------------------------------------------------------
+    
     # plot_gain_vs_contour_length(
     #     c_len_arr,
     #     filt_max_active_pop_mean_gain,
