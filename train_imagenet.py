@@ -29,6 +29,8 @@ import torchvision
 
 import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
+import experiment_gain_vs_len
+import experiment_gain_vs_spacing
 import train_utils
 
 
@@ -399,6 +401,25 @@ def main_worker(model, gpu, ngpus_per_node, args):
                 filename=os.path.join(results_store_dir, 'best_accuracy.pth')
             )
     f.close()
+
+    # Run Li 2006 experiments
+    # -----------------------------------------------------------------------------------
+    print("====> Running Experiments")
+    optim_stim_dict = experiment_gain_vs_len.main(
+        model,
+        base_results_dir=results_store_dir,
+        n_images=100,
+        embedded_layer_identifier=model.conv1,
+        iou_results=False
+    )
+
+    experiment_gain_vs_spacing.main(
+        model,
+        base_results_dir=results_store_dir,
+        optimal_stim_dict=optim_stim_dict,
+        n_images=100,
+        embedded_layer_identifier=model.conv1
+    )
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
