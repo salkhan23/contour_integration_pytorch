@@ -479,8 +479,6 @@ if __name__ == '__main__':
 
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
-    # net = ControlMatchParametersModel(lateral_e_size=15, lateral_i_size=15)
-
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/positive_weights')
 
