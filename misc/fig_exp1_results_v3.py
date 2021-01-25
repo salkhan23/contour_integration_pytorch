@@ -880,11 +880,15 @@ def debug_plot_individual_run_population_averages(result_dict_list, noise_th, la
 
     ax_c_len.plot(monkey_ma['c_len'], neuro_c_len_results, label='Neuro', c='k')
     ax_c_len.legend()
+    ax_c_len.set_xlabel("Contour Length")
+    ax_c_len.set_ylabel("Gain")
     if label is not None:
         ax_c_len.set_title('{} Noise Threshold={}'.format(label, noise_th))
 
     ax_space.plot(monkey_ma['rcd'], neuro_space_results, label='Neuro', c='k')
     ax_space.legend()
+    ax_space.set_xlabel("Fragment Spacing (RCD)")
+    ax_space.set_ylabel("Gain")
     if label is not None:
         ax_space.set_title('{} Noise Threshold={}'.format(label, noise_th))
 
@@ -898,6 +902,7 @@ def debug_plot_overall_averages(len_arr, space_arr, m_results, m_th, c_results, 
         get_overall_population_results(c_results, c_th, label='Control')
 
     # Contour Length
+    plt.figure()
     plt.plot(
         len_arr, m_pop_c_len_means,
         label='Model, N={}'.format(m_pop_c_len_n), c='b')
@@ -922,6 +927,8 @@ def debug_plot_overall_averages(len_arr, space_arr, m_results, m_th, c_results, 
 
     plt.plot(monkey_ma['c_len'], neuro_c_len_results, label='Neuro', c='k')
     plt.legend()
+    plt.title("Population Avg Over all runs")
+    plt.xlabel("Contour Length")
 
     # Fragment Spacing
     plt.figure()
@@ -949,6 +956,8 @@ def debug_plot_overall_averages(len_arr, space_arr, m_results, m_th, c_results, 
 
     plt.plot(monkey_ma['rcd'], neuro_space_results, label='Neuro', c='k')
     plt.legend()
+    plt.title("Population Avg Over all runs")
+    plt.xlabel("Fragment Spacing")
 
 
 def get_iou_per_len(result_dict):
