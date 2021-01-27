@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
         # Build Model
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-            lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=False)
         # cont_int_layer = new_control_models.ControlMatchParametersLayer(
         #      lateral_e_size=15, lateral_i_size=15)
         # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         main(net,
              train_params=train_parameters,
              data_set_params=data_set_parameters,
-             base_results_store_dir='./results/contour_dataset/random_seed_{}'.format(random_seed))
+             base_results_store_dir='./results/contour_dataset_multiple_runs/random_seed_{}'.format(random_seed))
 
     # ----------------------------------------------------------------------
     import pdb

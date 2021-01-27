@@ -1017,7 +1017,7 @@ def main(model, base_results_dir, optimal_stim_extract_point='contour_integratio
         f_name='tgt_n_pop_gain_vs_spacing_filtered_max_gain',
         f_title='Target neuron population contour spacing vs length\n'
                 '[max gain <= {}], Avg over {} neurons\n'
-                'Removed {} neurons - No optimal stimulus {}, Below noise Th {}'.format(
+                'Removed {} neurons - No optimal stimulus {}, invalid gains {}'.format(
                     max_gain,
                     n_channels - len(exclude_neurons),
                     len(exclude_neurons),
