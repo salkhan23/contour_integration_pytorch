@@ -186,6 +186,87 @@ def threshold_relu(input1, thres=0.1, below_value=0, above_thres_multiplier=1):
         above_thres_multiplier*input1, threshold=thres, value=below_value, inplace=True)
 
 
+class RecurrentBatchNorm(nn.Module):
+    def __init__(self, num_features, n_iters, eps=1e-5, momentum=0.1, affine=True):
+        """
+        Recurrent Batch Normalization base on [Coolijmans et. al. - 2017 - Recurrent
+        Batch Normalization]
+
+        Code Ref:
+        https://github.com/jihunchoi/recurrent-batch-normalization-pytorch/blob/master/bnlstm.py
+
+        Tracks Mean and Variance separately per time steps
+        Gamma and Beta Parameters are same per Iteration
+
+        :param num_features:
+        :param n_iters:
+        :param eps:
+        :param momentum:
+        :param affine:
+        """
+        super(RecurrentBatchNorm, self).__init__()
+
+        self.num_features = num_features
+        self.n_iters = n_iters
+        self.affine = affine
+        self.eps = eps
+        self.momentum = momentum
+
+        if self.affine:
+            self.weight = nn.Parameter(torch.FloatTensor(num_features))
+            self.bias = nn.Parameter(torch.FloatTensor(num_features))
+        else:
+            # Still a parameter but it is None.
+            # Can assign values to it, so equations will work. But will not be maintained
+            self.register_parameter('weight', None)
+            self.register_parameter('bias', None)
+
+        for i in range(n_iters):
+            self.register_buffer(
+                'running_mean_{}'.format(i), torch.zeros(num_features))
+            self.register_buffer(
+                'running_var_{}'.format(i), torch.ones(num_features))
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for i in range(self.n_iters):
+            running_mean_i = getattr(self, 'running_mean_{}'.format(i))
+            running_var_i = getattr(self, 'running_var_{}'.format(i))
+            running_mean_i.zero_()
+            running_var_i.fill_(1)
+
+        if self.affine:
+            self.weight.data.uniform_()
+            self.bias.data.zero_()
+
+    def _check_input_dim(self, input_):
+        if input_.size(1) != self.running_mean_0.nelement():
+            raise ValueError(
+                'got {}-feature tensor, expected {}'.format(input_.size(1), self.num_features))
+
+    def forward(self, input_, time):
+        self._check_input_dim(input_)
+
+        if time >= self.n_iters:
+            time = self.n_iters - 1
+
+        running_mean = getattr(self, 'running_mean_{}'.format(time))
+        running_var = getattr(self, 'running_var_{}'.format(time))
+
+        return torch.nn.functional.batch_norm(
+            input=input_, running_mean=running_mean, running_var=running_var,
+            weight=self.weight, bias=self.bias, training=self.training,
+            momentum=self.momentum, eps=self.eps)
+
+    def __repr__(self):
+        return ('{name}({num_features}, eps={eps}, momentum={momentum},'
+                ' n_iters={n_iters}, affine={affine})'
+                .format(name=self.__class__.__name__, **self.__dict__))
+
+
+# ---------------------------------------------------------------------------------------
+#  Contour Integration Layers
+# ---------------------------------------------------------------------------------------
 class CurrentSubtractInhibitLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7, a=None, b=None,
                  j_xy=None, j_yx=None, use_recurrent_batch_norm=False, store_recurrent_acts=False):
@@ -325,6 +406,21 @@ class CurrentSubtractInhibitLayer(nn.Module):
             for i in range(self.n_iters):
                 self.recurrent_e_BN.append(torch.nn.BatchNorm2d(num_features=self.edge_out_ch))
                 self.recurrent_i_BN.append(torch.nn.BatchNorm2d(num_features=self.edge_out_ch))
+
+            # # Recurrent batch norm as defined in [Coolijmans et. al. - 2017]
+            # # Single set of alpha\beta but different tracked running mean and var per iteration
+            # self.recurrent_BN_e = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+            # self.recurrent_BN_i = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+
+            # # Initialization of Batch normalization layer as defined in  [Coolijmans et. al. - 2017]
+            # # No bias and alpha init to 0.1
+            # self.recurrent_BN_e.weight.data.fill_(0.1)
+            # self.recurrent_BN_e.bias.data.fill_(0)
+            # self.recurrent_BN_e.bias.requires_grad = False
+            #
+            # self.recurrent_BN_i.weight.data.fill_(0.1)
+            # self.recurrent_BN_i.bias.data.fill_(0)
+            # self.recurrent_BN_i.bias.requires_grad = False
 
     def forward(self, ff):
         """
