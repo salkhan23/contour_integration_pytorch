@@ -10,7 +10,7 @@ import models.new_piech_models as new_piech_models
 
 if __name__ == '__main__':
 
-    random_seed_arr = [1, 11, 34, 100, 213]
+    random_seed_arr = [1, 11, 34, 100, 213, 97, 4]
 
     for rs_idx, random_seed in enumerate(random_seed_arr):
         print("Processing random seed = {} [{}/{}] {}".format(
