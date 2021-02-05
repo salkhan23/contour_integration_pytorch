@@ -636,7 +636,7 @@ if __name__ == '__main__':
     # Init
     # -----------------------------------------------------------------------------------
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=False)
     # cont_int_layer = new_control_models.ControlMatchParametersLayer(
     #     lateral_e_size=15, lateral_i_size=15)
 
@@ -667,7 +667,7 @@ if __name__ == '__main__':
 
     net = new_piech_models.embed_into_resnet50(
         edge_extract_and_contour_integration_layers=cont_int_model,
-        pretrained=False
+        pretrained=True
     )
 
     # check_requires_grad(net)
