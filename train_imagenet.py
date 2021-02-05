@@ -674,23 +674,22 @@ if __name__ == '__main__':
     # import pdb
     # pdb.set_trace()
 
+    # # -----------------------------------------------------------------------------------
+    # # If want to resume training after interruption
+    # # -----------------------------------------------------------------------------------
+    # # Train_imagenet stores the state of everything, not just the weights. Done this way
+    # # so that training can be resumed from any checkpoint.
+    #
+    # print("Loading saved model...")
+    # saved_model = \
+    #     './results/imagenet_classification/' \
+    #     'ResNet_20210127_151213/best_accuracy.pth'
+    #
+    # checkpoint = torch.load(saved_model)
+    # net.load_state_dict(checkpoint['state_dict'])
+
     # -----------------------------------------------------------------------------------
     # Main
     # -----------------------------------------------------------------------------------
     print(">>> Starting main script {}".format('.' * 80))
     main(net)
-
-    # -----------------------------------------------------------------------------------
-    # If want to resume training after interruption
-    # -----------------------------------------------------------------------------------
-
-    # Train_imagenet stores the state of everything, not just the weights. Done this way
-    # so that training can be resumed from any checkpoint.
-
-    # print("Loading model weights")
-    # saved_model = \
-    #     './results/imagenet_classification/' \
-    #     'Resnet50_20190907_162401_pretrained_with_contour_integration/best_accuracy.pth'
-    #
-    # checkpoint = torch.load(saved_model)
-    # net.load_state_dict(checkpoint['state_dict'])
