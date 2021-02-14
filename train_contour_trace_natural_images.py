@@ -19,6 +19,7 @@ import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
 import dataset_pathfinder
 import train_utils
+import utils
 
 import experiment_gain_vs_spacing_natural_images
 
@@ -170,7 +171,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     # Pre-processing
     transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        # utils.PunctureImage(n_bubbles=200, fwhm=np.array([7, 9, 11, 13, 15, 17]))
+        utils.PunctureImage(n_bubbles=200, fwhm=np.array([7, 9, 11, 13, 15, 17]))
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
@@ -461,11 +462,11 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 1,
         'learning_rate': 1e-4,
-        'num_epochs': 50,
+        'num_epochs': 100,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
-        'clip_negative_lateral_weights': False,
-        'lr_sched_step_size': 50,
+        'clip_negative_lateral_weights': True,
+        'lr_sched_step_size': 80,
         'lr_sched_gamma': 0.5
     }
 
