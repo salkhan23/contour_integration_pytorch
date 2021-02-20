@@ -145,6 +145,7 @@ def get_gabor_fragment(g_params, spatial_size):
 def find_best_fit_2d_gabor(kernel, verbose=0):
     """
     Find the best fit parameters of a 2D gabor for each input channel of kernel.
+    Channel = Last index
 
     :param kernel: Alexnet l1 kernel
     :param verbose: Controls verbosity of prints (
