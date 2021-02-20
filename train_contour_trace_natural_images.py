@@ -284,7 +284,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
         if 'lr_sched' in key:
             print("  {}: {}".format(key, train_params[key]), file=file_handle)
 
-    file_handle.write("Loss Fcn         : {}\n".format(criterion.__class__.__name__))
+    file_handle.write("Loss Fcn         : {}\n".format(loss_function.__class__.__name__))
     print(loss_function, file=file_handle)
     file_handle.write("clip negative lateral weights: {}\n".format(clip_negative_lateral_weights))
 
@@ -409,12 +409,15 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     file_handle.write("Train Duration       : {}\n".format(training_time))
     file_handle.close()
 
-    # -------------------------------------------------------------------
-    # PLots
-    # -------------------------------------------------------------------
     train_history = np.array(train_history)
     val_history = np.array(val_history)
 
+    train_utils.store_tracked_variables(
+        track_var_dict, results_store_dir, n_ch=model.contour_integration_layer.edge_out_ch)
+
+    # -------------------------------------------------------------------
+    # PLots
+    # -------------------------------------------------------------------
     f, ax_arr = plt.subplots(1, 2)
 
     ax_arr[0].plot(np.arange(1, num_epochs + 1), train_history[:, 0], label='train')
