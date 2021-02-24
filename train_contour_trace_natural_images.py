@@ -473,8 +473,10 @@ if __name__ == '__main__':
         'lr_sched_gamma': 0.5
     }
 
-    # Create Model
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    # # Create Model
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
 
     # cont_int_layer = new_control_models.ControlMatchParametersLayer(
