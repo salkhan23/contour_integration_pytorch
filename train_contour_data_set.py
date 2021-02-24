@@ -461,17 +461,20 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 32,
         'learning_rate': 1e-4,
-        'num_epochs': 60,
+        'num_epochs': 100,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
-        'clip_negative_lateral_weights': False,
-        'lr_sched_step_size': 50,
+        'clip_negative_lateral_weights': True,
+        'lr_sched_step_size': 80,
         'lr_sched_gamma': 0.5
     }
 
     # Build Model
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+
     # cont_int_layer = new_control_models.ControlMatchParametersLayer(
     #      lateral_e_size=15, lateral_i_size=15)
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
