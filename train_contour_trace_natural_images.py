@@ -361,7 +361,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
             is_train=False))
 
         lr_history.append(train_utils.get_lr(optimizer))
-        lr_scheduler.step(epoch)
+        lr_scheduler.step()
 
         # Track parameters
         cont_int_layer_params = model.contour_integration_layer.state_dict()
