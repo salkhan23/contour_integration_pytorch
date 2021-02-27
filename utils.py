@@ -1,6 +1,8 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import fields1993_stimuli
+import os
 
 
 def get_2d_gaussian_kernel(shape, sigma=1.0):
@@ -37,6 +39,90 @@ def normalize_image(img):
     new_image = (new_image - img_min) / (img_max - img_min)
 
     return new_image
+
+
+def view_ff_kernels(ff_kernels, results_store_dir=None):
+    """
+    Plot the feed forward kernels.
+    [ch_out, ch_in=3, r, c]
+
+    Kernels are normalized to range[0, 1] before display.
+
+    :param results_store_dir:
+    :param ff_kernels:
+    :return:
+    """
+    n_ff_kernels = ff_kernels.shape[0]
+
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_ff_kernels)))
+    fig, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
+    fig.suptitle("Feed Forward Kernels")
+
+    for ch_idx in range(n_ff_kernels):
+        r_idx = ch_idx // tile_single_dim
+        c_idx = ch_idx - r_idx * tile_single_dim
+
+        ff_kernel = np.transpose(ff_kernels[ch_idx, ], axes=(1, 2, 0))  # Channel first for display
+        ff_kernel = (ff_kernel - ff_kernel.min()) / (ff_kernel.max() - ff_kernel.min())
+
+        ax_arr[r_idx, c_idx].imshow(ff_kernel)
+        ax_arr[r_idx, c_idx].axis('off')
+
+    fig.tight_layout()
+
+    if results_store_dir is not None:
+        fig.savefig(os.path.join(results_store_dir, 'feedforward_kernels.jpg'), format='jpg')
+        plt.close(fig)
+
+
+def view_spatial_lateral_kernels(e_kernels, i_kernels, spatial_func=np.mean, results_store_dir=None):
+    """
+    Display each output kernel, with the sum of all inputs over the channel dimension.
+     [ch_out, ch_in, r, c]
+
+    spaital_func over all channels (function must change dimensions to 1). Also must have keyword axis.
+    "sum, max, min, etc"
+
+    :param spatial_func: [default: max]
+    :param e_kernels:
+    :param i_kernels:
+    :param results_store_dir:
+    :return:
+    """
+    n_out_ch = e_kernels.shape[0]  # Assumes channels of E and I kernels are the same.
+
+    # -----------------------------------------------------------------------------------
+    # View the lateral kernels
+    # -----------------------------------------------------------------------------------
+    tile_single_dim = np.int(np.ceil(np.sqrt(n_out_ch)))
+
+    f_e, ax_arr_e = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
+    f_e.suptitle("Excitatory Lateral Kernels - {} across input channels".format(spatial_func.__name__))
+
+    f_i, ax_arr_i = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
+    f_i.suptitle("Inhibitory Lateral Kernels - {} across input channels".format(spatial_func.__name__))
+
+    for ch_idx in range(n_out_ch):
+        e_idv_kernel = e_kernels[ch_idx, ]
+        i_idv_kernel = i_kernels[ch_idx, ]
+
+        r_idx = ch_idx // tile_single_dim
+        c_idx = ch_idx - r_idx * tile_single_dim
+
+        ax_arr_e[r_idx, c_idx].imshow(spatial_func(e_idv_kernel, axis=0))
+        ax_arr_e[r_idx, c_idx].axis('off')
+
+        ax_arr_i[r_idx, c_idx].imshow(spatial_func(i_idv_kernel, axis=0))
+        ax_arr_i[r_idx, c_idx].axis('off')
+
+    f_e.tight_layout()
+    f_i.tight_layout()
+
+    if results_store_dir is not None:
+        f_e.savefig(os.path.join(results_store_dir, 'lateral_excitatory_kernels.jpg'), format='jpg')
+        plt.close(f_e)
+        f_i.savefig(os.path.join(results_store_dir, 'lateral_inhibitory_kernels.jpg'), format='jpg')
+        plt.close(f_i)
 
 
 # ---------------------------------------------------------------------------------------

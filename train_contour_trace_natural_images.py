@@ -452,6 +452,24 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
         cont_int_scale=cont_int_scale
     )
 
+    # View trained kernels
+    # ------------------------------------------------------------------------------------
+    trained_kernels_store_dir = os.path.join(results_store_dir, 'trained_kernels')
+    if not os.path.exists(trained_kernels_store_dir):
+        os.makedirs(trained_kernels_store_dir)
+
+    utils.view_ff_kernels(
+        model.edge_extract.weight.data.numpy(),
+        results_store_dir=trained_kernels_store_dir
+    )
+
+    utils.view_spatial_lateral_kernels(
+        model.contour_integration_layer.lateral_e.weight.data.numpy(),
+        model.contour_integration_layer.lateral_i.weight.data.numpy(),
+        results_store_dir=trained_kernels_store_dir,
+        spatial_func=np.mean
+    )
+
 
 if __name__ == '__main__':
     plt.ion()
