@@ -559,7 +559,7 @@ if __name__ == '__main__':
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
-    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
          base_results_store_dir='./results/biped')
