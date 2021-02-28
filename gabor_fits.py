@@ -174,8 +174,8 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
         theta = 0
 
         # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
-        bounds = ([-half_x, -half_y,      -180,     -2,   0.1,       0,   -half_x,     0],
-                  [ half_x,  half_y,       180,      2,     4,      20,    half_x,     2])
+        bounds = ([-half_x, -half_y,      -90,     -2,   0.1,       0,   -half_x,     0],
+                  [ half_x,  half_y,       90,      2,     4,      20,    half_x,     2])
 
         while not opt_params_found:
 
