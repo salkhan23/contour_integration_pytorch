@@ -10,10 +10,8 @@ import models.new_piech_models as new_piech_models
 
 if __name__ == '__main__':
     random_seed = 10
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
 
-    lr_arr = [0.00001, 0.00002, 0.00003, 0.000005, 0.000001]
+    lr_arr = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
@@ -28,16 +26,20 @@ if __name__ == '__main__':
         base_results_dir = './results/analyze_lr_rate/lr_{}'.format(lr)
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-            lateral_e_size=15, lateral_i_size=15, n_iters=5)
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
         model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
 
         train_parameters = {
+            'random_seed': random_seed,
             'train_batch_size': 32,
-            'test_batch_size': 1,
+            'test_batch_size': 32,
             'learning_rate': lr,
-            'num_epochs': 50,
+            'num_epochs': 100,
             'lateral_w_reg_weight': 0.0001,
             'lateral_w_reg_gaussian_sigma': 10,
+            'clip_negative_lateral_weights': True,
+            'lr_sched_step_size': 100,
+            'lr_sched_gamma': 0.5
         }
 
         main(
