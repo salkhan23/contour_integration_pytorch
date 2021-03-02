@@ -178,6 +178,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     train_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'train'),
         transform=pre_process_transforms,
+        re_add_end_stops=True,
     )
 
     train_batch_size = min(train_batch_size, len(train_set))

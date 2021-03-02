@@ -15,13 +15,71 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as transform_functional
 from torch.utils.data import DataLoader, Dataset
+import utils
+
+
+def add_end_stop(img1, center=(0, 0), end_stop_radius=6):
+    """
+
+    Add end-stops.
+    This is the same code as in the online pathfinder generator.
+    Added her for the case when image puncturing is added,  the original end points can be added back
+
+    img1 should be 3d (channel first)
+    """
+    ax = torch.arange(center[0] - end_stop_radius, center[0] + end_stop_radius + 1)
+    ay = torch.arange(center[1] - end_stop_radius, center[1] + end_stop_radius + 1)
+
+    max_value = torch.max(img1)
+    min_value = torch.min(img1)
+    n_channels = img1.shape[0]
+
+    # Labels
+    if n_channels == 1:
+        for x in ax:
+            for y in ay:
+                if ((0 <= x < img1.shape[1]) and (0 <= y < img1.shape[2])
+                        and (((x - center[0]) ** 2 + (y - center[1]) ** 2) <=
+                             end_stop_radius ** 2)):
+                    x = x.int()
+                    y = y.int()
+                    img1[:, x, y] = 0
+                    img1[0, x, y] = max_value
+
+    else:  # images
+        for x in ax:
+            for y in ay:
+                if (0 <= x < img1.shape[1]) and (0 <= y < img1.shape[2]):
+
+                    d = np.sqrt((x - center[0]) ** 2 + (y - center[1]) ** 2)
+                    x = x.int()
+                    y = y.int()
+
+                    if d < 2:
+                        img1[:, x, y] = min_value
+                        img1[0, x, y] = max_value
+                    elif d < 4:
+                        img1[:, x, y] = min_value
+                        img1[2, x, y] = max_value
+                    elif d <= end_stop_radius:
+                        img1[:, x, y] = min_value
+                        img1[0, x, y] = max_value
+    return img1
 
 
 class PathfinderNaturalImages(Dataset):
 
-    def __init__(self, data_dir, transform=None, subset_size=None):
+    def __init__(self, data_dir, transform=None, subset_size=None, re_add_end_stops=False):
+        """
+
+        :param data_dir:
+        :param transform:
+        :param subset_size:
+        :param re_add_end_stops: After pre-processing transforms add back the end points, to make them clearer.
+        """
 
         self.transform = transform
+        self.re_add_end_stops = re_add_end_stops
 
         imgs_dir = os.path.join(data_dir, 'images')
         labels_file = os.path.join(data_dir, 'classification_labels.txt')
@@ -73,9 +131,17 @@ class PathfinderNaturalImages(Dataset):
     def __getitem__(self, index):
 
         img = Image.open(self.images[index]).convert('RGB')
+
+        with open(self.extra_info_files[index], 'rb') as handle:
+            extra_info = pickle.load(handle)
+
         img = transform_functional.to_tensor(img)
         if self.transform is not None:
             img = self.transform(img)
+
+            if self.re_add_end_stops:
+                add_end_stop(img, (extra_info['ep1']))
+                add_end_stop(img, (extra_info['ep2']))
 
         label = self.labels[index]
         label = torch.tensor(label)
@@ -102,10 +168,10 @@ if __name__ == "__main__":
     #      (3) full label as well,
     #      (4) the classification label in the image title
 
-    dataset_dir = './data/pathfinder_natural_images_test/test'
+    dataset_dir = './data/pathfinder_natural_images_2/test'
     random_seed = 5
 
-    save_dir = './results/sample_images'
+    save_dir = './results/sample_images_test'
 
     # Immutable ----------------------
     plt.ion()
@@ -123,14 +189,16 @@ if __name__ == "__main__":
 
     # Pre-processing
     transforms_list = [
-        transforms.Normalize(mean=ch_mean, std=ch_std)
+        transforms.Normalize(mean=ch_mean, std=ch_std),
+        utils.PunctureImage(n_bubbles=200, fwhm=np.array([7, 9, 11, 13, 15, 17]))
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
     dataset = PathfinderNaturalImages(
         dataset_dir,
         transform=pre_process_transforms,
-        subset_size=50
+        subset_size=50,
+        re_add_end_stops=True,
     )
 
     data_loader = DataLoader(
