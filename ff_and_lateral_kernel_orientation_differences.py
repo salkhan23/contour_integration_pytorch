@@ -157,7 +157,7 @@ def find_ff_and_lateral_orientation_preferences(model, ch_aggregator_fcn=np.mean
 
     print("Preferred orientations")
     for ch_idx in range(n_channels):
-        print("{}: FF {} Lateral E {}, Lateral I {}".format(
+        print("{}: FF {:10.2f} Lateral E {:10.2f}, Lateral I {:10.2f}".format(
             ch_idx, ff_orientations[ch_idx], lateral_kernels_orientations['E'][ch_idx],
             lateral_kernels_orientations['I'][ch_idx]))
 
