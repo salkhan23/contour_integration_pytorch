@@ -92,9 +92,6 @@ def plot_ff_lat_orientation_differences(ff_ori, lateral_e_ori, lateral_i_ori):
 
     plt.title("Gabor Fits Orientations")
 
-    import pdb
-    pdb.set_trace()
-
     return f, ax_arr
 
 
