@@ -185,7 +185,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
 
     train_data_loader = DataLoader(
         dataset=train_set,
-        num_workers=4,
+        num_workers=6,
         batch_size=train_batch_size,
         shuffle=True,
         pin_memory=True
@@ -194,13 +194,14 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     val_set = dataset_pathfinder.PathfinderNaturalImages(
         data_dir=os.path.join(data_set_dir, 'test'),
         transform=pre_process_transforms,
+        re_add_end_stops=True,
     )
 
     test_batch_size = min(test_batch_size, len(val_set))
 
     val_data_loader = DataLoader(
         dataset=val_set,
-        num_workers=4,
+        num_workers=6,
         batch_size=test_batch_size,
         shuffle=True,
         pin_memory=True
@@ -482,8 +483,8 @@ if __name__ == '__main__':
     train_parameters = {
         'random_seed': 7,
         'train_batch_size': 32,
-        'test_batch_size': 1,
-        'learning_rate': 1e-4,
+        'test_batch_size': 32,
+        'learning_rate': 1e-3,
         'num_epochs': 100,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
@@ -493,10 +494,10 @@ if __name__ == '__main__':
     }
 
     # # Create Model
-    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
-    cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
 
     # cont_int_layer = new_control_models.ControlMatchParametersLayer(
     #     lateral_e_size=15, lateral_i_size=15)
