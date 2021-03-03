@@ -142,11 +142,12 @@ def get_gabor_fragment(g_params, spatial_size):
     return frag
 
 
-def find_best_fit_2d_gabor(kernel, verbose=0):
+def find_best_fit_2d_gabor(kernel, verbose=0, theta_guess=0):
     """
     Find the best fit parameters of a 2D gabor for each input channel of kernel.
     Channel = Last index
 
+    :param theta_guess: Initial guess as to what the orientation in degrees should be
     :param kernel: Alexnet l1 kernel
     :param verbose: Controls verbosity of prints (
         0=Nothing is printed[Default],
@@ -167,17 +168,18 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
 
     opt_params_list = []
 
+    if theta_guess < -90:
+        raise Exception("Initial Theta Guess should be >= -90")
+    init_theta_arr = np.arange(theta_guess, theta_guess + 180, 10)
+    init_theta_arr_in_range = np.array([x if x < 90 else x - 180 for x in init_theta_arr])
+
     for c_idx in range(n_channels):
 
-        opt_params_found = False
+        for theta in init_theta_arr_in_range:
 
-        theta = -90
-
-        # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
-        bounds = ([-half_x, -half_y,      -90,     -2,   0.1,       0,   -half_x,     0],
-                  [ half_x,  half_y,       89,      2,     4,      20,    half_x,     2])
-
-        while not opt_params_found:
+            # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
+            bounds = ([-half_x, -half_y,      -90,     -2,   0.1,       0,   -half_x,     0],
+                      [ half_x,  half_y,       89,      2,     4,      20,    half_x,     2])
 
             p0 = [0, 0, theta, 1, 2.5, 8, 0, 1]
             # p0 = [0, 0, theta, -1, 1, 8, 0, 1] # Better for black on white gabors
@@ -192,9 +194,6 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
                 # Check that error in the estimate is reasonable
                 if one_sd_error[2] <= 3.0:
 
-                    opt_params_found = True
-                    opt_params_list.append(popt)
-
                     if verbose > 0:
                         print("chan {0}: (x0,y0)=({1:0.2f},{2:0.2f}), theta={3:0.2f}, A={4:0.2f}, sigma={5:0.2f}, "
                               "lambda={6:0.2f}, psi={7:0.2f}, gamma={8:0.2f}".format(
@@ -206,21 +205,22 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
                                one_sd_error[0], one_sd_error[1], one_sd_error[2], one_sd_error[3], one_sd_error[4],
                                one_sd_error[5], one_sd_error[6], one_sd_error[7]))
 
+                    opt_params_list.append(popt)
+                    break
+
                 else:
-                    theta += 10
+                    continue  # go to the next Theta
 
             except RuntimeError:
-                theta += 10
-
-                if theta == 90:
-                    # print("Optimal parameters could not be found")
-                    opt_params_found = True
-                    opt_params_list.append(None)
+                continue
 
             except ValueError:
-                # print("Optimal parameters could not be found")
-                opt_params_found = True
-                opt_params_list.append(None)
+                continue
+
+        # All thetas checked, no optimal fits found
+        # Note this is the abnormal case. If valid params are found, will break earlier
+        # print("Optimal parameters could not be found")
+        opt_params_list.append(None)
 
     return opt_params_list
 
