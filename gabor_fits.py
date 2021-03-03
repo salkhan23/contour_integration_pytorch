@@ -142,6 +142,112 @@ def get_gabor_fragment(g_params, spatial_size):
     return frag
 
 
+def find_best_fit_2d_gabor_exhaustive(kernel, verbose=0, theta_guess=0):
+    """
+
+    Similar to find_best_fit_2d_gabor, but does not break when sd of theta < some threshold,
+    continues through all theta estimates and picks a minimum
+
+    :param kernel:
+    :param verbose:
+    :param theta_guess:
+    :return:
+    """
+    n_channels = kernel.shape[-1]
+
+    half_x = kernel.shape[0] // 2
+    half_y = kernel.shape[1] // 2
+
+    x = np.linspace(-half_x, half_x, kernel.shape[0])
+    y = np.linspace(-half_y, half_y, kernel.shape[1])
+
+    xx, yy = np.meshgrid(x, y)
+
+    opt_params_list = []
+
+    if theta_guess < -90:
+        raise Exception("Initial Theta Guess should be >= -90")
+    init_theta_arr = np.arange(theta_guess, theta_guess + 180, 10)
+    init_theta_arr_in_range = np.array([x if x < 90 else x - 180 for x in init_theta_arr])
+
+    for c_idx in range(n_channels):
+
+        fit_params_list = []  # Estimated Theta from initial Theta Guess
+        fit_params_sd_list = []
+        # Error associated with the Estimated Theta
+        fit_theta_sd_arr = np.zeros_like(init_theta_arr_in_range, dtype=np.float)
+
+        for th_idx, theta in enumerate(init_theta_arr_in_range):
+            # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
+            bounds = ([-half_x, -half_y,       -90,      -2,   0.1,       0,   -half_x,     0],
+                      [half_x,   half_y,        89,       2,     4,      20,    half_x,     2])
+
+            # Initial Guess of the parameters.
+            p0 = [0, 0, theta, 1, 2.5, 8, 0, 1]
+            # p0 = [0, 0, theta, -1, 1, 8, 0, 1] # Better for black on white gabors
+
+            try:
+                popt, pcov = optimize.curve_fit(
+                    gabor_2d, (xx, yy), kernel[:, :, c_idx].ravel(), p0=p0, bounds=bounds)
+
+                # 1 SD of error in estimate
+                one_sd_error = np.sqrt(np.diag(pcov))
+
+                fit_theta_sd_arr[th_idx] = one_sd_error[2]
+                fit_params_list.append(popt)
+                fit_params_sd_list.append(pcov)
+
+            except RuntimeError:
+                fit_theta_sd_arr[th_idx] = np.NaN
+                fit_params_list.append([])
+                fit_params_sd_list.append([])
+                continue
+
+            except ValueError:
+                fit_theta_sd_arr[th_idx] = np.NaN
+                fit_params_list.append([])
+                fit_params_sd_list.append([])
+                continue
+
+        # All thetas checked, Find the one with the lowest theta estimate error:
+        min_idx = np.int(np.argmin(fit_theta_sd_arr))
+
+        if fit_theta_sd_arr[min_idx] <= 3.0:
+            opt_params_list.append(fit_params_list[min_idx])
+
+            if verbose > 0:
+                print("chan {0}: (x0,y0)=({1:0.2f},{2:0.2f}), theta={3:0.2f}, A={4:0.2f}, sigma={5:0.2f}, "
+                      "lambda={6:0.2f}, psi={7:0.2f}, gamma={8:0.2f}".format(
+                        c_idx, fit_params_list[min_idx][0], fit_params_list[min_idx][1], fit_params_list[min_idx][2],
+                        fit_params_list[min_idx][3], fit_params_list[min_idx][4], fit_params_list[min_idx][5],
+                        fit_params_list[min_idx][6], fit_params_list[min_idx][7]))
+
+            if verbose > 1:
+                print("1SD Err : (x0,y0)=({0:0.2f},{1:0.2f}), theta={2:0.2f}, A={3:0.2f}, sigma={4:0.2f}, "
+                      "lambda={5:0.2f}, psi={6:0.2f}, gamma={7:0.2f}".format(
+                        fit_params_sd_list[min_idx][0], fit_params_sd_list[min_idx][1],
+                        fit_params_sd_list[min_idx][2], fit_params_sd_list[min_idx][3],
+                        fit_params_sd_list[min_idx][4], fit_params_sd_list[min_idx][5],
+                        fit_params_sd_list[min_idx][6], fit_params_sd_list[min_idx][7]))
+        else:
+            opt_params_list.append(None)
+
+        # print("fit_theta_sd_arr: {}".format(fit_theta_sd_arr))
+        # print("Min Index {}".format(min_idx))
+        # print("fit_params: {}".format(fit_params_list[min_idx]))
+        #
+        # import pdb
+        # pdb.set_trace()
+
+    # for item in opt_params_list:
+    #     print(item)
+    #
+    # import pdb
+    # pdb.set_trace()
+
+    return opt_params_list
+
+
 def find_best_fit_2d_gabor(kernel, verbose=0, theta_guess=0):
     """
     Find the best fit parameters of a 2D gabor for each input channel of kernel.
