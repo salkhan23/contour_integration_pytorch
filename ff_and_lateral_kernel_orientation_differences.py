@@ -67,8 +67,19 @@ def plot_ff_lat_orientation_differences(ff_ori, lateral_e_ori, lateral_i_ori):
 
     f, ax_arr = plt.subplots(figsize=(9, 9))
 
-    ax_arr.scatter(ff_ori, lateral_e_ori, label='E')
-    ax_arr.scatter(ff_ori, lateral_i_ori, label='I', marker='x')
+    non_nan_count_e = np.count_nonzero(~np.isnan(lateral_e_ori))
+    non_nan_count_i = np.count_nonzero(~np.isnan(lateral_i_ori))
+
+    ff_e_diff = abs(ff_ori - lateral_e_ori)
+    ff_i_diff = abs(ff_ori - lateral_i_ori)
+
+    ax_arr.scatter(
+        ff_ori, lateral_e_ori,
+        label=r'$E: N={},\mu={:0.2f},\sigma={:0.2f} $'.format(non_nan_count_e, np.nanmean(ff_e_diff), np.nanstd(ff_e_diff)))
+    ax_arr.scatter(
+        ff_ori, lateral_i_ori,
+        label=r'$I: N={},\mu={:0.2f},\sigma={:0.2f} $'.format(non_nan_count_i, np.nanmean(ff_i_diff), np.nanstd(ff_i_diff)),
+        marker='x')
     ax_arr.set_xlim([-90, 90])
     ax_arr.set_ylim([-90, 90])
     ax_arr.legend()
