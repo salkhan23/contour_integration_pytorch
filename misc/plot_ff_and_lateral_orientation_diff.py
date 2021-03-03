@@ -9,7 +9,8 @@ import numpy as np
 import os
 
 import torch
-
+import sys
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 import gabor_fits
 import models.new_piech_models as new_piech_models
 import utils
@@ -19,7 +20,7 @@ if __name__ == '__main__':
 
     plt.ion()
 
-    base_results_dir = '../results/multiple_runs_contour_dataset/positive_lateral_weights_with_BN_best_gain_curves/'
+    base_results_dir = './results/multiple_runs_contour_dataset/positive_lateral_weights_with_BN_best_gain_curves/'
     saved_models_arr = [
         'run_1',
         'run_2',
