@@ -171,11 +171,11 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
 
         opt_params_found = False
 
-        theta = 0
+        theta = -90
 
         # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
         bounds = ([-half_x, -half_y,      -90,     -2,   0.1,       0,   -half_x,     0],
-                  [ half_x,  half_y,       90,      2,     4,      20,    half_x,     2])
+                  [ half_x,  half_y,       89,      2,     4,      20,    half_x,     2])
 
         while not opt_params_found:
 
@@ -212,7 +212,7 @@ def find_best_fit_2d_gabor(kernel, verbose=0):
             except RuntimeError:
                 theta += 10
 
-                if theta == 180:
+                if theta == 90:
                     # print("Optimal parameters could not be found")
                     opt_params_found = True
                     opt_params_list.append(None)
