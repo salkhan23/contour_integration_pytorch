@@ -407,6 +407,9 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     training_time = datetime.now() - training_start_time
     print('Finished Training. Training took {}'.format(training_time))
 
+    # -----------------------------------------------------------------------------------
+    np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
+
     file_handle.write("{}\n".format('-' * 80))
     file_handle.write("Train Duration       : {}\n".format(training_time))
     file_handle.close()
