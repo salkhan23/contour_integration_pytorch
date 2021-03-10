@@ -1,7 +1,6 @@
 # ---------------------------------------------------------------------------------------
-# PLot  FF and lateral kernels.
-# Do gabor fits on them
-# And look at Gabor fit orientation Differences
+#  Compare Feed Forward Orientations and Axis of Elongation of Lateral Kernels
+#  Comparison based on independent Gabor Fits for FF and lateral kernels
 # ---------------------------------------------------------------------------------------
 import pickle
 import matplotlib as mpl
