@@ -72,7 +72,9 @@ def view_ff_kernels(ff_kernels, results_store_dir=None):
 
     if results_store_dir is not None:
         fig.savefig(os.path.join(results_store_dir, 'feedforward_kernels.jpg'), format='jpg')
-        plt.close(fig)
+        # plt.close(fig)
+
+    return fig, ax_arr
 
 
 def view_spatial_lateral_kernels(e_kernels, i_kernels, spatial_func=np.mean, results_store_dir=None):
@@ -120,9 +122,11 @@ def view_spatial_lateral_kernels(e_kernels, i_kernels, spatial_func=np.mean, res
 
     if results_store_dir is not None:
         f_e.savefig(os.path.join(results_store_dir, 'lateral_excitatory_kernels.jpg'), format='jpg')
-        plt.close(f_e)
+        # plt.close(f_e)
         f_i.savefig(os.path.join(results_store_dir, 'lateral_inhibitory_kernels.jpg'), format='jpg')
-        plt.close(f_i)
+        # plt.close(f_i)
+
+    return f_e, ax_arr_e, f_i, ax_arr_i
 
 
 # ---------------------------------------------------------------------------------------
