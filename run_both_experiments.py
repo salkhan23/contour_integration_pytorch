@@ -22,19 +22,33 @@ if __name__ == "__main__":
     # Loading Saved Model
     print("===> Loading Model ...")
 
-    # Contour Dataset
-    # ----------------
-    contour_integration_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
+    # # Contour Dataset
+    # # ----------------
+    # contour_integration_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
+    # saved_model = \
+    #     './results/new_model_resnet_based/Old' \
+    #     '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+    #     '/best_accuracy.pth'
+    # replacement_layer = None
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # net.load_state_dict(torch.load(saved_model, map_location=device))
+    # get_iou_results = True
+
+    # Contour Tracing Natural Images
+    # ------------------------------
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model_resnet_based/Old' \
-        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
+        './results/contour_tracing' \
+        '/BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20210308_090110_pos_only_lr_1e_3_new_classifier_head_recurrent_BN_as_defined_in_paper' \
         '/best_accuracy.pth'
     replacement_layer = None
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
-    get_iou_results = True
+    get_iou_results = False
 
     # # Imagenet
     # # ----------------------
