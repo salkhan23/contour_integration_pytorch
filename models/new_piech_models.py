@@ -463,18 +463,18 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
             # # Recurrent batch norm as defined in [Coolijmans et. al. - 2017]
             # # Single set of alpha\beta but different tracked running mean and var per iteration
-            # self.recurrent_BN_e = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
-            # self.recurrent_BN_i = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
-
+            # self.recurrent_e_BN = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+            # self.recurrent_i_BN = RecurrentBatchNorm(self.edge_out_ch, self.n_iters)
+            #
             # # Initialization of Batch normalization layer as defined in  [Coolijmans et. al. - 2017]
             # # No bias and alpha init to 0.1
-            # self.recurrent_BN_e.weight.data.fill_(0.1)
-            # self.recurrent_BN_e.bias.data.fill_(0)
-            # self.recurrent_BN_e.bias.requires_grad = False
+            # self.recurrent_e_BN.weight.data.fill_(0.1)
+            # self.recurrent_e_BN.bias.data.fill_(0)
+            # self.recurrent_e_BN.bias.requires_grad = False
             #
-            # self.recurrent_BN_i.weight.data.fill_(0.1)
-            # self.recurrent_BN_i.bias.data.fill_(0)
-            # self.recurrent_BN_i.bias.requires_grad = False
+            # self.recurrent_i_BN.weight.data.fill_(0.1)
+            # self.recurrent_i_BN.bias.data.fill_(0)
+            # self.recurrent_i_BN.bias.requires_grad = False
 
     def forward(self, ff):
         """
@@ -527,6 +527,9 @@ class CurrentSubtractInhibitLayer(nn.Module):
             if self.use_recurrent_batch_norm:
                 f_x = nn.functional.relu(self.recurrent_e_BN[i](x))
                 f_y = nn.functional.relu(self.recurrent_i_BN[i](y))
+                # f_x = nn.functional.relu(self.recurrent_e_BN(x, i))
+                # f_y = nn.functional.relu(self.recurrent_i_BN(y, i))
+                
             else:
                 f_x = nn.functional.relu(x)
                 f_y = nn.functional.relu(y)
