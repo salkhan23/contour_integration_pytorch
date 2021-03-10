@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.par
 import gabor_fits
 import models.new_piech_models as new_piech_models
 import utils
-import ff_and_lateral_kernel_orientation_differences
+import analysis_ff_lat_ori_diff_gabor_fits
 
 if __name__ == '__main__':
 
@@ -52,7 +52,7 @@ if __name__ == '__main__':
         full_lateral_e_kernels.extend(lateral_kernels_orientations['E'])
         full_lateral_i_kernels.extend(lateral_kernels_orientations['I'])
 
-    ff_and_lateral_kernel_orientation_differences.plot_ff_lat_orientation_differences(
+    analysis_ff_lat_ori_diff_gabor_fits.plot_ff_lat_orientation_differences(
         full_ff_kernels,
         full_lateral_e_kernels,
         full_lateral_i_kernels
