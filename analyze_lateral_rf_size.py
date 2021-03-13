@@ -40,7 +40,7 @@ if __name__ == '__main__':
             use_recurrent_batch_norm=True
         )
 
-        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+        model = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
         main(
             model,
