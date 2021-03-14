@@ -420,6 +420,11 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     val_history = np.array(val_history)
     train_utils.plot_training_history(train_history, val_history, results_store_dir)
 
+    # Reload the model parameters that resulted in the best accuracy
+    # --------------------------------------------------------------
+    best_val_model_params = os.path.join(results_store_dir, 'best_accuracy.pth')
+    net.load_state_dict(torch.load(best_val_model_params, map_location=device))
+
     # Straight contour performance over validation dataset
     # ---------------------------------------------------------------------------------
     print("====> Getting validation set straight contour performance per length")

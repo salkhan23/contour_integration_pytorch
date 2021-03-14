@@ -420,6 +420,11 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     train_utils.store_tracked_variables(
         track_var_dict, results_store_dir, n_ch=model.contour_integration_layer.edge_out_ch)
 
+    # Reload the model parameters that resulted in the best accuracy
+    # --------------------------------------------------------------
+    best_val_model_params = os.path.join(results_store_dir, 'best_accuracy.pth')
+    net.load_state_dict(torch.load(best_val_model_params, map_location=device))
+
     # -------------------------------------------------------------------
     # PLots
     # -------------------------------------------------------------------
