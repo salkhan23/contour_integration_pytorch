@@ -12,13 +12,32 @@ import torch
 
 import utils
 import models.new_piech_models as new_piech_models
-import analysis_ff_lat_ori_diff_gabor_fits
+import gabor_fits
 
 mpl.rcParams.update({
     'font.size': 18, 'lines.linewidth': 3,
     'lines.markersize': 10,
     'lines.markeredgewidth': 3
 })
+
+
+def find_ff_kernel_orientations(weights):
+    n = weights.shape[0]
+
+    ori_arr = np.ones(n) * -1000
+    ori_1std_arr = np.ones(n) * -1000
+
+    for n_idx in range(n):
+        print("Process channel {}".format(n_idx))
+        kernel = weights[n_idx, ]
+        kernel_ch_last = np.transpose(kernel, axes=(1, 2, 0))
+
+        ori = gabor_fits.get_filter_orientation(
+            kernel_ch_last, o_type='max', display_params=False)
+
+        ori_arr[n_idx] = ori
+
+    return ori_arr
 
 
 def get_polar_vectors_of_weights(kernel, dist_arr, ori_arr):
@@ -138,6 +157,69 @@ def get_channel_wise_axis_of_elongation(kernel):
     return np.array(elongation_mag_arr), np.array(elongation_ori_arr) * 180 / np.pi
 
 
+def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_ori, i_mag):
+    """
+
+    :param ff_ori: [Deg]
+    :param e_ori: [Deg]
+    :param e_mag:
+    :param i_ori: [Deg]
+    :param i_mag:
+    :return:
+    """
+    f, ax_arr = plt.subplots(figsize=(9, 9))
+
+    ax_arr.scatter(ff_ori, e_ori, s=e_mag * 1000, marker='x', c='b', label='E')
+
+    ax_arr.scatter(ff_ori, i_ori, s=i_mag * 1000, marker='x', c='r', label='I')
+
+    ax_arr.set_xlim([0, 180])
+    ax_arr.set_ylim([0, 180])
+    ax_arr.legend()
+    ax_arr.set_xlabel("FF Orientation (deg)")
+    ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
+
+    diagonal = np.arange(0, 180, 5)
+    ax_arr.plot(diagonal, diagonal, color='k')
+    f.tight_layout()
+
+
+def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_ori, e_mag, i_ori, i_mag):
+    """
+
+    :param ff_ori: [Deg]
+    :param e_ori: [Deg]
+    :param e_mag:
+    :param i_ori: [Deg]
+    :param i_mag:
+    :return:
+    """
+    f, ax_arr = plt.subplots(figsize=(9, 9))
+
+    n_chan = ff_ori.shape[0]
+
+    ax_arr.set_xlim([0, 180])
+    ax_arr.set_ylim([0, 180])
+    ax_arr.legend()
+    ax_arr.set_xlabel("FF Orientation (deg)")
+    ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
+
+    diagonal = np.arange(0, 180, 5)
+    ax_arr.plot(diagonal, diagonal, color='k')
+    f.tight_layout()
+
+    for idx in range(n_chan):
+        ax_arr.scatter(ff_ori[idx], e_ori[idx], s=e_mag[idx] * 1000, marker='x', c='b', label='E')
+        ax_arr.scatter(ff_ori[idx], i_ori[idx], s=i_mag[idx] * 1000, marker='x', c='r', label='I')
+        ax_arr.annotate(idx, (ff_ori[idx],  e_ori[idx]))
+        ax_arr.annotate(idx, (ff_ori[idx], i_ori[idx]))
+        print("{:02}: FF {:10.2f}, E: {:10.2f}, r={:0.4f}, I {:10.2f}, r={:0.4f}".format(
+            idx, ff_ori[idx], e_ori[idx], e_mag[idx], i_ori[idx], i_mag[idx]))
+
+        # import pdb
+        # pdb.set_trace()
+
+
 # ---------------------------------------------------------------------------------------
 if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
@@ -174,8 +256,7 @@ if __name__ == '__main__':
             ff_ori_arr_deg = pickle.load(handle)
     else:
         print(">>>> Find FF Kernel orientation ....")
-        ff_ori_arr_deg = \
-            analysis_ff_lat_ori_diff_gabor_fits.find_ff_kernel_orientations(ff_kernels)
+        ff_ori_arr_deg = find_ff_kernel_orientations(ff_kernels)
 
     # For Gabor Fits, the vertical is at 0 & moves anticlockwise, we want orientations
     # from the positive x-axis
@@ -209,16 +290,6 @@ if __name__ == '__main__':
     lateral_e_w = net.contour_integration_layer.lateral_e.weight.data.detach().cpu().numpy()
     lateral_i_w = net.contour_integration_layer.lateral_i.weight.data.detach().cpu().numpy()
     lateral_kernels_size = np.array(lateral_e_w.shape[2:])
-
-    # In Ref, first patch sites were identified by Eyeballing. Criteria used was that it
-    # should have more than 1 axon terminating at a patch location. Here, we consider weights
-    # weights above a threshold.
-    th_e = np.percentile(net.contour_integration_layer.lateral_e.weight.data.numpy(), 75)
-    th_i = np.percentile(net.contour_integration_layer.lateral_i.weight.data.numpy(), 75)
-    print("Chosen Lateral Weights Cutoff Thresholds: E >= {:0.4f} , I >= {:0.4f}".format(th_e, th_i))
-
-    lateral_e_w[lateral_e_w < th_e] = 0
-    lateral_i_w[lateral_i_w < th_i] = 0
 
     e_elong_mag, e_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_e_w)
     i_elong_mag, i_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_i_w)
@@ -258,29 +329,22 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # PLot Orientation Differences
     # -----------------------------------------------------------------------------------
-    f, ax_arr = plt.subplots(figsize=(9, 9))
+    scatter_plot_ff_orientation_lat_axis_of_elongation_individually(
+        aligned_ff_ori_arr_deg,
+        e_elong_ori_deg, e_elong_mag,
+        i_elong_ori_deg, i_elong_mag,
+    )
 
-    ax_arr.scatter(aligned_ff_ori_arr_deg, e_elong_ori_deg, marker='x', c='b', label='E')
-    ax_arr.scatter(aligned_ff_ori_arr_deg, i_elong_ori_deg, marker='o', c='r', label='I')
-    ax_arr.set_xlim([0, 180])
-    ax_arr.set_ylim([0, 180])
-    ax_arr.legend()
-    ax_arr.set_xlabel("FF Orientation (deg)")
-    ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
-
-    diag = np.arange(0, 180, 5)
-    ax_arr.plot(diag, diag, color='k')
-
-    # -----------------------------------------------------------------------------------
-    # Normalized index of ellipticity, rn
-    # -----------------------------------------------------------------------------------
-    plt.figure(figsize=(9, 9))
-    plt.plot(e_elong_mag, label='E')
-    plt.plot(i_elong_mag, label='I')
-    plt.title("Normalized index of ellipticity, r_n")
-    plt.xlabel("Channel")
-    plt.legend()
-    plt.grid()
+    # # -----------------------------------------------------------------------------------
+    # # Normalized index of ellipticity, rn
+    # # -----------------------------------------------------------------------------------
+    # plt.figure(figsize=(9, 9))
+    # plt.plot(e_elong_mag, label='E')
+    # plt.plot(i_elong_mag, label='I')
+    # plt.title("Normalized index of ellipticity, r_n")
+    # plt.xlabel("Channel")
+    # plt.legend()
+    # plt.grid()
 
     # -----------------------------------------------------------------------------------
     # End

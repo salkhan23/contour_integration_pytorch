@@ -210,7 +210,7 @@ def find_best_fit_2d_gabor_exhaustive(kernel, verbose=0, theta_guess=0):
                 continue
 
         # All thetas checked, Find the one with the lowest theta estimate error:
-        min_idx = np.int(np.argmin(fit_theta_sd_arr))
+        min_idx = np.int(np.nanargmin(fit_theta_sd_arr))
 
         if fit_theta_sd_arr[min_idx] <= 3.0:
             opt_params_list.append(fit_params_list[min_idx])
@@ -457,7 +457,7 @@ def get_filter_orientation(tgt_filt, o_type='average', display_params=True):
     """
     orient = None
 
-    gabor_fit_params = find_best_fit_2d_gabor(tgt_filt)
+    gabor_fit_params = find_best_fit_2d_gabor_exhaustive(tgt_filt)
     gabor_fit_params = np.array(gabor_fit_params)
 
     if display_params:
