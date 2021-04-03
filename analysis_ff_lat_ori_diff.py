@@ -22,10 +22,9 @@ mpl.rcParams.update({
 
 
 def find_ff_kernel_orientations(weights):
-    n = weights.shape[0]
 
+    n = weights.shape[0]
     ori_arr = np.ones(n) * -1000
-    ori_1std_arr = np.ones(n) * -1000
 
     for n_idx in range(n):
         print("Process channel {}".format(n_idx))
@@ -207,6 +206,7 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_or
     diagonal = np.arange(0, 180, 5)
     ax_arr.plot(diagonal, diagonal, color='k')
     f.tight_layout()
+    plt.grid()
 
     for idx in range(n_chan):
         ax_arr.scatter(ff_ori[idx], e_ori[idx], s=e_mag[idx] * 1000, marker='x', c='b', label='E')
@@ -215,7 +215,7 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_or
         ax_arr.annotate(idx, (ff_ori[idx], i_ori[idx]))
         print("{:02}: FF {:10.2f}, E: {:10.2f}, r={:0.4f}, I {:10.2f}, r={:0.4f}".format(
             idx, ff_ori[idx], e_ori[idx], e_mag[idx], i_ori[idx], i_mag[idx]))
-
+        #
         # import pdb
         # pdb.set_trace()
 
@@ -250,24 +250,32 @@ if __name__ == '__main__':
     # Find orientation
     # ----------------
     ff_ori_pickle_file = 'ff_kernels_orientations.pickle'
-
     if os.path.exists(ff_ori_pickle_file):
         with open(ff_ori_pickle_file, 'rb') as handle:
             ff_ori_arr_deg = pickle.load(handle)
     else:
         print(">>>> Find FF Kernel orientation ....")
         ff_ori_arr_deg = find_ff_kernel_orientations(ff_kernels)
+        with open(ff_ori_pickle_file, 'wb') as handle:
+            pickle.dump(ff_ori_arr_deg, handle)
 
     # For Gabor Fits, the vertical is at 0 & moves anticlockwise, we want orientations
     # from the positive x-axis
     aligned_ff_ori_arr_deg = ff_ori_arr_deg + 90
+    aligned_ff_ori_arr_deg = np.ceil(aligned_ff_ori_arr_deg)  # Round up the Orientations
+    aligned_ff_ori_arr_deg = np.mod(aligned_ff_ori_arr_deg, 180)
 
-    # # Print the Orientations
-    # print("FF kernels Gabor Fit Orientations: ")
-    # for ch_idx in range(n_channels):
-    #     print("ch {}: {:0.2f}".format(ch_idx, aligned_ff_ori_arr_deg[ch_idx]))
-    # print("Gabor Fits for {}/{} Kernels found".format(np.count_nonzero(
-    #     ~np.isnan(aligned_ff_ori_arr_deg)), n_channels))
+    # Print the Orientations
+    print("FF kernels Gabor Fit Orientations: ")
+    for ch_idx in range(n_channels):
+        print("ch {}: {:0.2f}".format(ch_idx, aligned_ff_ori_arr_deg[ch_idx]))
+    print("Gabor Fits for {}/{} Kernels found".format(np.count_nonzero(
+        ~np.isnan(aligned_ff_ori_arr_deg)), n_channels))
+
+    # Remove some Ill fitted Gabors (Eye Balling)
+    # -------------------------------------------
+    bad_fit_indices = [18, 20, 28, 48, 56, 58, 59]
+    aligned_ff_ori_arr_deg[bad_fit_indices] = np.NaN
 
     # Visualize FF Kernels
     # --------------------
@@ -294,8 +302,14 @@ if __name__ == '__main__':
     e_elong_mag, e_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_e_w)
     i_elong_mag, i_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_i_w)
 
+    e_elong_ori_deg = np.ceil(e_elong_ori_deg)
+    e_elong_ori_deg = np.mod(e_elong_ori_deg, 180)
+
+    i_elong_ori_deg = np.ceil(i_elong_ori_deg)
+    i_elong_ori_deg = np.mod(i_elong_ori_deg, 180)
+
     for ch_idx in range(n_channels):
-        print("{:02}: FF {:10.2f}, E {:10.2f}, I {:10.2f}".format(
+        print("{:02}: FF {:10}, E {:10}, I {:10}".format(
             ch_idx,
             aligned_ff_ori_arr_deg[ch_idx],
             e_elong_ori_deg[ch_idx],
@@ -307,24 +321,24 @@ if __name__ == '__main__':
     lat_e_fig, lat_e_ax_arr, lat_i_fig, lat_i_ax_arr = utils.view_spatial_lateral_kernels(
         lateral_e_w, lateral_i_w, spatial_func=channel_aggregator_fcn)
 
-    # # Add Axis of Elongation to the kernels
-    # for ch_idx in range(n_channels):
-    #     r_idx = ch_idx // 8
-    #     c_idx = ch_idx - r_idx * 8
-    #
-    #     lat_e_ax_arr[r_idx][c_idx].axline(
-    #         (7, 7),
-    #         slope=-np.tan(e_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
-    #         linewidth=1
-    #     )
-    #
-    #     lat_i_ax_arr[r_idx][c_idx].axline(
-    #         (7, 7),
-    #         slope=-np.tan(i_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
-    #         linewidth=1
-    #     )
-    # # Note: the minus is because of how the origin is defined by imshow (0,0) is at the
-    # # top left corner, y increases in the opposite direction
+    # Add Axis of Elongation to the kernels
+    for ch_idx in range(n_channels):
+        r_idx = ch_idx // 8
+        c_idx = ch_idx - r_idx * 8
+
+        lat_e_ax_arr[r_idx][c_idx].axline(
+            (7, 7),
+            slope=-np.tan(e_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
+            linewidth=e_elong_mag[ch_idx] * 10
+        )
+
+        lat_i_ax_arr[r_idx][c_idx].axline(
+            (7, 7),
+            slope=-np.tan(i_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
+            linewidth=i_elong_mag[ch_idx] * 10
+        )
+    # Note: the minus is because of how the origin is defined by imshow (0,0) is at the
+    # top left corner, y increases in the opposite direction
 
     # -----------------------------------------------------------------------------------
     # PLot Orientation Differences
@@ -335,16 +349,17 @@ if __name__ == '__main__':
         i_elong_ori_deg, i_elong_mag,
     )
 
-    # # -----------------------------------------------------------------------------------
-    # # Normalized index of ellipticity, rn
-    # # -----------------------------------------------------------------------------------
-    # plt.figure(figsize=(9, 9))
-    # plt.plot(e_elong_mag, label='E')
-    # plt.plot(i_elong_mag, label='I')
-    # plt.title("Normalized index of ellipticity, r_n")
-    # plt.xlabel("Channel")
-    # plt.legend()
-    # plt.grid()
+    # -----------------------------------------------------------------------------------
+    # Normalized index of ellipticity, rn
+    # -----------------------------------------------------------------------------------
+    fig = plt.figure(figsize=(9, 9))
+    plt.plot(e_elong_mag, label='E')
+    plt.plot(i_elong_mag, label='I')
+    plt.title("Normalized index of ellipticity, r_n")
+    plt.xlabel("Channel")
+    plt.legend()
+    plt.grid()
+    fig.tight_layout()
 
     # -----------------------------------------------------------------------------------
     # End
