@@ -142,12 +142,13 @@ def get_gabor_fragment(g_params, spatial_size):
     return frag
 
 
-def find_best_fit_2d_gabor_exhaustive(kernel, verbose=0, theta_guess=0):
+def find_best_fit_2d_gabor_exhaustive(kernel, verbose=0, theta_guess=0, err_th=5.0):
     """
 
     Similar to find_best_fit_2d_gabor, but does not break when sd of theta < some threshold,
     continues through all theta estimates and picks a minimum
 
+    :param err_th:
     :param kernel:
     :param verbose:
     :param theta_guess:
@@ -173,75 +174,80 @@ def find_best_fit_2d_gabor_exhaustive(kernel, verbose=0, theta_guess=0):
     for c_idx in range(n_channels):
 
         fit_params_list = []  # Estimated Theta from initial Theta Guess
-        fit_params_sd_list = []
-        # Error associated with the Estimated Theta
-        fit_theta_sd_arr = np.zeros_like(init_theta_arr_in_range, dtype=np.float)
+        fit_params_err_list = []
 
         for th_idx, theta in enumerate(init_theta_arr_in_range):
-            # gabor_2d(     x0,      y0, theta_deg,     amp, sigma, lambda1,       psi, gamma):
-            bounds = ([-half_x, -half_y,       -90,      -2,   0.1,       0,   -half_x,     0],
-                      [half_x,   half_y,        89,       2,     4,      20,    half_x,     2])
+            # gabor_2d(     x0,      y0, theta_deg,     amp,  sigma, lambda1,       psi, gamma):
+            bounds = ([-half_x, -half_y,       -89,      -2,      1,       0,   -half_x,    0],
+                      [half_x,   half_y,        90,       2,      8,      20,    half_x,    2])
 
             # Initial Guess of the parameters.
             p0 = [0, 0, theta, 1, 2.5, 8, 0, 1]
-            # p0 = [0, 0, theta, -1, 1, 8, 0, 1] # Better for black on white gabors
+            # p0 = [0, 0, theta, -1, 1, 8, 0, 1]  # Better for black on white gabors
 
             try:
+                ch_kernel = kernel[:, :, c_idx].ravel()
+
                 popt, pcov = optimize.curve_fit(
-                    gabor_2d, (xx, yy), kernel[:, :, c_idx].ravel(), p0=p0, bounds=bounds)
+                    gabor_2d, (xx, yy), ch_kernel, p0=p0, bounds=bounds)
 
-                # 1 SD of error in estimate
-                one_sd_error = np.sqrt(np.diag(pcov))
+                one_std_err = np.sqrt(np.diag(pcov))  # 1 SD of error in estimate
 
-                fit_theta_sd_arr[th_idx] = one_sd_error[2]
                 fit_params_list.append(popt)
-                fit_params_sd_list.append(pcov)
+                fit_params_err_list.append(one_std_err)
+
+                # print("{}: init Theta={:0.2f}, Estimated theta={:0.2f}, 1 STD err: {:0.4f}".format(
+                #     th_idx, theta, popt[2], one_std_err[2]))
 
             except RuntimeError:
-                fit_theta_sd_arr[th_idx] = np.NaN
-                fit_params_list.append([])
-                fit_params_sd_list.append([])
                 continue
 
             except ValueError:
-                fit_theta_sd_arr[th_idx] = np.NaN
-                fit_params_list.append([])
-                fit_params_sd_list.append([])
                 continue
 
-        # All thetas checked, Find the one with the lowest theta estimate error:
-        min_idx = np.int(np.nanargmin(fit_theta_sd_arr))
+        # Remove all parameters with high errors in any of the parameters:
+        all_est_err = np.sqrt(np.sum(np.array(fit_params_err_list) ** 2, axis=1))
+        invalid_idxs = np.argwhere(all_est_err > 15)
 
-        if fit_theta_sd_arr[min_idx] <= 3.0:
-            opt_params_list.append(fit_params_list[min_idx])
+        fit_params_err_list = \
+            [fit_params_err_list[idx] for idx in range(len(fit_params_err_list)) if idx not in invalid_idxs]
+        fit_params_list = \
+            [fit_params_list[idx] for idx in range(len(fit_params_list)) if idx not in invalid_idxs]
 
-            if verbose > 0:
-                print("chan {0}: (x0,y0)=({1:0.2f},{2:0.2f}), theta={3:0.2f}, A={4:0.2f}, sigma={5:0.2f}, "
-                      "lambda={6:0.2f}, psi={7:0.2f}, gamma={8:0.2f}".format(
-                        c_idx, fit_params_list[min_idx][0], fit_params_list[min_idx][1], fit_params_list[min_idx][2],
-                        fit_params_list[min_idx][3], fit_params_list[min_idx][4], fit_params_list[min_idx][5],
-                        fit_params_list[min_idx][6], fit_params_list[min_idx][7]))
+        fit_params_list = np.array(fit_params_list)
+        fit_params_err_list = np.array(fit_params_err_list)
 
-            if verbose > 1:
-                print("1SD Err : (x0,y0)=({0:0.2f},{1:0.2f}), theta={2:0.2f}, A={3:0.2f}, sigma={4:0.2f}, "
-                      "lambda={5:0.2f}, psi={6:0.2f}, gamma={7:0.2f}".format(
-                        fit_params_sd_list[min_idx][0], fit_params_sd_list[min_idx][1],
-                        fit_params_sd_list[min_idx][2], fit_params_sd_list[min_idx][3],
-                        fit_params_sd_list[min_idx][4], fit_params_sd_list[min_idx][5],
-                        fit_params_sd_list[min_idx][6], fit_params_sd_list[min_idx][7]))
+        if len(fit_params_list) > 0:
+            # All thetas checked, Find the one with the lowest theta estimate error:
+            theta_est_err = fit_params_err_list[:, 2]
+            min_value = np.min(theta_est_err)
+            min_idx = np.int(np.nanargmin(theta_est_err))
+
+            if min_value <= err_th:
+                opt_params_list.append(fit_params_list[min_idx])
+
+                if verbose > 0:
+                    print("chan {0}: (x0,y0)=({1:0.2f},{2:0.2f}), theta={3:0.2f}, A={4:0.2f}, sigma={5:0.2f}, "
+                          "lambda={6:0.2f}, psi={7:0.2f}, gamma={8:0.2f}".format(
+                            c_idx, fit_params_list[min_idx][0], fit_params_list[min_idx][1], fit_params_list[min_idx][2],
+                            fit_params_list[min_idx][3], fit_params_list[min_idx][4], fit_params_list[min_idx][5],
+                            fit_params_list[min_idx][6], fit_params_list[min_idx][7]))
+
+                if verbose > 1:
+                    print("1SD Err : (x0,y0)=({0:0.2f},{1:0.2f}), theta={2:0.2f}, A={3:0.2f}, sigma={4:0.2f}, "
+                          "lambda={5:0.2f}, psi={6:0.2f}, gamma={7:0.2f}".format(
+                            fit_params_err_list[min_idx][0], fit_params_err_list[min_idx][1],
+                            fit_params_err_list[min_idx][2], fit_params_err_list[min_idx][3],
+                            fit_params_err_list[min_idx][4], fit_params_err_list[min_idx][5],
+                            fit_params_err_list[min_idx][6], fit_params_err_list[min_idx][7]))
+            else:
+                opt_params_list.append(None)
         else:
             opt_params_list.append(None)
 
-        # print("fit_theta_sd_arr: {}".format(fit_theta_sd_arr))
-        # print("Min Index {}".format(min_idx))
-        # print("fit_params: {}".format(fit_params_list[min_idx]))
-        #
-        # import pdb
-        # pdb.set_trace()
-
+    # plot_kernel_and_best_fit_gabors(kernel, 0, opt_params_list)
     # for item in opt_params_list:
     #     print(item)
-    #
     # import pdb
     # pdb.set_trace()
 
@@ -340,14 +346,14 @@ def plot_kernel_and_best_fit_gabors(kernel, kernel_idx, fitted_gabors_params):
 
     :return: None
     """
-    n_channels = kernel.shape[-1]
+    n_r, n_c, n_ch = kernel.shape
 
-    x_arr = np.arange(-0.5, 0.5, 1 / np.float(kernel.shape[0]))
+    x_arr = np.arange(-n_r//2 + 1, n_r//2 + 1)
     y_arr = np.copy(x_arr)
     xx, yy = np.meshgrid(x_arr, y_arr)
 
     # Higher resolution display
-    x2_arr = np.arange(-0.5, 0.5, 1 / np.float((kernel.shape[0]) + 100))
+    x2_arr = np.arange(-n_r // 2 + 1, n_r // 2, (n_r-1) / 100)
     y2_arr = np.copy(x2_arr)
     xx2, yy2 = np.meshgrid(x2_arr, y2_arr)
 
@@ -356,10 +362,10 @@ def plot_kernel_and_best_fit_gabors(kernel, kernel_idx, fitted_gabors_params):
     # Normalize the kernel to [0, 1] to display it properly
     display_kernel = (kernel - kernel.min()) / (kernel.max() - kernel.min())
 
-    for c_idx in range(n_channels):
+    for c_idx in range(n_ch):
 
         # Plot the kernel
-        f.add_subplot(n_channels, 3, (c_idx * 3) + 1)
+        f.add_subplot(n_ch, 3, (c_idx * 3) + 1)
         plt.imshow(display_kernel[:, :, c_idx], cmap='seismic')
         plt.title(r"$Chan=%d $" % c_idx)
 
@@ -368,14 +374,14 @@ def plot_kernel_and_best_fit_gabors(kernel, kernel_idx, fitted_gabors_params):
             x0, y0, theta, amp, sigma, lambda1, psi, gamma = fitted_gabors_params[c_idx]
 
             # Fitted gabor - same resolution (with which fit was done)
-            f.add_subplot(n_channels, 3, (c_idx * 3) + 2)
+            f.add_subplot(n_ch, 3, (c_idx * 3) + 2)
             fitted_gabor = gabor_2d((xx, yy), x0, y0, theta, amp, sigma, lambda1, psi, gamma)
             fitted_gabor = fitted_gabor.reshape((x_arr.shape[0], y_arr.shape[0]))
             display_gabor = (fitted_gabor - fitted_gabor.min()) / (fitted_gabor.max() - fitted_gabor.min())
             plt.imshow(display_gabor, cmap='seismic')
 
             # # Fitted gabor - higher resolution
-            f.add_subplot(n_channels, 3, (c_idx * 3) + 3)
+            f.add_subplot(n_ch, 3, (c_idx * 3) + 3)
             fitted_gabor = gabor_2d((xx2, yy2), x0, y0, theta, amp, sigma, lambda1, psi, gamma)
             fitted_gabor = fitted_gabor.reshape((x2_arr.shape[0], y2_arr.shape[0]))
             display_gabor = (fitted_gabor - fitted_gabor.min()) / (fitted_gabor.max() - fitted_gabor.min())
