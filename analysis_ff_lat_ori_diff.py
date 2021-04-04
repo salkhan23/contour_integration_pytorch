@@ -168,18 +168,22 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_o
     """
     f, ax_arr = plt.subplots(figsize=(9, 9))
 
-    ax_arr.scatter(ff_ori, e_ori, s=e_mag * 1000, marker='x', c='b', label='E')
+    e_diff = np.array([get_angle_diff(e_ori[idx], ff_ori[idx]) for idx in range(len(ff_ori))])
+    i_diff = np.array([get_angle_diff(i_ori[idx], ff_ori[idx]) for idx in range(len(ff_ori))])
 
-    ax_arr.scatter(ff_ori, i_ori, s=i_mag * 1000, marker='x', c='r', label='I')
+    ax_arr.scatter(ff_ori, ff_ori + e_diff, s=e_mag * 1000, marker='x', c='b', label='E')
+    ax_arr.scatter(ff_ori, ff_ori + i_diff, s=i_mag * 1000, marker='x', c='r', label='I')
 
     ax_arr.set_xlim([0, 180])
-    ax_arr.set_ylim([0, 180])
-    ax_arr.legend()
     ax_arr.set_xlabel("FF Orientation (deg)")
     ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
 
     diagonal = np.arange(0, 180, 5)
     ax_arr.plot(diagonal, diagonal, color='k')
+    ax_arr.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
+    ax_arr.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
+    ax_arr.legend()
+    ax_arr.grid()
     f.tight_layout()
 
 
@@ -198,26 +202,58 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_or
     n_chan = ff_ori.shape[0]
 
     ax_arr.set_xlim([0, 180])
-    ax_arr.set_ylim([0, 180])
-    ax_arr.legend()
     ax_arr.set_xlabel("FF Orientation (deg)")
     ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
 
     diagonal = np.arange(0, 180, 5)
-    ax_arr.plot(diagonal, diagonal, color='k')
+    ax_arr.plot(diagonal, diagonal, color='k', label=r'$\theta_{diff} = 0$')
+    ax_arr.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
+    ax_arr.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
+    ax_arr.legend()
     f.tight_layout()
     plt.grid()
 
     for idx in range(n_chan):
-        ax_arr.scatter(ff_ori[idx], e_ori[idx], s=e_mag[idx] * 1000, marker='x', c='b', label='E')
-        ax_arr.scatter(ff_ori[idx], i_ori[idx], s=i_mag[idx] * 1000, marker='x', c='r', label='I')
-        ax_arr.annotate(idx, (ff_ori[idx],  e_ori[idx]))
-        ax_arr.annotate(idx, (ff_ori[idx], i_ori[idx]))
-        print("{:02}: FF {:10.2f}, E: {:10.2f}, r={:0.4f}, I {:10.2f}, r={:0.4f}".format(
-            idx, ff_ori[idx], e_ori[idx], e_mag[idx], i_ori[idx], i_mag[idx]))
-        #
+
+        e_diff = get_angle_diff(e_ori[idx], ff_ori[idx])
+        i_diff = get_angle_diff(i_ori[idx], ff_ori[idx])
+
+        ax_arr.scatter(ff_ori[idx], ff_ori[idx] + e_diff, s=e_mag[idx] * 1000, marker='x', c='b', label='E')
+        ax_arr.scatter(ff_ori[idx], ff_ori[idx] + i_diff, s=i_mag[idx] * 1000, marker='x', c='r', label='I')
+        ax_arr.annotate(idx, (ff_ori[idx], ff_ori[idx] + e_diff))
+        ax_arr.annotate(idx, (ff_ori[idx], ff_ori[idx] + i_diff))
+
+        print("{:02}: FF {:10.2f}, E diff: {:10.2f}, r={:0.4f}, I diff {:10.2f}, r={:0.4f}".format(
+            idx, ff_ori[idx], e_diff, e_mag[idx], i_diff, i_mag[idx]))
+
         # import pdb
         # pdb.set_trace()
+
+
+def get_angle_diff(a, b):
+    """
+    Get smallest difference between two angles.
+
+    Ref: https://stackoverflow.com/questions/7570808/how-do-i-calculate-the-difference-of-two-angle-measures
+
+    Modified from source to restrick angle to 0, 180
+    a and b must be in the range [0, 180]
+
+
+    :param a:
+    :param b:
+    :return:
+    """
+    diff = np.abs(a - b)
+    if diff > 90:
+        diff = 180 - diff
+
+    signed_diff = a - b
+    sign = -1
+    if (0 < signed_diff <= 90) or (-180 < signed_diff < -90):
+        sign = 1
+
+    return sign * diff
 
 
 # ---------------------------------------------------------------------------------------
@@ -343,7 +379,7 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # PLot Orientation Differences
     # -----------------------------------------------------------------------------------
-    scatter_plot_ff_orientation_lat_axis_of_elongation_individually(
+    scatter_plot_ff_orientation_lat_axis_of_elongation(
         aligned_ff_ori_arr_deg,
         e_elong_ori_deg, e_elong_mag,
         i_elong_ori_deg, i_elong_mag,
