@@ -239,7 +239,6 @@ def get_angle_diff(a, b):
     Modified from source to restrick angle to 0, 180
     a and b must be in the range [0, 180]
 
-
     :param a:
     :param b:
     :return:
@@ -266,7 +265,7 @@ if __name__ == '__main__':
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
         './results/multiple_runs_contour_dataset/positive_lateral_weights_with_BN_best_gain_curves/' \
-        '/run_2' \
+        '/run_4' \
         '/best_accuracy.pth'
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -357,22 +356,22 @@ if __name__ == '__main__':
     lat_e_fig, lat_e_ax_arr, lat_i_fig, lat_i_ax_arr = utils.view_spatial_lateral_kernels(
         lateral_e_w, lateral_i_w, spatial_func=channel_aggregator_fcn)
 
-    # Add Axis of Elongation to the kernels
-    for ch_idx in range(n_channels):
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-
-        lat_e_ax_arr[r_idx][c_idx].axline(
-            (7, 7),
-            slope=-np.tan(e_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
-            linewidth=e_elong_mag[ch_idx] * 10
-        )
-
-        lat_i_ax_arr[r_idx][c_idx].axline(
-            (7, 7),
-            slope=-np.tan(i_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
-            linewidth=i_elong_mag[ch_idx] * 10
-        )
+    # # Add Axis of Elongation to the kernels
+    # for ch_idx in range(n_channels):
+    #     r_idx = ch_idx // 8
+    #     c_idx = ch_idx - r_idx * 8
+    #
+    #     lat_e_ax_arr[r_idx][c_idx].axline(
+    #         (7, 7),
+    #         slope=-np.tan(e_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
+    #         linewidth=e_elong_mag[ch_idx] * 10
+    #     )
+    #
+    #     lat_i_ax_arr[r_idx][c_idx].axline(
+    #         (7, 7),
+    #         slope=-np.tan(i_elong_ori_deg[ch_idx] * np.pi / 180), c='r',
+    #         linewidth=i_elong_mag[ch_idx] * 10
+    #     )
     # Note: the minus is because of how the origin is defined by imshow (0,0) is at the
     # top left corner, y increases in the opposite direction
 
@@ -396,6 +395,108 @@ if __name__ == '__main__':
     plt.legend()
     plt.grid()
     fig.tight_layout()
+
+    # -----------------------------------------------------------------------------------
+    # Statistics
+    # -----------------------------------------------------------------------------------
+
+    # Get Angles fixed withing += 90
+    e_diff = np.array(
+        [get_angle_diff(e_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
+         for idx in range(len(aligned_ff_ori_arr_deg))])
+
+    i_diff = np.array(
+        [get_angle_diff(i_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
+         for idx in range(len(aligned_ff_ori_arr_deg))])
+
+    ff_angles = aligned_ff_ori_arr_deg
+    e_lat_angles = ff_angles + e_diff
+    e_lat_weights = e_elong_mag
+
+    i_lat_angles = ff_angles + i_diff
+    i_lat_weights = i_elong_mag
+
+    # Filter out all NaN values
+    e_valid_mask = ~np.isnan(ff_angles)
+    i_valid_mask = ~np.isnan(ff_angles)
+
+    ff_angles = ff_angles[e_valid_mask]
+
+    e_lat_angles = e_lat_angles[e_valid_mask]
+    e_lat_weights = e_lat_weights[e_valid_mask]
+
+    i_lat_angles = i_lat_angles[i_valid_mask]
+    i_lat_weights = i_lat_weights[i_valid_mask]
+
+    # ----------------------------------------
+    import scipy.stats as stats
+
+    e_corr_coff, e_p_value = stats.pearsonr(ff_angles, e_lat_angles)
+    i_corr_coff, i_p_value = stats.pearsonr(ff_angles, i_lat_angles)
+
+    print("Pearson Correlation:\nE: rho {:0.4f} p {:0.4e}, \nI: rho {:0.4} p {:0.4e}".format(
+        e_corr_coff, e_p_value,
+        i_corr_coff, i_p_value
+    ))
+
+    e_corr_coff, e_p_value = stats.spearmanr(ff_angles, e_lat_angles)
+    i_corr_coff, i_p_value = stats.spearmanr(ff_angles, i_lat_angles)
+
+    print("Spearman Correlation:\nE: rho {:0.4f} p {:0.4e}, \nI: rho {:0.4f} p {:0.4e}".format(
+        e_corr_coff, e_p_value,
+        i_corr_coff, i_p_value
+    ))
+
+    # -------------------------------------------
+    # Do it manually using Weights
+    e_weights = np.ones_like(e_lat_weights)
+    i_weights = np.ones_like(i_lat_weights)
+
+    def m(x, w):
+        """Weighted Mean"""
+        return np.sum(x * w) / np.sum(w)
+
+    def cov(x, y, w):
+        """Weighted Covariance"""
+        return np.sum(w * (x - m(x, w)) * (y - m(y, w))) / np.sum(w)
+
+    def corr(x, y, w):
+        """Weighted Correlation"""
+        return cov(x, y, w) / np.sqrt(cov(x, x, w) * cov(y, y, w))
+
+    r = corr(ff_angles, e_lat_angles, e_lat_weights)
+    print("Weighted Correlation E {}".format(r))
+
+    r = corr(ff_angles, i_lat_angles, i_lat_weights)
+    print("Weighted Correlation I {}".format(r))
+
+    import pdb
+    pdb.set_trace()
+
+
+    f, ax_arr = plt.subplots(2, 1)
+    ax_arr[0].hist(e_diff, bins=np.arange(-90, 90, 10))
+    ax_arr[0].set_title("Histogram of E lateral connection orientation differences")
+    ax_arr[1].hist(i_diff, bins=np.arange(-90, 90, 10))
+    ax_arr[1].set_title("Histogram of I lateral connection orientation differences")
+    #
+    # ff_valid_mask = ~np.isnan(aligned_ff_ori_arr_deg)
+    # lat_e_valid_mask = ~np.isnan(e_elong_ori_deg)
+    #
+    # import scipy.stats as stats
+    #
+    # filtered_ff = [value for value in aligned_ff_ori_arr_deg if ~np.isnan(value)]
+    # filtered_e_long = [value for value in e_elong_ori_deg if ~np.isnan(value)]
+    #
+    # x = filtered_ff
+    # y1 = x + filtered_e_long
+    #
+    # import pdb
+    # pdb.set_trace()
+    #
+
+
+
 
     # -----------------------------------------------------------------------------------
     # End
