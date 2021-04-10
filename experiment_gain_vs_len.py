@@ -15,7 +15,6 @@ import torchvision.transforms.functional as transform_functional
 from torchvision import transforms
 
 import models.new_piech_models as new_piech_models
-from models.new_control_models import ControlMatchParametersModel
 import gabor_fits
 import fields1993_stimuli
 import utils
