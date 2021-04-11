@@ -6,6 +6,7 @@ import torch
 
 from train_contour_data_set import main
 import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
 
 
 if __name__ == '__main__':
@@ -27,6 +28,12 @@ if __name__ == '__main__':
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
             lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+        # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+        #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+
+        # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+        #      lateral_e_size=15, lateral_i_size=15)
+
         model = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
         train_parameters = {
@@ -38,7 +45,7 @@ if __name__ == '__main__':
             'lateral_w_reg_weight': 0.0001,
             'lateral_w_reg_gaussian_sigma': 10,
             'clip_negative_lateral_weights': True,
-            'lr_sched_step_size': 100,
+            'lr_sched_step_size': 80,
             'lr_sched_gamma': 0.5
         }
 
