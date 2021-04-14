@@ -265,7 +265,7 @@ if __name__ == '__main__':
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
         './results/multiple_runs_contour_dataset/positive_lateral_weights_with_BN_best_gain_curves/' \
-        '/run_4' \
+        '/run_2' \
         '/best_accuracy.pth'
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -387,13 +387,18 @@ if __name__ == '__main__':
     # -----------------------------------------------------------------------------------
     # Normalized index of ellipticity, rn
     # -----------------------------------------------------------------------------------
-    fig = plt.figure(figsize=(9, 9))
-    plt.plot(e_elong_mag, label='E')
-    plt.plot(i_elong_mag, label='I')
-    plt.title("Normalized index of ellipticity, r_n")
-    plt.xlabel("Channel")
-    plt.legend()
-    plt.grid()
+    fig, ax_arr = plt.subplots(2, 1, figsize=(9, 9), sharex=True)
+
+    ax_arr[0].hist(e_elong_mag, bins=np.arange(0, 1, 0.05), label='Excitatory', edgecolor='k')
+    ax_arr[1].hist(i_elong_mag, bins=np.arange(0, 1, 0.05), label='Inhibitory', color='r', edgecolor='k')
+
+    ax_arr[1].set_xlabel("Normalized Index of Ellipticity")
+    ax_arr[1].set_ylabel("Frequency")
+    ax_arr[1].legend()
+
+    ax_arr[0].set_ylabel('Frequency')
+    ax_arr[0].legend()
+
     fig.tight_layout()
 
     # -----------------------------------------------------------------------------------
