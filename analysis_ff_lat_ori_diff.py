@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 import pickle
+import scipy.stats as stats
 
 import torch
 
@@ -19,6 +20,31 @@ mpl.rcParams.update({
     'lines.markersize': 10,
     'lines.markeredgewidth': 3
 })
+
+
+def visualize_ff_kernels(kernels, ori_arr):
+    """
+
+    :param ori_arr:
+    :param kernels: [o_ch, i_ch,r, c]
+    :return:
+    """
+    f, axis_arr = utils.view_ff_kernels(kernels)
+
+    # Add Orientation fits to kernels
+    kernel_size = np.array(kernels.shape[2: ])
+
+    for chan_idx in range(kernels.shape[0]):
+        r_idx = chan_idx // 8
+        c_idx = chan_idx - r_idx * 8
+
+        axis_arr[r_idx][c_idx].axline(
+            kernel_size // 2,  # pass through center of kernel
+            slope=-np.tan(ori_arr[chan_idx] * np.pi / 180),
+            c='r', linewidth=3
+        )
+
+    # print("Fits for {} kernels".format(np.count_nonzero(~np.isnan(ori_arr))))
 
 
 def find_ff_kernel_orientations(weights):
@@ -153,12 +179,18 @@ def get_channel_wise_axis_of_elongation(kernel):
         elongation_mag_arr.append(ch_mag_avg)
         elongation_ori_arr.append(ch_ori_avg)
 
-    return np.array(elongation_mag_arr), np.array(elongation_ori_arr) * 180 / np.pi
+    elongation_mag_arr = np.array(elongation_mag_arr)
+    elongation_ori_arr = np.array(elongation_ori_arr) * 180 / np.pi
+    elongation_ori_arr = np.ceil(elongation_ori_arr)
+    elongation_ori_arr = np.mod(elongation_ori_arr, 180)
+
+    return elongation_mag_arr, elongation_ori_arr
 
 
-def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_ori, i_mag):
+def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_ori, i_mag, axis=None):
     """
 
+    :param axis:
     :param ff_ori: [Deg]
     :param e_ori: [Deg]
     :param e_mag:
@@ -166,25 +198,27 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_o
     :param i_mag:
     :return:
     """
-    f, ax_arr = plt.subplots(figsize=(9, 9))
+
+    if axis is None:
+        f, axis = plt.subplots(figsize=(9, 9))
 
     e_diff = np.array([get_angle_diff(e_ori[idx], ff_ori[idx]) for idx in range(len(ff_ori))])
     i_diff = np.array([get_angle_diff(i_ori[idx], ff_ori[idx]) for idx in range(len(ff_ori))])
 
-    ax_arr.scatter(ff_ori, ff_ori + e_diff, s=e_mag * 1000, marker='x', c='b', label='E')
-    ax_arr.scatter(ff_ori, ff_ori + i_diff, s=i_mag * 1000, marker='x', c='r', label='I')
+    axis.scatter(ff_ori, ff_ori + e_diff, s=e_mag * 1000, marker='x', c='b', label='E')
+    axis.scatter(ff_ori, ff_ori + i_diff, s=i_mag * 1000, marker='x', c='r', label='I')
 
-    ax_arr.set_xlim([0, 180])
-    ax_arr.set_xlabel("FF Orientation (deg)")
-    ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
+    axis.set_xlim([0, 180])
+    axis.set_xlabel("FF Orientation (deg)")
+    axis.set_ylabel("Lateral Kernel orientation (deg)")
 
     diagonal = np.arange(0, 180, 5)
-    ax_arr.plot(diagonal, diagonal, color='k')
-    ax_arr.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
-    ax_arr.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
-    ax_arr.legend()
-    ax_arr.grid()
-    f.tight_layout()
+    axis.plot(diagonal, diagonal, color='k')
+    axis.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
+    axis.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
+    axis.legend()
+    # axis.grid()
+    # f.tight_layout()
 
 
 def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_ori, e_mag, i_ori, i_mag):
@@ -197,19 +231,19 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_or
     :param i_mag:
     :return:
     """
-    f, ax_arr = plt.subplots(figsize=(9, 9))
+    f, axis = plt.subplots(figsize=(9, 9))
 
     n_chan = ff_ori.shape[0]
 
-    ax_arr.set_xlim([0, 180])
-    ax_arr.set_xlabel("FF Orientation (deg)")
-    ax_arr.set_ylabel("Lateral Kernel orientation (deg)")
+    axis.set_xlim([0, 180])
+    axis.set_xlabel("FF Orientation (deg)")
+    axis.set_ylabel("Lateral Connections axis of Elongation (deg)")
 
     diagonal = np.arange(0, 180, 5)
-    ax_arr.plot(diagonal, diagonal, color='k', label=r'$\theta_{diff} = 0$')
-    ax_arr.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
-    ax_arr.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
-    ax_arr.legend()
+    axis.plot(diagonal, diagonal, color='k', label=r'$\theta_{diff} = 0$')
+    axis.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
+    axis.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
+    axis.legend()
     f.tight_layout()
     plt.grid()
 
@@ -218,10 +252,10 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation_individually(ff_ori, e_or
         e_diff = get_angle_diff(e_ori[idx], ff_ori[idx])
         i_diff = get_angle_diff(i_ori[idx], ff_ori[idx])
 
-        ax_arr.scatter(ff_ori[idx], ff_ori[idx] + e_diff, s=e_mag[idx] * 1000, marker='x', c='b', label='E')
-        ax_arr.scatter(ff_ori[idx], ff_ori[idx] + i_diff, s=i_mag[idx] * 1000, marker='x', c='r', label='I')
-        ax_arr.annotate(idx, (ff_ori[idx], ff_ori[idx] + e_diff))
-        ax_arr.annotate(idx, (ff_ori[idx], ff_ori[idx] + i_diff))
+        axis.scatter(ff_ori[idx], ff_ori[idx] + e_diff, s=e_mag[idx] * 1000, marker='x', c='b', label='E')
+        axis.scatter(ff_ori[idx], ff_ori[idx] + i_diff, s=i_mag[idx] * 1000, marker='x', c='r', label='I')
+        axis.annotate(idx, (ff_ori[idx], ff_ori[idx] + e_diff))
+        axis.annotate(idx, (ff_ori[idx], ff_ori[idx] + i_diff))
 
         print("{:02}: FF {:10.2f}, E diff: {:10.2f}, r={:0.4f}, I diff {:10.2f}, r={:0.4f}".format(
             idx, ff_ori[idx], e_diff, e_mag[idx], i_diff, i_mag[idx]))
@@ -264,7 +298,7 @@ if __name__ == '__main__':
         lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/multiple_runs_contour_dataset/positive_lateral_weights_with_BN_best_gain_curves/' \
+        './results/contour_dataset_multiple_runs/positive_lateral_weights_with_independent_BN_best_gain_curves/' \
         '/run_2' \
         '/best_accuracy.pth'
 
@@ -280,7 +314,6 @@ if __name__ == '__main__':
     # FF Kernels
     # -----------------------------------------------------------------------------------
     ff_kernels = net.edge_extract.weight.data.detach().cpu().numpy()
-    ff_kernels_size = np.array(ff_kernels.shape[2:])
 
     # Find orientation
     # ----------------
@@ -300,6 +333,12 @@ if __name__ == '__main__':
     aligned_ff_ori_arr_deg = np.ceil(aligned_ff_ori_arr_deg)  # Round up the Orientations
     aligned_ff_ori_arr_deg = np.mod(aligned_ff_ori_arr_deg, 180)
 
+    # Remove some additional Gabors that did not look like good line segments (visually)
+    bad_fit_indices = [2, 18, 20, 25, 31, 33, 45, 63]
+    aligned_ff_ori_arr_deg[bad_fit_indices] = np.NaN
+
+    visualize_ff_kernels(ff_kernels, aligned_ff_ori_arr_deg)
+
     # Print the Orientations
     print("FF kernels Gabor Fit Orientations: ")
     for ch_idx in range(n_channels):
@@ -307,28 +346,8 @@ if __name__ == '__main__':
     print("Gabor Fits for {}/{} Kernels found".format(np.count_nonzero(
         ~np.isnan(aligned_ff_ori_arr_deg)), n_channels))
 
-    # Remove some Ill fitted Gabors (Eye Balling)
-    # -------------------------------------------
-    bad_fit_indices = [18, 20, 28, 48, 56, 58, 59]
-    aligned_ff_ori_arr_deg[bad_fit_indices] = np.NaN
-
-    # Visualize FF Kernels
-    # --------------------
-    ff_kernel_fig, ff_kernels_ax_arr = utils.view_ff_kernels(ff_kernels)
-    # Add Orientation fits to kernels
-    for ch_idx in range(n_channels):
-
-        r_idx = ch_idx // 8
-        c_idx = ch_idx - r_idx * 8
-
-        ff_kernels_ax_arr[r_idx][c_idx].axline(
-            ff_kernels_size // 2,  # pass through center of kernel
-            slope=-np.tan(aligned_ff_ori_arr_deg[ch_idx] * np.pi / 180),
-            c='r', linewidth=3
-        )
-
     # -----------------------------------------------------------------------------------
-    # Axis of Elongation of Lateral Kernels. - Sincich and Blasdel - 2001
+    # Lateral Kernels
     # -----------------------------------------------------------------------------------
     lateral_e_w = net.contour_integration_layer.lateral_e.weight.data.detach().cpu().numpy()
     lateral_i_w = net.contour_integration_layer.lateral_i.weight.data.detach().cpu().numpy()
@@ -337,21 +356,36 @@ if __name__ == '__main__':
     e_elong_mag, e_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_e_w)
     i_elong_mag, i_elong_ori_deg = get_channel_wise_axis_of_elongation(lateral_i_w)
 
-    e_elong_ori_deg = np.ceil(e_elong_ori_deg)
-    e_elong_ori_deg = np.mod(e_elong_ori_deg, 180)
+    # Remove All lateral kernels for which Gabor Fits were not found. Exclude from Analysis
+    mask = np.isnan(aligned_ff_ori_arr_deg)
 
-    i_elong_ori_deg = np.ceil(i_elong_ori_deg)
-    i_elong_ori_deg = np.mod(i_elong_ori_deg, 180)
+    e_elong_ori_deg[mask] = np.NaN
+    e_elong_mag[mask] = np.NaN
 
-    for ch_idx in range(n_channels):
+    i_elong_ori_deg[mask] = np.NaN
+    i_elong_mag[mask] = np.NaN
+
+    for ch_idx in range(len(aligned_ff_ori_arr_deg)):
         print("{:02}: FF {:10}, E {:10}, I {:10}".format(
             ch_idx,
             aligned_ff_ori_arr_deg[ch_idx],
             e_elong_ori_deg[ch_idx],
             i_elong_ori_deg[ch_idx]))
 
-    # Visualize the Lateral Kernels
-    # -----------------------------
+    e_difference = np.array(
+        [get_angle_diff(e_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
+         for idx in range(len(aligned_ff_ori_arr_deg))])
+    print("E: Mean Normalized index of ellipticity {:0.2f}, Theta Diff {:0.2f}".format(
+        np.nanmean(e_elong_mag), np.nanmean(np.abs(e_difference))))
+
+    i_difference = np.array(
+        [get_angle_diff(i_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
+         for idx in range(len(aligned_ff_ori_arr_deg))])
+    print("I: Mean Normalized index of ellipticity {:0.2f}, Theta Diff {:0.2f}".format(
+        np.nanmean(i_elong_mag), np.nanmean(np.abs(i_difference))))
+
+    # Visualize Lateral kernels
+    # --------------------------
     channel_aggregator_fcn = np.sum  # For visualizing multi channel kernels
     lat_e_fig, lat_e_ax_arr, lat_i_fig, lat_i_ax_arr = utils.view_spatial_lateral_kernels(
         lateral_e_w, lateral_i_w, spatial_func=channel_aggregator_fcn)
@@ -385,7 +419,7 @@ if __name__ == '__main__':
     )
 
     # -----------------------------------------------------------------------------------
-    # Normalized index of ellipticity, rn
+    # PLot Orientation Differences
     # -----------------------------------------------------------------------------------
     fig, ax_arr = plt.subplots(2, 1, figsize=(9, 9), sharex=True)
 
@@ -402,23 +436,13 @@ if __name__ == '__main__':
     fig.tight_layout()
 
     # -----------------------------------------------------------------------------------
-    # Statistics
+    # Correlation between feedforward and Lateral axis of elongation
     # -----------------------------------------------------------------------------------
-
-    # Get Angles fixed withing += 90
-    e_diff = np.array(
-        [get_angle_diff(e_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
-         for idx in range(len(aligned_ff_ori_arr_deg))])
-
-    i_diff = np.array(
-        [get_angle_diff(i_elong_ori_deg[idx], aligned_ff_ori_arr_deg[idx])
-         for idx in range(len(aligned_ff_ori_arr_deg))])
-
     ff_angles = aligned_ff_ori_arr_deg
-    e_lat_angles = ff_angles + e_diff
+    e_lat_angles = ff_angles + e_difference
     e_lat_weights = e_elong_mag
 
-    i_lat_angles = ff_angles + i_diff
+    i_lat_angles = ff_angles + i_difference
     i_lat_weights = i_elong_mag
 
     # Filter out all NaN values
@@ -426,15 +450,10 @@ if __name__ == '__main__':
     i_valid_mask = ~np.isnan(ff_angles)
 
     ff_angles = ff_angles[e_valid_mask]
-
     e_lat_angles = e_lat_angles[e_valid_mask]
     e_lat_weights = e_lat_weights[e_valid_mask]
-
     i_lat_angles = i_lat_angles[i_valid_mask]
     i_lat_weights = i_lat_weights[i_valid_mask]
-
-    # ----------------------------------------
-    import scipy.stats as stats
 
     e_corr_coff, e_p_value = stats.pearsonr(ff_angles, e_lat_angles)
     i_corr_coff, i_p_value = stats.pearsonr(ff_angles, i_lat_angles)
@@ -452,10 +471,11 @@ if __name__ == '__main__':
         i_corr_coff, i_p_value
     ))
 
-    # -------------------------------------------
-    # Do it manually using Weights
-    e_weights = np.ones_like(e_lat_weights)
-    i_weights = np.ones_like(i_lat_weights)
+    # Index of ellipticity weighted correlations
+    e_weights = e_lat_weights
+    i_weights = i_lat_weights
+    # e_weights = np.ones_like(e_lat_weights)
+    # i_weights = np.ones_like(i_lat_weights)
 
     def m(x, w):
         """Weighted Mean"""
@@ -469,39 +489,21 @@ if __name__ == '__main__':
         """Weighted Correlation"""
         return cov(x, y, w) / np.sqrt(cov(x, x, w) * cov(y, y, w))
 
-    r = corr(ff_angles, e_lat_angles, e_lat_weights)
-    print("Weighted Correlation E {}".format(r))
+    r_e = corr(ff_angles, e_lat_angles, e_lat_weights)
+    r_i = corr(ff_angles, i_lat_angles, i_lat_weights)
+    print("Weighted Correlation E {}, I {}".format(r_e, r_i))
 
-    r = corr(ff_angles, i_lat_angles, i_lat_weights)
-    print("Weighted Correlation I {}".format(r))
+    # Correlation of uniformly distributed angles
+    e_lat_angles = ff_angles + np.random.uniform(-90, 90, size=len(ff_angles))
+    i_lat_angles = ff_angles + np.random.uniform(-90, 90, size=len(ff_angles))
 
-    import pdb
-    pdb.set_trace()
+    e_corr_coff, e_p_value = stats.pearsonr(ff_angles, e_lat_angles)
+    i_corr_coff, i_p_value = stats.pearsonr(ff_angles, i_lat_angles)
 
-
-    f, ax_arr = plt.subplots(2, 1)
-    ax_arr[0].hist(e_diff, bins=np.arange(-90, 90, 10))
-    ax_arr[0].set_title("Histogram of E lateral connection orientation differences")
-    ax_arr[1].hist(i_diff, bins=np.arange(-90, 90, 10))
-    ax_arr[1].set_title("Histogram of I lateral connection orientation differences")
-    #
-    # ff_valid_mask = ~np.isnan(aligned_ff_ori_arr_deg)
-    # lat_e_valid_mask = ~np.isnan(e_elong_ori_deg)
-    #
-    # import scipy.stats as stats
-    #
-    # filtered_ff = [value for value in aligned_ff_ori_arr_deg if ~np.isnan(value)]
-    # filtered_e_long = [value for value in e_elong_ori_deg if ~np.isnan(value)]
-    #
-    # x = filtered_ff
-    # y1 = x + filtered_e_long
-    #
-    # import pdb
-    # pdb.set_trace()
-    #
-
-
-
+    print("Pearson Correlation: Random \nE: rho {:0.4f} p {:0.4e}, \nI: rho {:0.4} p {:0.4e}".format(
+        e_corr_coff, e_p_value,
+        i_corr_coff, i_p_value
+    ))
 
     # -----------------------------------------------------------------------------------
     # End
