@@ -214,8 +214,8 @@ def scatter_plot_ff_orientation_lat_axis_of_elongation(ff_ori, e_ori, e_mag, i_o
 
     diagonal = np.arange(0, 180, 5)
     axis.plot(diagonal, diagonal, color='k')
-    axis.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = +90$')
-    axis.plot(diagonal, diagonal - 90, color='k', linestyle='--', label=r'$\theta_{diff} = -90$')
+    axis.plot(diagonal, diagonal + 90, color='k', linestyle='--', label=r'$\theta_{diff} = \pm90$')
+    axis.plot(diagonal, diagonal - 90, color='k', linestyle='--')
     axis.legend()
     # axis.grid()
     # f.tight_layout()
@@ -410,30 +410,37 @@ if __name__ == '__main__':
     # top left corner, y increases in the opposite direction
 
     # -----------------------------------------------------------------------------------
-    # PLot Orientation Differences
+    # Plot Histogram of normalized index of ellipticity
     # -----------------------------------------------------------------------------------
+    fig = plt.figure(constrained_layout=True, figsize=(12, 6))
+    gs = fig.add_gridspec(2, 2)
+
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.hist(e_elong_mag, bins=np.arange(0, 1, 0.05), label='Excitatory', edgecolor='k')
+    ax1.set_ylabel('Frequency')
+    ax1.legend()
+    ax1.text(0, 5, 'A', fontsize=30)
+
+    ax2 = fig.add_subplot(gs[1, 0], sharex=ax1)
+    ax2.hist(i_elong_mag, bins=np.arange(0, 1, 0.05), label='Inhibitory', color='r', edgecolor='k')
+    ax2.set_xlabel("Normalized Index of Ellipticity")
+    ax2.set_ylabel("Frequency")
+    ax2.legend()
+    ax2.set_ylabel('Frequency')
+    ax2.legend()
+    ax2.text(0, 15, 'B', fontsize=30)
+
+    # -----------------------------------------------------------------------------------
+    # Plot Orientation Differences
+    # -----------------------------------------------------------------------------------
+    ax3 = fig.add_subplot(gs[:, 1])
     scatter_plot_ff_orientation_lat_axis_of_elongation(
         aligned_ff_ori_arr_deg,
         e_elong_ori_deg, e_elong_mag,
         i_elong_ori_deg, i_elong_mag,
+        axis=ax3
     )
-
-    # -----------------------------------------------------------------------------------
-    # PLot Orientation Differences
-    # -----------------------------------------------------------------------------------
-    fig, ax_arr = plt.subplots(2, 1, figsize=(9, 9), sharex=True)
-
-    ax_arr[0].hist(e_elong_mag, bins=np.arange(0, 1, 0.05), label='Excitatory', edgecolor='k')
-    ax_arr[1].hist(i_elong_mag, bins=np.arange(0, 1, 0.05), label='Inhibitory', color='r', edgecolor='k')
-
-    ax_arr[1].set_xlabel("Normalized Index of Ellipticity")
-    ax_arr[1].set_ylabel("Frequency")
-    ax_arr[1].legend()
-
-    ax_arr[0].set_ylabel('Frequency')
-    ax_arr[0].legend()
-
-    fig.tight_layout()
+    ax3.text(10, 150, 'C', fontsize=30)
 
     # -----------------------------------------------------------------------------------
     # Correlation between feedforward and Lateral axis of elongation
