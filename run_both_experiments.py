@@ -22,33 +22,33 @@ if __name__ == "__main__":
     # Loading Saved Model
     print("===> Loading Model ...")
 
-    # # Contour Dataset
-    # # ----------------
-    # contour_integration_layer = new_piech_models.CurrentSubtractInhibitLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
-    # saved_model = \
-    #     './results/new_model_resnet_based/Old' \
-    #     '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
-    #     '/best_accuracy.pth'
-    # replacement_layer = None
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # net.load_state_dict(torch.load(saved_model, map_location=device))
-    # get_iou_results = True
-
-    # Contour Tracing Natural Images
-    # ------------------------------
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    # Contour Dataset
+    # ----------------
+    contour_integration_layer = new_piech_models.CurrentSubtractInhibitLayer(
         lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
-    net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    net = new_piech_models.ContourIntegrationResnet50(contour_integration_layer)
     saved_model = \
-        './results/contour_tracing' \
-        '/BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20210308_090110_pos_only_lr_1e_3_new_classifier_head_recurrent_BN_as_defined_in_paper' \
+        './results' \
+        '/run_1' \
         '/best_accuracy.pth'
     replacement_layer = None
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     net.load_state_dict(torch.load(saved_model, map_location=device))
-    get_iou_results = False
+    get_iou_results = True
+
+    # # Contour Tracing Natural Images
+    # # ------------------------------
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
+    # saved_model = \
+    #     './results/contour_tracing' \
+    #     '/BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20210308_090110_pos_only_lr_1e_3_new_classifier_head_recurrent_BN_as_defined_in_paper' \
+    #     '/best_accuracy.pth'
+    # replacement_layer = None
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # net.load_state_dict(torch.load(saved_model, map_location=device))
+    # get_iou_results = False
 
     # # Imagenet
     # # ----------------------
@@ -106,7 +106,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Main Loop
     # -----------------------------------------------------------------------------------
-    frag_size_list = [(7, 7)]
+    frag_size_list = [np.array([7, 7])]
     # frag_size_list = [(7, 7), (9, 9), (11, 11), (13, 13)]
 
     for frag_size in frag_size_list:
@@ -119,14 +119,18 @@ if __name__ == "__main__":
             results_dir,
             iou_results=get_iou_results,
             embedded_layer_identifier=replacement_layer,
-            frag_size=frag_size)
+            frag_size=frag_size,
+            n_images=100
+        )
 
         print("Getting fragment spacing results")
         experiment_gain_vs_spacing.main(
             net, results_dir,
             embedded_layer_identifier=replacement_layer,
             frag_size=frag_size,
-            optimal_stim_dict=optim_stim_dict)
+            optimal_stim_dict=optim_stim_dict,
+            n_images=100
+        )
 
     # -----------------------------------------------------------------------------------
     print("Running script took {}".format(datetime.now() - start_time))
