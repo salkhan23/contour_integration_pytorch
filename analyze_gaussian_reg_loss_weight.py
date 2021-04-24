@@ -42,7 +42,7 @@ if __name__ == '__main__':
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
             lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
-        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+        model = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
         main(
             model,
