@@ -232,6 +232,7 @@ if __name__ == "__main__":
     saved_model = './results/contour_dataset_multiple_runs/control_mp_100_epochs/random_seed_1/' \
                   'ContourIntegrationResnet50_ControlMatchParametersLayer_20210414_002232/' \
                   'best_accuracy.pth'
+    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
     data_set_dir = "./data/channel_wise_optimal_full14_frag7"
 
@@ -245,6 +246,7 @@ if __name__ == "__main__":
     torch.manual_seed(random_seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net = net.to(device)
     net.load_state_dict(torch.load(saved_model, map_location=device))
 
     # ----------------------------------------------------------------------------
