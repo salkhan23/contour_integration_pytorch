@@ -16,6 +16,7 @@ import dataset
 import utils
 
 import models.new_piech_models as new_piech_models
+import models.new_control_models as new_control_models
 
 
 def get_performance(model, device_to_use, data_loader):
@@ -219,12 +220,18 @@ if __name__ == "__main__":
     #     'results/new_model/ContourIntegrationCSI_20200117_092743_baseline_n_iters_5_latrf_15' \
     #     '/best_accuracy.pth'
 
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
-    saved_model = "./results/new_model_resnet_based/" \
-                  "ContourIntegrationResnet50_CurrentSubtractInhibitLayer_run_1_20200924_183734" \
-                  "/best_accuracy.pth"
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
+    # saved_model = "./results/contour_dataset_multiple_runs/" \
+    #               "positive_lateral_weights_with_independent_BN_best_gain_curves/run_1" \
+    #               "/best_accuracy.pth"
+
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+         lateral_e_size=15, lateral_i_size=15)
+    saved_model = './results/contour_dataset_multiple_runs/control_mp_100_epochs/random_seed_1/' \
+                  'ContourIntegrationResnet50_ControlMatchParametersLayer_20210414_002232/' \
+                  'best_accuracy.pth'
 
     data_set_dir = "./data/channel_wise_optimal_full14_frag7"
 
@@ -238,8 +245,7 @@ if __name__ == "__main__":
     torch.manual_seed(random_seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    net = net.to(device)
-    net.load_state_dict(torch.load(saved_model))
+    net.load_state_dict(torch.load(saved_model, map_location=device))
 
     # ----------------------------------------------------------------------------
     # Straight Contours
