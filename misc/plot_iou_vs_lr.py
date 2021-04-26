@@ -1,3 +1,7 @@
+# ---------------------------------------------------------------------------------------
+# Plot the results of the learning rate analysis.
+# Results need to be manually entered in  a dictionary with keys = learning rates
+# ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl

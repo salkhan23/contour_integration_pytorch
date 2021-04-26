@@ -1,6 +1,7 @@
 # ---------------------------------------------------------------------------------------
-# Plot the results of the lateral Connection Size exploration.
-# Results need to be manually entered in lateral_connection_results dictionary
+# Plot the results of the lateral connection size exploration.
+# Results need to be manually entered in  a dictionary with keys = single dimension
+# of lateral connection size
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib as mpl
