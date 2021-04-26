@@ -2,7 +2,6 @@
 # Plot the results of the lateral Connection Size exploration.
 # Results need to be manually entered in lateral_connection_results dictionary
 # ---------------------------------------------------------------------------------------
-
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -1441,7 +1440,7 @@ lateral_conn_size_results_control_model = {
 }
 
 
-def main(results, label):
+def main(results, label, color='b'):
     best_train_iou = []
     best_val_iou = []
 
@@ -1464,31 +1463,37 @@ def main(results, label):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs rf size
-    plt.figure("IoU")
-    plt.plot(rf_size_arr, best_train_iou, label='train_' + label, marker='x', markersize=10)
-    plt.plot(rf_size_arr, best_val_iou, label='val_' + label, marker='x', markersize=10)
+    plt.figure("IoU", figsize=(9, 9))
+    plt.plot(rf_size_arr, best_train_iou, label=label + '_train',
+             marker='x', markersize=10,  markeredgewidth=3, color=color)
+    plt.plot(rf_size_arr, best_val_iou, label=label + '_val',
+             marker='x', markersize=10, color=color, linestyle='--',  markeredgewidth=3)
     plt.xlabel("Lateral RF size")
     plt.ylabel("IoU")
-    plt.title("Iou vs Rf Size")
+    # plt.title("Iou vs Rf Size")
     plt.legend()
-    plt.grid(True)
+    # plt.grid(True)
+    plt.tight_layout()
 
     # Plot lowest loss vs Tau
-    plt.figure("Loss")
-    plt.plot(rf_size_arr, best_training_loss, label='train_' + label, marker='x', markersize=10)
-    plt.plot(rf_size_arr, best_val_loss, label='val_' + label, marker='x', markersize=10)
+    plt.figure("Loss", figsize=(9,9))
+    plt.plot(rf_size_arr, best_training_loss, label='train_' + label,
+             marker='x', markersize=10, color=color,  markeredgewidth=3)
+    plt.plot(rf_size_arr, best_val_loss, label='val_' + label,
+             marker='x', markersize=10, linestyle='--',  markeredgewidth=3, color=color)
     plt.xlabel("Lateral RF Size")
     plt.ylabel("Loss")
-    plt.title("Loss vs RF Size")
+    # plt.title("Loss vs RF Size")
     plt.legend()
-    plt.grid(True)
+    # plt.grid(True)
+    plt.tight_layout()
 
     # Plot Individual Loss/Iou Curves
     num_keys = len(results.keys())
-    single_dim = np.ceil(np.sqrt(num_keys))
+    single_dim = np.int(np.ceil(np.sqrt(num_keys)))
 
-    fig1 = plt.figure()
-    fig2 = plt.figure()
+    fig1 = plt.figure(figsize=(9, 9))
+    fig2 = plt.figure(figsize=(9, 9))
 
     for k_idx, key in enumerate(sorted(results.keys())):
         ax1 = fig1.add_subplot(single_dim, single_dim, k_idx + 1)
@@ -1497,24 +1502,24 @@ def main(results, label):
         ax1.plot(
             results[key][:, 0],
             results[key][:, 2],
-            label='train_iou')
+            label=label + '_train', color=color)
 
         ax1.plot(
             results[key][:, 0],
             results[key][:, 4],
-            label='val_iou')
+            label=label + '_val', color=color, linestyle='--')
 
         ax1.set_title("rf_size={}".format(key))
 
         ax2.plot(
             results[key][:, 0],
             results[key][:, 1],
-            label='train_loss')
+            label=label + '_train', color=color)
 
         ax2.plot(
             results[key][:, 0],
             results[key][:, 3],
-            label='val_iou_loss')
+            label=label + '_val',  color=color, linestyle='--')
 
         # ax2.set_yscale('log')
 
@@ -1533,10 +1538,9 @@ if __name__ == "__main__":
     plt.ion()
 
     # main(lateral_conn_size_results, 'old')
-    main(lateral_conn_size_results_fix, 'new')
-    # main(lateral_conn_size_results_control_model, 'control')
+    main(lateral_conn_size_results_fix, 'model', color='b')
+    main(lateral_conn_size_results_control_model, 'control', color='r')
 
     # ----------------------------------------------------------------------
     import pdb
-
     pdb.set_trace()
