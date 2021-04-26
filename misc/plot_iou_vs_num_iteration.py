@@ -1,6 +1,6 @@
 # ---------------------------------------------------------------------------------------
-# Plot the results of the number of iterations vs Iou
-# Results need to be manually entered in n_iter_results dictionary
+# Plot the results of the number of iterations vs IoU analysis
+# Results need to be manually entered in  a dictionary with keys = number of iterations
 # ---------------------------------------------------------------------------------------
 
 import numpy as np
@@ -2454,7 +2454,7 @@ n_iters_results_scaled_irrn_init = {
 }
 
 
-def main(results, label):
+def main(results, label, color='black'):
     best_train_iou = []
     best_val_iou = []
 
@@ -2477,31 +2477,37 @@ def main(results, label):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs num iterations
-    plt.figure('IoU')
-    plt.plot(n_iter_arr, best_train_iou, label='train_' + label, marker='x', markersize=10)
-    plt.plot(n_iter_arr, best_val_iou, label='val_'+ label, marker='x', markersize=10)
+    plt.figure('IoU', figsize=(9, 9))
+    plt.plot(n_iter_arr, best_train_iou, label=label + '_train',
+             marker='x', markersize=10,  markeredgewidth=3, color=color)
+    plt.plot(n_iter_arr, best_val_iou, label=label + '_val',
+             marker='x', markersize=10, color=color, linestyle='--',  markeredgewidth=3)
     plt.xlabel("Number of iterations")
     plt.ylabel("IoU")
-    plt.title("IoU vs Number of iterations")
+    # plt.title("IoU vs Number of iterations")
     plt.legend()
-    plt.grid(True)
+    # plt.grid(True)
+    plt.tight_layout()
 
     # Plot lowest loss vs num iterations
-    plt.figure('Loss')
-    plt.plot(n_iter_arr, best_training_loss, label='train_' + label, marker='x', markersize=10)
-    plt.plot(n_iter_arr, best_val_loss, label='val_' + label, marker='x', markersize=10)
-    plt.xlabel("number of iterations =")
+    plt.figure('Loss', figsize=(9, 9))
+    plt.plot(n_iter_arr, best_training_loss, label=label + '_train',
+             marker='x', markersize=10, markeredgewidth=3, color=color)
+    plt.plot(n_iter_arr, best_val_loss, label=label + '_val' + label,
+             marker='x', markersize=10, color=color, linestyle='--',  markeredgewidth=3)
+    plt.xlabel("Number of iterations")
     plt.ylabel("Loss")
-    plt.title("Loss vs Number of iterations")
+    # plt.title("Loss vs Number of iterations")
     plt.legend()
-    plt.grid(True)
+    # plt.grid(True)
+    plt.tight_layout()
 
     # Plot Individual Loss/Iou Curves
     num_keys = len(results.keys())
-    single_dim = np.ceil(np.sqrt(num_keys))
+    single_dim = np.int(np.ceil(np.sqrt(num_keys)))
 
-    fig1 = plt.figure()
-    fig2 = plt.figure()
+    fig1 = plt.figure(figsize=(9, 9))
+    fig2 = plt.figure(figsize=(9, 9))
 
     for k_idx, key in enumerate(sorted(results.keys())):
         ax1 = fig1.add_subplot(single_dim, single_dim, k_idx + 1)
@@ -2510,22 +2516,22 @@ def main(results, label):
         ax1.plot(
             results[key][:, 0],
             results[key][:, 2],
-            label='train_iou')
+            label=label + '_train', color=color)
 
         ax1.plot(
             results[key][:, 0],
             results[key][:, 4],
-            label='val_iou')
+            label=label + 'val', color=color, linestyle='--')
 
         ax2.plot(
             results[key][:, 0],
             results[key][:, 1],
-            label='train_loss')
+            label=label + '_train', color=color)
 
         ax2.plot(
             results[key][:, 0],
             results[key][:, 3],
-            label='val_iou_loss')
+            label=label + 'val', color=color, linestyle='--')
 
         # ax2.set_yscale('log')
 
@@ -2546,9 +2552,9 @@ if __name__ == "__main__":
     # main(n_iter_results, 'first_run')
     # main(n_iters_results_fix, 'fix_only')
     # main(n_iters_results_fix_sigmoidgate_tanh, 'fix_sigmoid_gate_tanh')
-    main(n_iters_results_fix_sigmoidgate, 'fix_sigmoid_gate')
-    main(n_iters_results_alexnet_bias, 'alexnet_conv1_bias')
-    main(n_iters_results_scaled_irrn_init, 'scaled_irrn')
+    main(n_iters_results_fix_sigmoidgate, 'fix_sigmoid_gate', color='b')
+    main(n_iters_results_alexnet_bias, 'alexnet_conv1_bias', color='r')
+    main(n_iters_results_scaled_irrn_init, 'scaled_irrn', color='g')
 
     # ----------------------------------------------------------------------
     import pdb
