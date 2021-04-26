@@ -14,7 +14,7 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    gaussian_reg_sigma_arr = [2, 4, 6, 8, 10, 12]
+    gaussian_reg_sigma_arr = [2, 4, 6, 8, 10, 12, 14, 16]
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
@@ -27,19 +27,23 @@ if __name__ == '__main__':
         print("Processing gaussian regularization with width = {} {}".format(sigma, '*' * 40))
 
         train_parameters = {
+            'random_seed': random_seed,
             'train_batch_size': 32,
-            'test_batch_size': 1,
-            'learning_rate': 3e-5,
-            'num_epochs': 50,
+            'test_batch_size': 32,
+            'learning_rate': 1e-4,
+            'num_epochs': 100,
             'lateral_w_reg_weight': 0.0001,
             'lateral_w_reg_gaussian_sigma': sigma,
+            'clip_negative_lateral_weights': True,
+            'lr_sched_step_size': 80,
+            'lr_sched_gamma': 0.5
         }
 
         base_results_dir = './results/gaussian_reg_sigma_explore/sigma_{}'.format(sigma)
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-            lateral_e_size=15, lateral_i_size=15, n_iters=5)
-        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+        model = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
         main(
             model,
