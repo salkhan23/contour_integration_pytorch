@@ -1853,7 +1853,7 @@ model_recurrent_BN_results = {
 }
 
 
-def main(results, label):
+def main(results, label, color='black'):
     best_train_iou = []
     best_val_iou = []
 
@@ -1876,34 +1876,41 @@ def main(results, label):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs Tau
-    plt.figure("IoU")
-    plt.plot(lr_arr, best_train_iou, label='train_' + label, marker='x', markersize=10, markeredgewidth=3)
-    plt.plot(lr_arr, best_val_iou, label='val_' + label, marker='x', markersize=10, markeredgewidth=3)
+    plt.figure("IoU", figsize=(9, 9))
+    plt.plot(lr_arr, best_train_iou, label=label + '_train',
+             marker='x', markersize=10, markeredgewidth=3, color=color)
+    plt.plot(lr_arr, best_val_iou, label=label + '_val',
+             marker='x', markersize=10, markeredgewidth=3, color=color, linestyle='--')
     plt.xlabel("learning rate")
     plt.ylabel("IoU")
-    plt.title("IoU vs Learning Rate")
+    # plt.title("IoU vs Learning Rate")
     plt.legend()
-    plt.grid()
+    # plt.grid()
     plt.xscale('log')
+    plt.tight_layout()
 
     # Plot lowest loss vs Tau
-    plt.figure("Loss")
-    plt.plot(lr_arr, best_training_loss, label='train_' + label, marker='x', markersize=10, markeredgewidth=3)
-    plt.plot(lr_arr, best_val_loss, label='val_' + label, marker='x', markersize=10, markeredgewidth=3)
+    plt.figure("Loss", figsize=(9, 9))
+    plt.plot(lr_arr, best_training_loss, label=label + '_train',
+             marker='x', markersize=10, markeredgewidth=3, color=color)
+    plt.plot(lr_arr, best_val_loss, label=label + '_val',
+             marker='x', markersize=10, markeredgewidth=3, color=color, linestyle='--')
     plt.xlabel("learning rate")
     plt.ylabel("Loss")
-    plt.title("IoU vs Learning Rate")
+    # plt.title("IoU vs Learning Rate")
     plt.legend()
-    plt.grid()
+    # plt.grid()
     plt.xscale('log')
+    plt.tight_layout()
 
 
 if __name__ == "__main__":
     plt.ion()
 
-    main(control_results, 'control')
-    main(model_independent_BN_results, 'model_independent_BN_layers')
-    main(model_recurrent_BN_results, 'model_recurrent_BN_layers')
+    main(model_independent_BN_results, 'model', color='b')
+    main(control_results, 'control', color='r')
+
+    # main(model_recurrent_BN_results, 'model_recurrent_BN_layers')
 
     # ----------------------------------------------------------------------
     import pdb
