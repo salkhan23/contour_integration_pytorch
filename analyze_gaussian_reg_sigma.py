@@ -14,7 +14,7 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    gaussian_reg_sigma_arr = [2, 4, 6, 8, 10, 12, 14, 16]
+    gaussian_reg_sigma_arr = [2, 4, 6, 8, 10, 12, 14]
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
