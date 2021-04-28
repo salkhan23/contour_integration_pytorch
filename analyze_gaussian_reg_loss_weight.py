@@ -13,7 +13,7 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    gaussian_reg_weight_arr = [0.1, 0.01, 0.0001, 0.00001, 0.000001]
+    gaussian_reg_weight_arr = [0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001]
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
