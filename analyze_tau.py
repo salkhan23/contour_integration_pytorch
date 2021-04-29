@@ -15,8 +15,8 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    sigma_tau_arr = [0.001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.999]
-    tau_arr = inverse_sigmoid(sigma_tau_arr)
+    sigma_tau_arr = [0.001, 0.2, 0.4, 0.6, 0.8, 0.999]
+    a_b_arr = inverse_sigmoid(sigma_tau_arr)
 
     # ----------------------------------------------------------------------
     data_set_parameters = {
@@ -26,20 +26,26 @@ if __name__ == '__main__':
     }
 
     train_parameters = {
-        'train_batch_size': 16,
-        'test_batch_size': 1,
-        'learning_rate': 3e-5,
-        'num_epochs': 50,
+        'random_seed': random_seed,
+        'train_batch_size': 32,
+        'test_batch_size': 32,
+        'learning_rate': 1e-4,
+        'num_epochs': 100,
+        'lateral_w_reg_weight': 0.0001,
+        'lateral_w_reg_gaussian_sigma': 10,
+        'clip_negative_lateral_weights': True,
+        'lr_sched_step_size': 80,
+        'lr_sched_gamma': 0.5
     }
 
-    for tau in tau_arr:
-        print("Processing tau = {} {}".format(tau, '*'*40))
+    for tau in a_b_arr:
+        print("Processing a_b = {} {}".format(tau, '*'*40))
 
-        base_results_dir = './results/tau_explore/tau_{}'.format(tau)
+        base_results_dir = './results/tau_explore/a_{:0.3f}'.format(tau)
 
         cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-            lateral_e_size=15, lateral_i_size=15, n_iters=5, a=tau, b=tau)
-        model = new_piech_models.ContourIntegrationAlexnet(cont_int_layer)
+            lateral_e_size=15, lateral_i_size=15, n_iters=5, a=tau, use_recurrent_batch_norm=True)
+        model = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
         main(
             model,
@@ -48,6 +54,8 @@ if __name__ == '__main__':
             base_results_store_dir=base_results_dir
         )
 
-    # ----------------------------------------------------------------------
+    # -----------------------------------------------------------------------------------
+    # End
+    # -----------------------------------------------------------------------------------
     import pdb
     pdb.set_trace()
