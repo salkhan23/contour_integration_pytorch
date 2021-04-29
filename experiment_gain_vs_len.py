@@ -562,7 +562,9 @@ def plot_iou_vs_contour_length(c_len_arr, ious_arr, store_dir, f_name, f_title=N
     :return:
     """
     f = plt.figure()
-    plt.plot(c_len_arr, ious_arr)
+    if ious_arr is not None:
+        plt.plot(c_len_arr, ious_arr)
+
     plt.xlabel("Contour Length")
     plt.ylabel("IoU")
     plt.ylim(bottom=0, top=1.0)
