@@ -1,11 +1,18 @@
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import sys
+import os
 
 mpl.rcParams.update({
     'font.size': 18,
     'lines.linewidth': 3}
 )
+
+# This file uses modules from the parent directory
+# to import this, the parent directory needs to be added to sys.path
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
+from train_utils import sigmoid
 
 tau_results_old = {
     0.0: np.array([
@@ -1177,7 +1184,7 @@ tau_results_fix = {
 }
 
 
-def main(results, label):
+def main(results, label, color='black'):
     best_train_iou = []
     best_val_iou = []
 
@@ -1200,20 +1207,26 @@ def main(results, label):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs Tau
-    plt.figure("IoU")
-    plt.plot(tau_arr, best_train_iou, label='train_' + label, marker='x', markersize=10, markeredgewidth=3)
-    plt.plot(tau_arr, best_val_iou, label='val_' + label, marker='x', markersize=10, markeredgewidth=3)
-    plt.xlabel("a, b")
+    plt.figure("IoU", figsize=(5, 5))
+    plt.plot(
+        tau_arr, best_train_iou, label='train ' + r'$\sigma({})$'.format(label),
+        marker='x', markersize=10, markeredgewidth=3, color=color)
+    plt.plot(
+        tau_arr, best_val_iou, label='val ' + r'$\sigma({})$'.format(label),
+        marker='x', markersize=10, markeredgewidth=3, color=color, linestyle='--')
+    plt.xlabel("Time Constant")
     plt.ylabel("IoU")
-    plt.title("IoU vs Fixed Tau")
+    # plt.title("IoU vs Fixed Tau")
+    plt.ylim([0, 1])
     plt.legend()
-    plt.grid()
+    plt.tight_layout()
+    # plt.grid()
 
     # Plot lowest loss vs Tau
     plt.figure("Loss")
     plt.plot(tau_arr, best_training_loss, label='train_' + label, marker='x', markersize=10, markeredgewidth=3)
     plt.plot(tau_arr, best_val_loss, label='val_' + label, marker='x', markersize=10, markeredgewidth=3)
-    plt.xlabel("a, b")
+    plt.xlabel("TimeConstant")
     plt.ylabel("Loss")
     plt.title("Loss vs Fixed Tau")
     plt.legend()
@@ -1221,7 +1234,7 @@ def main(results, label):
 
     # Plot Individual Loss/Iou Curves
     num_keys = len(results.keys())
-    single_dim = np.ceil(np.sqrt(num_keys))
+    single_dim = np.int(np.ceil(np.sqrt(num_keys)))
 
     fig1 = plt.figure()
     fig2 = plt.figure()
@@ -1270,7 +1283,7 @@ if __name__ == "__main__":
     plt.ion()
 
     # main(tau_results_old, 'old')
-    main(tau_results_fix, 'with fix')
+    main(tau_results_fix, 'a', color='b')
 
     # ----------------------------------------------------------------------
     import pdb
