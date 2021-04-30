@@ -15,7 +15,7 @@ if __name__ == '__main__':
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
-    sigma_tau_arr = [0.001, 0.2, 0.4, 0.6, 0.8, 0.999]
+    sigma_tau_arr = np.array([0.001, 0.2, 0.4, 0.6, 0.8, 0.999])
     a_b_arr = inverse_sigmoid(sigma_tau_arr)
 
     # ----------------------------------------------------------------------
