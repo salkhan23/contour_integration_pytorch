@@ -388,7 +388,7 @@ gaussian_width_results = {
 }
 
 
-def main(results, label):
+def main(results, label, color='r'):
     best_train_iou = []
     best_val_iou = []
 
@@ -411,28 +411,35 @@ def main(results, label):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs rf size
-    plt.figure("IoU")
-    plt.plot(rf_size_arr, best_train_iou, label='train_' + label, marker='x', markersize=10)
-    plt.plot(rf_size_arr, best_val_iou, label='val_' + label, marker='x', markersize=10)
-    plt.xlabel("Gaussian mask width (sigma)")
+    plt.figure("IoU", figsize=(6, 6))
+    plt.plot(rf_size_arr, best_train_iou, label=label + ' train',
+             marker='x', markersize=10, color=color, markeredgewidth=3)
+    plt.plot(rf_size_arr, best_val_iou, label=label + ' val',
+             marker='x', markersize=10, markeredgewidth=3, linestyle='--', color=color)
+    plt.xlabel("Gaussian Mask Width")
     plt.ylabel("IoU")
-    plt.title("Iou vs Gaussian Regularization Width (loss weight = 0.0001)")
+    plt.ylim([0, 1])
+    # plt.title("Iou vs Gaussian Regularization Width (loss weight = 0.0001)")
     plt.legend()
-    plt.grid(True)
+    # plt.grid(True)
+    plt.tight_layout()
 
     # Plot lowest loss vs Tau
     plt.figure("Loss")
-    plt.plot(rf_size_arr, best_training_loss, label='train_' + label, marker='x', markersize=10)
-    plt.plot(rf_size_arr, best_val_loss, label='val_' + label, marker='x', markersize=10)
-    plt.xlabel("Gaussian mask width (sigma)")
+    plt.plot(rf_size_arr, best_training_loss, label=label + ' train',
+             marker='x', markersize=10, color=color, markeredgewidth=3)
+    plt.plot(rf_size_arr, best_val_loss, label=label + ' val',
+             marker='x', markersize=10, markeredgewidth=3, linestyle='--', color=color)
+    plt.xlabel("Gaussian Mask Width")
     plt.ylabel("Loss")
     plt.title("Loss vs  Gaussian Regularization Width (loss weight = 0.0001)")
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
 
     # Plot Individual Loss/Iou Curves
     num_keys = len(results.keys())
-    single_dim = np.ceil(np.sqrt(num_keys))
+    single_dim = np.int(np.ceil(np.sqrt(num_keys)))
 
     fig1 = plt.figure()
     fig2 = plt.figure()
@@ -481,7 +488,7 @@ def main(results, label):
 if __name__ == "__main__":
     plt.ion()
 
-    main(gaussian_width_results, '')
+    main(gaussian_width_results, 'model', color='b')
 
     # ----------------------------------------------------------------------
     import pdb
