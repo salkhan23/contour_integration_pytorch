@@ -1880,7 +1880,7 @@ def main(results, label, color='black'):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs Tau
-    plt.figure("IoU", figsize=(9, 9))
+    plt.figure("IoU", figsize=(6, 6))
     plt.plot(lr_arr, best_train_iou, label=label + '_train',
              marker='x', markersize=10, markeredgewidth=3, color=color)
     plt.plot(lr_arr, best_val_iou, label=label + '_val',
@@ -1889,6 +1889,7 @@ def main(results, label, color='black'):
     plt.ylabel("IoU")
     # plt.title("IoU vs Learning Rate")
     plt.legend()
+    plt.ylim([0, 1])
     # plt.grid()
     plt.xscale('log')
     plt.tight_layout()

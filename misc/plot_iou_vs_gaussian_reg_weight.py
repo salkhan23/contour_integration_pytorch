@@ -1144,7 +1144,7 @@ def main(results, label, color='black'):
         best_val_loss.append(np.min(validation_loss_arr))
 
     # Plot best Iou vs Loss Weight
-    plt.figure("IoU")
+    plt.figure("IoU", figsize=(6, 6))
     plt.plot(
         rf_size_arr, best_train_iou, label=label + ' train',
         marker='x', markersize=10, markeredgewidth=3, color=color)
@@ -1153,6 +1153,7 @@ def main(results, label, color='black'):
         marker='x', markersize=10,  markeredgewidth=3, color=color, linestyle='--')
     plt.xlabel("Weight")
     plt.xscale('log')
+    plt.ylim([0, 1])
     plt.ylabel("IoU")
     # plt.title("Iou vs Regularization Weight")
     plt.legend()
