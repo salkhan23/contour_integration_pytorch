@@ -626,6 +626,7 @@ control_results = {
     ]),
 }
 
+# ./results/contour_dataset_sensitivity_analysis/learning rate/model_independent_BN
 model_independent_BN_results = {
      1e-1: np.array([
         [1, 0.2444, 0.2000, 0.2064, 0.1971, 0.1],
@@ -1241,6 +1242,7 @@ model_independent_BN_results = {
      ])
 }
 
+# ./results/contour_dataset_sensitivity_analysis/learning rate/model_recurrent_BN
 model_recurrent_BN_results = {
      1e-1: np.array([
          [1, 0.2245, 0.2000, 0.7035, 0.1971, 0.1],

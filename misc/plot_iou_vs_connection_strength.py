@@ -23,6 +23,7 @@ mpl.rcParams.update({
     'lines.linewidth': 3}
 )
 
+# ./results/contour_dataset_sensitivity_analysis/fixed_jxy
 J_xy_time = {
     0.4505 : np.array([
         [1, 0.5109, 0.1451, 0.4116, 0.1836, 0.0001],
@@ -637,7 +638,6 @@ J_xy_time = {
         [100, 0.1537, 0.6898, 0.1545, 0.6764, 5e-05],
     ])
 }
-
 J_xy_c_len_gains = {
     0.4505: np.array([
         [    1.   ,     5.731,    11.12 ,    14.465,    14.801],
@@ -1031,6 +1031,7 @@ J_xy_c_len_gains = {
         [    1.   ,     3.044,     3.721,     4.024,     3.967]])
 }
 
+# /results/contour_dataset_sensitivity_analysis/fixed_jyx
 J_yx_time = {
     0.4505 : np.array([
         [1, 0.6144, 0.1231, 0.5160, 0.1805, 0.0001],
@@ -1645,7 +1646,6 @@ J_yx_time = {
         [100, 0.1500, 0.8133, 0.1544, 0.7250, 5e-05],
     ])
 }
-
 J_yx_c_len_gains = {
     0.4505: np.array([
         [-1000.   , -1000.   , -1000.   , -1000.   , -1000.   ],

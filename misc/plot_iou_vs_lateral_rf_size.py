@@ -1440,6 +1440,7 @@ mpl.rcParams.update({
 #     ])
 # }
 
+# .results/contour_dataset_sensitivity_analysis/lateral_rf_size/model_with_independent_BN
 model_results = {
     3: np.array([
         [1, 0.6057, 0.0579, 0.5112, 0.1013, 0.0001],
@@ -2361,6 +2362,7 @@ model_results = {
     ])
 }
 
+# ./results/contour_dataset_sensitivity_analysis/lateral_rf_size/control
 control_results = {
     3: np.array([
         [1, 0.4792, 0.0421, 0.3794, 0.1277, 0.0001],
