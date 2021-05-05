@@ -3091,7 +3091,7 @@ def plot_behavioral_iou(results_behave, label, color='black', axis=None):
     :return:
     """
     if axis is None:
-        plt.figure("IoU", figsize=(9, 9))
+        f, axis = plt.subplots(figsize=(6, 6))
 
     best_train_iou = []
     best_val_iou = []
@@ -3120,10 +3120,10 @@ def plot_behavioral_iou(results_behave, label, color='black', axis=None):
     axis.legend()
     axis.set_ylim([0, 1])
     # axis.grid(True)
-    # axis.set_title("Iou vs Rf Size")
+    # axis.set_title("Iou vs Connection Strength")
 
 
-def plot_neuro_gains(results_neuro, label, c_len_arr = np.array([1, 3, 5, 7, 9]),  axis=None):
+def plot_neuro_gains(results_neuro, label, c_len_arr=np.array([1, 3, 5, 7, 9]),  axis=None):
     """
 
     :param results_neuro:
