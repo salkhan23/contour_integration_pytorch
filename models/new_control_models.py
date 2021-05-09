@@ -108,7 +108,7 @@ class ControlMatchIterationsLayer(nn.Module):
         return ff
 
 
-class ControlRecurrentCNN(nn.Module):
+class ControlRecurrentCnnLayer(nn.Module):
     def __init__(self, edge_out_ch=64, n_iters=5, lateral_e_size=7, lateral_i_size=7):
         """
         Model with matching number of recurrent iterations and capacity as the Contour Integration Layer.
@@ -124,7 +124,7 @@ class ControlRecurrentCNN(nn.Module):
         :param lateral_e_size:
         :param lateral_i_size:
         """
-        super(ControlRecurrentCNN, self).__init__()
+        super(ControlRecurrentCnnLayer, self).__init__()
 
         self.lateral_e_size = lateral_e_size
         self.lateral_i_size = lateral_i_size
@@ -150,9 +150,9 @@ class ControlRecurrentCNN(nn.Module):
         )
 
         # self.control_bn1 = RecurrentBatchNorm(num_features=edge_out_ch, n_iters=5)
-        self.control_bn = nn.ModuleList([])
+        self.bn = nn.ModuleList([])
         for i in range(self.n_iters):
-            self.control_bn.append(nn.BatchNorm2d(num_features=edge_out_ch))
+            self.bn.append(nn.BatchNorm2d(num_features=edge_out_ch))
 
         # self.dp = nn.Dropout(p=0.3)
 
