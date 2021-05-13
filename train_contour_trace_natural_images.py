@@ -511,6 +511,8 @@ if __name__ == '__main__':
     #     lateral_e_size=15, lateral_i_size=15)
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+    # cont_int_layer = new_control_models.ControlRecurrentCnnLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
     scale_down_input_to_contour_integration_layer = 4
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
@@ -519,7 +521,7 @@ if __name__ == '__main__':
         net,
         train_params=train_parameters,
         data_set_params=data_set_parameters,
-        base_results_store_dir='./results/contour_tracing',
+        base_results_store_dir='./results/contour_tracing_new',
         cont_int_scale=scale_down_input_to_contour_integration_layer
     )
 
