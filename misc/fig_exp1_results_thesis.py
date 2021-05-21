@@ -3538,6 +3538,7 @@ if __name__ == "__main__":
         model_run_5,
     ]
     net_a_name = 'Model'
+    net_a_color = 'blue'
 
     # ------------------------------------------------------------------------------------
     network_b = [
@@ -3548,6 +3549,7 @@ if __name__ == "__main__":
         control_run_5,
     ]
     net_b_name = 'Control'
+    net_b_color = 'red'
 
     # network_b = [
     #     curr_di_variant_run_1,
@@ -3556,21 +3558,24 @@ if __name__ == "__main__":
     #     curr_di_variant_run_4,
     # ]
     # net_b_name = 'currDI'
+    # net_b_color = 'green'
 
     # network_b = [
     #     rpcm_variant_run_1,
-    #     # rpcm_variant_run_2,
-    #     rpcm_variant_run_3,
-    #     # rpcm_variant_run_4,
-    #     rpcm_variant_run_5,
+    #     rpcm_variant_run_2,
+    #     # rpcm_variant_run_3,
+    #     rpcm_variant_run_4,
+    #     # rpcm_variant_run_5,
     # ]
     # net_b_name = 'RPCM'
+    # net_b_color = 'green'
 
     # network_b = [
     #     rcnnm_variant_run_1,
     #     rcnnm_variant_run_2,
     # ]
     # net_b_name = 'RCNNM'
+    # net_b_color = 'green'
 
     # -----------------------------------------------------------------------------------
     # Process Results
@@ -3589,8 +3594,8 @@ if __name__ == "__main__":
     # [A] Behavioral IoU vs contour length
     # -------------------------------------------------------------------------
     ax1 = fig.add_subplot(gs[0, 0:4])
-    ax1.plot(c_len_arr, net_a_results['pop_c_len_iou'], label=net_a_name, color='b', marker='x')
-    ax1.plot(c_len_arr, net_b_results['pop_c_len_iou'], label=net_b_name, color='r', marker='o')
+    ax1.plot(c_len_arr, net_a_results['pop_c_len_iou'], label=net_a_name, color=net_a_color, marker='x')
+    ax1.plot(c_len_arr, net_b_results['pop_c_len_iou'], label=net_b_name, color=net_b_color, marker='o')
     ax1.text(1, 0.1, 'A', fontsize=30)
     ax1.set_yticks([0, 0.5, 1])
     ax1.set_ylabel('IoU')
@@ -3606,25 +3611,25 @@ if __name__ == "__main__":
         ax2.plot(
             c_len_arr, net_a_results['pop_c_len_means'],
             # label='Model (N={})'.format(model_pop_c_len_n),
-            color='b', marker='x'
+            color=net_a_color, marker='x'
         )
         ax2.fill_between(
             c_len_arr,
             net_a_results['pop_c_len_means'] - net_a_results['pop_c_len_stds'],
             net_a_results['pop_c_len_means'] + net_a_results['pop_c_len_stds'],
-            alpha=0.2, color='b')
+            alpha=0.2, color=net_a_color)
 
     if net_b_results['pop_c_len_n'] > 0:
         ax2.plot(
             c_len_arr, net_b_results['pop_c_len_means'],
             # label='Model (N={})'.format(model_pop_c_len_n),
-            color='r', marker='o'
+            color=net_b_color, marker='o'
         )
         ax2.fill_between(
             c_len_arr,
             net_b_results['pop_c_len_means'] - net_b_results['pop_c_len_stds'],
             net_b_results['pop_c_len_means'] + net_b_results['pop_c_len_stds'],
-            alpha=0.2, color='r')
+            alpha=0.2, color=net_b_color)
 
     if plot_neuro_results:
         ax2.plot(
@@ -3646,25 +3651,25 @@ if __name__ == "__main__":
         ax3.plot(
             spacing_arr, net_a_results['pop_space_means'],
             label='{} (N={})'.format(net_a_name, net_a_results['pop_space_n']),
-            color='b', marker='x'
+            color=net_a_color, marker='x'
         )
         ax3.fill_between(
             spacing_arr,
             net_a_results['pop_space_means'] - net_a_results['pop_space_stds'],
             net_a_results['pop_space_means'] + net_a_results['pop_space_stds'],
-            alpha=0.2, color='b')
+            alpha=0.2, color=net_a_color)
 
     if net_b_results['pop_space_n'] > 0:
         ax3.plot(
             spacing_arr, net_b_results['pop_space_means'],
             label='{} (N={})'.format(net_b_name, net_b_results['pop_space_n']),
-            color='r', marker='o'
+            color=net_b_color, marker='o'
         )
         ax3.fill_between(
             spacing_arr,
             net_b_results['pop_space_means'] - net_b_results['pop_space_stds'],
             net_b_results['pop_space_means'] + net_b_results['pop_space_stds'],
-            alpha=0.2, color='r')
+            alpha=0.2, color=net_b_color)
 
     if plot_neuro_results:
         ax3.plot(monkey_ma['rcd'], neuro_space_results, color='black', marker='s',
@@ -3676,7 +3681,7 @@ if __name__ == "__main__":
     # ax3.set_xlim([0.99, 2.01])
     # ax3.legend()
 
-    # [4] histogram CI Outputs vs Length - Model
+    # [4] Histogram CI Outputs vs Length - Network A
     # ----------------------------------------------------------------------------
     c_len_bin_max = 1.5
     c_len_bin_min = -0.2
@@ -3689,7 +3694,7 @@ if __name__ == "__main__":
 
         ax4.hist(
             net_a_c_len_grads.clip(min=c_len_bin_min, max=c_len_bin_max),  # Include all data points
-            label=net_a_name, color='blue', bins=c_len_bins, edgecolor='black', linewidth=1.2)
+            label=net_a_name, color=net_a_color, bins=c_len_bins, edgecolor='black', linewidth=1.2)
 
     ax4.text(c_len_bin_min - 0.2, 60, 'D', fontsize=30)
     ax4.set_ylabel("Freq")
@@ -3697,8 +3702,8 @@ if __name__ == "__main__":
     ax4.legend()
     ax4.set_xlim([c_len_bin_min - 0.2, c_len_bin_max + 0.3])
 
-    # [5] histogram Gain vs Spacing - Model
-    # --------------------------------
+    # [5] Histogram Gain vs Spacing - Network A
+    # -----------------------------------------
     spacing_bin_max = 5
     spacing_bin_min = -10
     spacing_bins = np.arange(spacing_bin_min, spacing_bin_max + 1, 1)
@@ -3710,15 +3715,14 @@ if __name__ == "__main__":
 
         ax6.hist(
             net_a_spacing_grads.clip(min=spacing_bin_min, max=spacing_bin_max),  # Include all data points
-            label="Contour Int. (N={})".format(len(net_a_results['all_space_ci_block_outputs'])),
-            color='blue', bins=spacing_bins, edgecolor='black', linewidth=1.2)
+            label=net_a_name, color=net_a_color, bins=spacing_bins, edgecolor='black', linewidth=1.2)
 
     ax6.text(spacing_bin_min, 85, 'E', fontsize=30)
     # ax6.set_ylabel("Freq")
     ax6.set_xlabel("gradients - spacing")
     # ax6.legend()
 
-    # [6] histogram Gain vs Length - Control
+    # [6] Histogram Gain vs Length - Network B
     # --------------------------------
     ax5 = fig.add_subplot(gs[1, 6:9], sharex=ax4)
 
@@ -3727,14 +3731,14 @@ if __name__ == "__main__":
 
         ax5.hist(
             net_b_c_len_grads.clip(min=c_len_bin_min, max=c_len_bin_max),  # Include all data points
-            label="Control", color='red', bins=c_len_bins, edgecolor='black', linewidth=1.2)
+            label=net_b_name, color=net_b_color, bins=c_len_bins, edgecolor='black', linewidth=1.2)
 
     ax5.text(c_len_bin_min - 0.1, 32, 'F', fontsize=30)
     # ax5.set_ylabel("Freq")
     ax5.legend()
     ax5.set_xlabel("gradients - length")
 
-    # histogram Gain vs Spacing - Control
+    # Histogram Gain vs Spacing - Network B
     # --------------------------------
     ax7 = fig.add_subplot(gs[1, 9:12])
 
@@ -3743,8 +3747,7 @@ if __name__ == "__main__":
 
         z = ax7.hist(
             net_b_spacing_grads.clip(min=spacing_bin_min, max=spacing_bin_max),  # Include all data points
-            label="Control (N={})".format(len(net_b_results['all_space_ci_block_outputs'])), color='red',
-            bins=spacing_bins, edgecolor='black', linewidth=1.2)
+            label=net_b_name, color=net_b_color, bins=spacing_bins, edgecolor='black', linewidth=1.2)
 
     ax7.text(spacing_bin_min, 34, 'G', fontsize=30)
     # ax7.set_ylabel("Freq")
