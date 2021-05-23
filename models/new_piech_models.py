@@ -29,78 +29,46 @@ class DummyHead(nn.Module):
         return x
 
 
-class BinaryClassifier(nn.Module):
-    def __init__(self, n_in_channels):
-        """
-        Final output is a single value.
-        Given input dimension [CH, R, C], 3 conv layers are applied.
-
-        First one reduces CH/2, R/2, C/2
-        Second one reduces CH/4, R/4, C/4
-        Third one reduces  1, R/4, C/4,
-        Global Avg Pool:  [1, 1, 1] averages over all R/4, C/4 to give 1 output.
-
-        Sigmoid is not applied as it is included with the loss
-
-        :param n_in_channels:
-        """
-        super(BinaryClassifier, self).__init__()
-        self.n_in_channels = n_in_channels
-
-        self.conv_first = nn.Conv2d(
-            in_channels=self.n_in_channels, out_channels=self.n_in_channels // 2, kernel_size=(3, 3), stride=(2, 2),
-            padding=(1, 1), groups=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(num_features=self.n_in_channels // 2)
-
-        self.conv_second = nn.Conv2d(
-            in_channels=self.n_in_channels // 2, out_channels=self.n_in_channels // 4, kernel_size=(3, 3), stride=(2, 2),
-            padding=(1, 1), groups=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(num_features=self.n_in_channels // 4)
-
-        self.conv_final = nn.Conv2d(
-            in_channels=self.n_in_channels // 4, out_channels=1, kernel_size=(1, 1), bias=True)
-
-        self.avg_pool = nn.AvgPool2d(n_in_channels // 4)
-
-    def forward(self, x):
-        x = self.conv_first(x)
-        x = self.bn1(x)
-        x = nn.functional.relu(x)
-
-        x = self.conv_second(x)
-        x = self.bn2(x)
-        x = nn.functional.relu(x)
-
-        x = self.conv_final(x)
-        x = self.avg_pool(x)
-
-        # Done per dimension to avoid the problem of zero dimension output
-        # if batch size = 1 (see torch.squeeze docs)
-        x = torch.squeeze(x, 3)
-        x = torch.squeeze(x, 2)
-        x = torch.squeeze(x, 1)
-
-        return x
-
-
 # class BinaryClassifier(nn.Module):
-#     def __init__(self, n_in_channels, final_conv_dim=43):
+#     def __init__(self, n_in_channels):
+#         """
+#         Final output is a single value.
+#         Given input dimension [CH, R, C], 3 conv layers are applied.
+#
+#         First one reduces CH/2, R/2, C/2
+#         Second one reduces CH/4, R/4, C/4
+#         Third one reduces  1, R/4, C/4,
+#         Global Avg Pool:  [1, 1, 1] averages over all R/4, C/4 to give 1 output.
+#
+#         Sigmoid is not applied as it is included with the loss
+#
+#         :param n_in_channels:
+#         """
 #         super(BinaryClassifier, self).__init__()
 #         self.n_in_channels = n_in_channels
 #
 #         self.conv_first = nn.Conv2d(
-#             in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(3, 3),
+#             in_channels=self.n_in_channels, out_channels=self.n_in_channels // 2, kernel_size=(3, 3), stride=(2, 2),
 #             padding=(1, 1), groups=1, bias=False)
-#         self.bn1 = nn.BatchNorm2d(num_features=8)
+#         self.bn1 = nn.BatchNorm2d(num_features=self.n_in_channels // 2)
+#
+#         self.conv_second = nn.Conv2d(
+#             in_channels=self.n_in_channels // 2, out_channels=self.n_in_channels // 4, kernel_size=(3, 3), stride=(2, 2),
+#             padding=(1, 1), groups=1, bias=False)
+#         self.bn2 = nn.BatchNorm2d(num_features=self.n_in_channels // 4)
 #
 #         self.conv_final = nn.Conv2d(
-#             in_channels=8, out_channels=1, kernel_size=(1, 1), bias=True)
+#             in_channels=self.n_in_channels // 4, out_channels=1, kernel_size=(1, 1), bias=True)
 #
-#         self.avg_pool = nn.AvgPool2d(final_conv_dim)  # 43=C=R
+#         self.avg_pool = nn.AvgPool2d(n_in_channels // 4)
 #
 #     def forward(self, x):
 #         x = self.conv_first(x)
 #         x = self.bn1(x)
+#         x = nn.functional.relu(x)
+#
+#         x = self.conv_second(x)
+#         x = self.bn2(x)
 #         x = nn.functional.relu(x)
 #
 #         x = self.conv_final(x)
@@ -113,6 +81,39 @@ class BinaryClassifier(nn.Module):
 #         x = torch.squeeze(x, 1)
 #
 #         return x
+
+
+class BinaryClassifier(nn.Module):
+    def __init__(self, n_in_channels, final_conv_dim=22):
+        super(BinaryClassifier, self).__init__()
+        self.n_in_channels = n_in_channels
+
+        self.conv_first = nn.Conv2d(
+            in_channels=self.n_in_channels, out_channels=8, kernel_size=(3, 3), stride=(3, 3),
+            padding=(1, 1), groups=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(num_features=8)
+
+        self.conv_final = nn.Conv2d(
+            in_channels=8, out_channels=1, kernel_size=(1, 1), bias=True)
+
+        self.avg_pool = nn.AvgPool2d(final_conv_dim)  # 43=C=R
+
+    def forward(self, x):
+        x = self.conv_first(x)
+        x = self.bn1(x)
+        x = nn.functional.relu(x)
+
+        x = self.conv_final(x)
+
+        x = self.avg_pool(x)
+
+        # Done per dimension to avoid the problem of zero dimension output
+        # if batch size = 1 (see torch.squeeze docs)
+        x = torch.squeeze(x, 3)
+        x = torch.squeeze(x, 2)
+        x = torch.squeeze(x, 1)
+
+        return x
 
 
 class EdgeExtractClassifier(nn.Module):
