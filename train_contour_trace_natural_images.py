@@ -130,6 +130,10 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
         train_params['lr_sched_gamma'] = 0.1
     if 'random_seed' not in train_params:
         train_params['random_seed'] = 1
+    if 'punc_n_bubbles' not in train_params:
+        train_params['punc_n_bubbles'] = 200
+    if 'punc_fwhm' not in train_params:
+        train_params['punc_fwhm'] = np.array([7, 9, 11, 13, 15, 17])
 
     torch.manual_seed(train_params['random_seed'])
     np.random.seed(train_params['random_seed'])
@@ -171,7 +175,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     # Pre-processing
     transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=200, fwhm=np.array([7, 9, 11, 13, 15, 17]))
+        utils.PunctureImage(n_bubbles=train_params['punc_n_bubbles'], fwhm=train_params['punc_fwhm'])
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
@@ -498,7 +502,9 @@ if __name__ == '__main__':
         'lateral_w_reg_gaussian_sigma': 10,
         'clip_negative_lateral_weights': True,
         'lr_sched_step_size': 80,
-        'lr_sched_gamma': 0.5
+        'lr_sched_gamma': 0.5,
+        'punc_n_bubbles': 200,
+        'punc_fwhm':  np.array([7, 9, 11, 13, 15, 17])
     }
 
     # # Create Model
