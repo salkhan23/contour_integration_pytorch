@@ -190,7 +190,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
 
     train_data_loader = DataLoader(
         dataset=train_set,
-        num_workers=6,
+        num_workers=30,
         batch_size=train_batch_size,
         shuffle=True,
         pin_memory=True
@@ -206,7 +206,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
 
     val_data_loader = DataLoader(
         dataset=val_set,
-        num_workers=6,
+        num_workers=30,
         batch_size=test_batch_size,
         shuffle=True,
         pin_memory=True
