@@ -94,7 +94,8 @@ def iterate_epoch(
     return e_loss, e_acc
 
 
-def main(model, train_params, data_set_params, cont_int_scale, base_results_store_dir='./results'):
+def main(model, train_params, data_set_params, cont_int_scale, base_results_store_dir='./results',
+         n_imgs_for_exp=20000):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
@@ -455,7 +456,7 @@ def main(model, train_params, data_set_params, cont_int_scale, base_results_stor
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
         'biped_dataset_type': 'train',
-        'n_biped_imgs': 20000,
+        'n_biped_imgs': n_imgs_for_exp,
         'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
