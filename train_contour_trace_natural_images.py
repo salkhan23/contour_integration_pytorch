@@ -529,7 +529,8 @@ if __name__ == '__main__':
         train_params=train_parameters,
         data_set_params=data_set_parameters,
         base_results_store_dir='./results/contour_tracing_new',
-        cont_int_scale=scale_down_input_to_contour_integration_layer
+        cont_int_scale=scale_down_input_to_contour_integration_layer,
+        n_imgs_for_exp=5000,
     )
 
     # -----------------------------------------------------------------------------------
