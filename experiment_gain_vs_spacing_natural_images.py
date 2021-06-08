@@ -1215,16 +1215,16 @@ if __name__ == '__main__':
         results_store_dir,
         data_set_params=dataset_parameters,
         cont_int_scale=scale_down_input_to_contour_integration_layer,
-        max_sep_dist=2.0
+        max_sep_dist=3.0
     )
 
-    main(
-        net,
-        results_store_dir,
-        data_set_params=dataset_parameters,
-        cont_int_scale=scale_down_input_to_contour_integration_layer,
-        max_sep_dist=1.0
-    )
+    # main(
+    #     net,
+    #     results_store_dir,
+    #     data_set_params=dataset_parameters,
+    #     cont_int_scale=scale_down_input_to_contour_integration_layer,
+    #     max_sep_dist=1.0
+    # )
 
     # -----------------------------------------------------------------------------------
     # End
