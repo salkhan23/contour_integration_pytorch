@@ -1175,20 +1175,20 @@ if __name__ == '__main__':
     # Dataset Parameters
     dataset_parameters = {
         'biped_dataset_dir': './data/BIPED/edges',
-        'biped_dataset_type': 'test',
-        'n_biped_imgs': 50,
+        'biped_dataset_type': 'train',
+        'n_biped_imgs': 5000,
         'n_epochs': 1  # Total images = n_epochs * n_biped_images
     }
 
     # Model
     # ------
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
 
     net = new_piech_models.BinaryClassifierResnet50(cont_int_layer)
     saved_model = \
-        './results/pathfinder/' \
-        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_base_20200826_220913/' \
+        './results/contour_tracing_new/' \
+        'BinaryClassifierResnet50_CurrentSubtractInhibitLayer_20210605_204025/' \
         'best_accuracy.pth'
     scale_down_input_to_contour_integration_layer = 4
 
