@@ -21,7 +21,7 @@ if __name__ == '__main__':
         torch.manual_seed(random_seed)
 
         data_set_parameters = {
-            'data_set_dir': "./data/channel_wise_optimal_full14_frag7",
+            'data_set_dir': './data/pathfinder_natural_images_2',
         }
 
         train_parameters = {
