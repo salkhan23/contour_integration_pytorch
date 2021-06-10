@@ -6,7 +6,7 @@ import torch
 
 from train_contour_trace_natural_images import main
 import models.new_piech_models as new_piech_models
-import models.new_control_models as new_control_model
+import models.new_control_models as new_control_models
 
 
 if __name__ == '__main__':
