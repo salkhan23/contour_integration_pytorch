@@ -1454,8 +1454,7 @@ model_run_2 = {
         50, 49, 50, 50, 49, 50, 50, 50, 50, 50,
         49, 50, 49, 50, 50, 49, 50, 50, 50, 50,
          0, 49, 50, 49, 49, 49, 49, 49, 49, 50,
-        50, 49, 50, 49]
-)
+        50, 49, 50, 49])
 }
 
 control_run_1 = {
@@ -2550,9 +2549,12 @@ def get_training_results(results_list):
 
     # average results over all runs
     avg_max_train_acc = np.mean(max_training_acc)
-    avg_max_val_acc = np.mean(max_val_acc)
+    std_max_train_acc = np.std(max_training_acc)
 
-    return avg_max_train_acc, avg_max_val_acc
+    avg_max_val_acc = np.mean(max_val_acc)
+    std_max_val_acc = np.std(max_val_acc)
+
+    return avg_max_train_acc, std_max_train_acc, avg_max_val_acc, std_max_val_acc
 
 
 def main_3_networks(a_result_list, a_name, b_result_list, b_name, c_result_list, c_name, rcd):
@@ -2566,17 +2568,17 @@ def main_3_networks(a_result_list, a_name, b_result_list, b_name, c_result_list,
     c_marker = '+'
     c_color = 'green'
 
-    a_max_train_acc, a_max_val_acc = get_training_results(a_result_list)
-    print("{:>10} training results: Train Acc {:0.2f}, Val Acc {:0.2f}".format(
-        a_name, a_max_train_acc, a_max_val_acc))
+    a_max_train_acc, a_max_train_acc_std, a_max_val_acc, a_max_val_acc_std = get_training_results(a_result_list)
+    print("{:>10} training results: Train Acc {:0.2f} +- {:0.2f}, Val Acc {:0.2f} +- {:0.2f}".format(
+        a_name, a_max_train_acc, a_max_train_acc_std, a_max_val_acc, a_max_val_acc_std))
 
-    b_max_train_acc, b_max_val_acc = get_training_results(b_result_list)
-    print("{:>10} training results: Train Acc {:0.2f}, Val Acc {:0.2f}".format(
-        b_name, b_max_train_acc, b_max_val_acc))
+    b_max_train_acc, b_max_train_acc_std, b_max_val_acc, b_max_val_acc_std = get_training_results(b_result_list)
+    print("{:>10} training results: Train Acc {:0.2f} +- {:0.2f}, Val Acc {:0.2f} +- {:0.2f}".format(
+        b_name, b_max_train_acc, b_max_train_acc_std, b_max_val_acc, b_max_val_acc_std))
 
-    c_max_train_acc, c_max_val_acc = get_training_results(c_result_list)
-    print("{:>10} training results: Train Acc {:0.2f}, Val Acc {:0.2f}".format(
-        c_name, c_max_train_acc, c_max_val_acc))
+    c_max_train_acc, c_max_train_acc_std, c_max_val_acc, c_max_val_acc_std = get_training_results(c_result_list)
+    print("{:>10} training results: Train Acc {:0.2f} +- {:0.2f}, Val Acc {:0.2f} +- {:0.2f}".format(
+        c_name, c_max_train_acc, c_max_train_acc_std, c_max_val_acc, c_max_val_acc_std))
 
     print("-" * 80)
 
@@ -2658,6 +2660,121 @@ def main_3_networks(a_result_list, a_name, b_result_list, b_name, c_result_list,
     f.tight_layout()
 
 
+def get_avg_across_runs(results, index):
+    values = []
+
+    for result_dict in results:
+        values.append(result_dict['training'][:, index])
+
+    values = np.array(values)
+
+    mean_each_epoch = np.mean(values, axis=0)
+    std_each_epoch = np.std(values, axis=0)
+
+    return mean_each_epoch, std_each_epoch
+
+
+def plot_avg_training(a_results, a_name, a_color, b_results, b_name, b_color, c_results, c_name, c_color):
+
+    # training subfields: Epoch, train_loss, train_acc, val_loss, val_acc, lr
+    a_acc_train_mu, a_acc_train_sigma = get_avg_across_runs(a_results, 2)
+    a_acc_val_mu, a_acc_val_sigma = get_avg_across_runs(a_results, 4)
+    a_loss_train_mu, a_loss_train_sigma = get_avg_across_runs(a_results, 1)
+    a_loss_val_mu, a_loss_val_sigma = get_avg_across_runs(a_results, 3)
+
+    b_acc_train_mu, b_acc_train_sigma = get_avg_across_runs(b_results, 2)
+    b_acc_val_mu, b_acc_val_sigma = get_avg_across_runs(b_results, 4)
+    b_loss_train_mu, b_loss_train_sigma = get_avg_across_runs(b_results, 1)
+    b_loss_val_mu, b_loss_val_sigma = get_avg_across_runs(b_results, 3)
+
+    c_acc_train_mu, c_acc_train_sigma = get_avg_across_runs(c_results, 2)
+    c_acc_val_mu, c_acc_val_sigma = get_avg_across_runs(c_results, 4)
+    c_loss_train_mu, c_loss_train_sigma = get_avg_across_runs(c_results, 1)
+    c_loss_val_mu, c_loss_val_sigma = get_avg_across_runs(c_results, 3)
+
+    a_epochs = a_results[0]['training'][:, 0]
+    b_epochs = b_results[0]['training'][:, 0]
+    c_epochs = c_results[0]['training'][:, 0]
+
+    # -----------------------------------------------------------------------------------
+    # Plot Accuracy Figure
+    # -----------------------------------------------------------------------------------
+    f, ax = plt.subplots(figsize=(7, 7))
+
+    # Loss
+    # ---------------------
+    ax.plot(a_epochs, a_loss_train_mu, label=a_name + '_train', color=a_color)
+    ax.fill_between(
+        a_epochs, a_loss_train_mu - a_loss_train_sigma, a_loss_train_mu + a_loss_train_sigma,
+        alpha=0.2, color=a_color)
+
+    ax.plot(b_epochs, b_loss_train_mu, label=b_name + '_train', color=b_color)
+    ax.fill_between(
+        b_epochs, b_loss_train_mu - b_loss_train_sigma, b_loss_train_mu + b_loss_train_sigma,
+        alpha=0.2, color=b_color)
+
+    ax.plot(c_epochs, c_loss_train_mu, label=c_name + '_train', color=c_color)
+    ax.fill_between(
+        c_epochs, c_loss_train_mu - c_loss_train_sigma, c_loss_train_mu + c_loss_train_sigma,
+        alpha=0.2, color=c_color)
+
+    ax.plot(a_epochs, a_loss_val_mu, label=a_name + '_val', color=a_color, linestyle='--')
+    ax.fill_between(
+        a_epochs, a_loss_val_mu - a_loss_val_sigma, a_loss_val_mu + a_loss_val_sigma,
+        alpha=0.2, color=a_color)
+
+    ax.plot(b_epochs, b_loss_val_mu, label=b_name + '_val', color=b_color, linestyle='--')
+    ax.fill_between(
+        b_epochs, b_loss_val_mu - b_loss_val_sigma, b_loss_val_mu + b_loss_val_sigma, alpha=0.2, color=b_color)
+
+    ax.plot(c_epochs, c_loss_val_mu, label=c_name + '_val', color=c_color, linestyle='--')
+    ax.fill_between(
+        c_epochs, c_loss_val_mu - c_loss_val_sigma, c_loss_val_mu + c_loss_val_sigma, alpha=0.2, color=c_color)
+
+    # ax_arr[0].legend()
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Loss")
+    # ax_arr[0].set_yscale('log')
+    f.tight_layout()
+
+    f, ax = plt.subplots(figsize=(7, 7))
+
+    ax.plot(a_epochs, a_acc_train_mu, label=a_name + '_train', color=a_color)
+    ax.fill_between(
+        a_epochs, a_acc_train_mu - a_acc_train_sigma, a_acc_train_mu + a_acc_train_sigma,
+        alpha=0.2, color=a_color)
+
+    ax.plot(b_epochs, b_acc_train_mu, label=b_name + '_train', color=b_color)
+    ax.fill_between(
+        b_epochs, b_acc_train_mu - b_acc_train_sigma, b_acc_train_mu + b_acc_train_sigma,
+        alpha=0.2, color=b_color)
+
+    ax.plot(c_epochs, c_acc_train_mu, label=c_name + '_train', color=c_color)
+    ax.fill_between(
+        c_epochs, c_acc_train_mu - c_acc_train_sigma, c_acc_train_mu + c_acc_train_sigma,
+        alpha=0.2, color=c_color)
+
+    ax.plot(a_epochs, a_acc_val_mu, label=a_name + '_val', color=a_color, linestyle='--')
+    ax.fill_between(
+        a_epochs, a_acc_val_mu - a_acc_val_sigma, a_acc_val_mu + a_acc_val_sigma,
+        alpha=0.2, color=a_color)
+
+    ax.plot(b_epochs, b_acc_val_mu, label=b_name + '_val', color=b_color, linestyle='--')
+    ax.fill_between(
+        b_epochs, b_acc_val_mu - b_acc_val_sigma, b_acc_val_mu + b_acc_val_sigma, alpha=0.2, color=b_color)
+
+    ax.plot(c_epochs, c_acc_val_mu, label=c_name + '_val', color=c_color, linestyle='--')
+    ax.fill_between(
+        c_epochs, c_acc_val_mu - c_acc_val_sigma, c_acc_val_mu + c_acc_val_sigma, alpha=0.2, color=c_color)
+
+    ax.legend()
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("Accuracy")
+    ax.set_ylim([40, 95])
+
+    f.tight_layout()
+
+
 if __name__ == '__main__':
     plt.ion()
     np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
@@ -2694,6 +2811,11 @@ if __name__ == '__main__':
     plot_individual_runs(net_a_results_list, relative_co_linear_dist, net_a_name)
     plot_individual_runs(net_b_results_list, relative_co_linear_dist, net_b_name)
     plot_individual_runs(net_c_results_list, relative_co_linear_dist, net_c_name)
+
+    plot_avg_training(
+        net_a_results_list, net_a_name, net_a_color,
+        net_b_results_list, net_b_name, net_b_color,
+        net_c_results_list, net_c_name, net_c_color)
 
     main_3_networks(
         net_a_results_list, net_a_name,
