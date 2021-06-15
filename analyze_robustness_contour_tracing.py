@@ -59,7 +59,7 @@ if __name__ == '__main__':
             net,
             train_params=train_parameters,
             data_set_params=data_set_parameters,
-            base_results_store_dir='./results/contour_tracing_multiple_runs/random_seed_{}',
+            base_results_store_dir='./results/contour_tracing_multiple_runs/random_seed_{}'.format(random_seed),
             cont_int_scale=scale_down_input_to_contour_integration_layer,
             n_imgs_for_exp=5000,
         )
