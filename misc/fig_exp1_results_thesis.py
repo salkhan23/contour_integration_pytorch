@@ -4303,6 +4303,7 @@ if __name__ == "__main__":
     # Units of relative co-linear distance (RCD)
     spacing_arr = np.array([1.00, 1.14, 1.29, 1.43, 1.57, 1.71, 1.86, 2.00])
 
+    # -----------------------------------------------------------------------------------
     network_a = [
         model_run_1,
         model_run_2,
@@ -4312,8 +4313,8 @@ if __name__ == "__main__":
     ]
     net_a_name = 'Model'
     net_a_color = 'blue'
+    net_a_marker = 'x'
 
-    # ------------------------------------------------------------------------------------
     network_b = [
         control_run_1,
         control_run_2,
@@ -4323,6 +4324,7 @@ if __name__ == "__main__":
     ]
     net_b_name = 'Control'
     net_b_color = 'red'
+    net_b_marker = 'o'
 
     # network_b = [
     #     curr_di_variant_run_1,
@@ -4332,6 +4334,7 @@ if __name__ == "__main__":
     # ]
     # net_b_name = 'currDI'
     # net_b_color = 'green'
+    # net_b_marker = 'o'
 
     # network_b = [
     #     # rpcm_variant_run_1,
@@ -4344,16 +4347,48 @@ if __name__ == "__main__":
     # ]
     # net_b_name = 'RPCM'
     # net_b_color = 'green'
+    # net_b_marker = 'o'
 
-    network_b = [
-        rcnnm_variant_run_1,
-        rcnnm_variant_run_2,
-        rcnnm_variant_run_3,
-        rcnnm_variant_run_4,
-        rcnnm_variant_run_5,
-    ]
-    net_b_name = 'RCNNM'
-    net_b_color = 'green'
+    plot_network_c_results = False
+    network_c = []
+    net_c_name = None
+    net_c_marker = None
+    net_c_color = None
+
+    # # PLot Results of RCNNM Model Variant -----------------------------------------------------
+    # network_a = [
+    #     rcnnm_variant_run_1,
+    #     rcnnm_variant_run_2,
+    #     rcnnm_variant_run_3,
+    #     # rcnnm_variant_run_4,
+    #     # rcnnm_variant_run_5,
+    # ]
+    # net_a_name = 'RCNNM_a'
+    # net_a_color = 'green'
+    # net_a_marker = 'v'
+    #
+    # network_b = [
+    #     # rcnnm_variant_run_1,
+    #     # rcnnm_variant_run_2,
+    #     # rcnnm_variant_run_3,
+    #     rcnnm_variant_run_4,
+    #     rcnnm_variant_run_5,
+    # ]
+    # net_b_name = 'RCNNM_b'
+    # net_b_color = 'orange'
+    # net_b_marker = '^'
+    #
+    # network_c = [
+    #     model_run_1,
+    #     model_run_2,
+    #     model_run_3,
+    #     model_run_4,
+    #     model_run_5,
+    # ]
+    # net_c_name = 'model'
+    # net_c_color = 'blue'
+    # net_c_marker = 'x'
+    # plot_network_c_results = True
 
     # -----------------------------------------------------------------------------------
     # Process Results
@@ -4362,6 +4397,9 @@ if __name__ == "__main__":
 
     net_b_results = get_network_results(network_b, net_b_name)
     plot_individual_run_curves(network_b, label=net_b_name)
+
+    if plot_network_c_results:
+        net_c_results = get_network_results(network_c, net_c_name)
 
     # -----------------------------------------------------------------------------------
     # Combined Plot
@@ -4372,8 +4410,11 @@ if __name__ == "__main__":
     # [A] Behavioral IoU vs contour length
     # -------------------------------------------------------------------------
     ax1 = fig.add_subplot(gs[0, 0:4])
-    ax1.plot(c_len_arr, net_a_results['pop_c_len_iou'], label=net_a_name, color=net_a_color, marker='x')
-    ax1.plot(c_len_arr, net_b_results['pop_c_len_iou'], label=net_b_name, color=net_b_color, marker='o')
+    ax1.plot(c_len_arr, net_a_results['pop_c_len_iou'], label=net_a_name, color=net_a_color, marker=net_a_marker)
+    ax1.plot(c_len_arr, net_b_results['pop_c_len_iou'], label=net_b_name, color=net_b_color, marker=net_b_marker)
+    if plot_network_c_results:
+        ax1.plot(c_len_arr, net_c_results['pop_c_len_iou'], label=net_c_name, color=net_c_color, marker=net_c_marker)
+
     ax1.text(1, 0.1, 'A', fontsize=30)
     ax1.set_yticks([0, 0.5, 1])
     ax1.set_ylabel('IoU')
@@ -4389,7 +4430,7 @@ if __name__ == "__main__":
         ax2.plot(
             c_len_arr, net_a_results['pop_c_len_means'],
             # label='Model (N={})'.format(model_pop_c_len_n),
-            color=net_a_color, marker='x'
+            color=net_a_color, marker=net_a_marker
         )
         ax2.fill_between(
             c_len_arr,
@@ -4401,13 +4442,26 @@ if __name__ == "__main__":
         ax2.plot(
             c_len_arr, net_b_results['pop_c_len_means'],
             # label='Model (N={})'.format(model_pop_c_len_n),
-            color=net_b_color, marker='o'
+            color=net_b_color, marker=net_b_marker
         )
         ax2.fill_between(
             c_len_arr,
             net_b_results['pop_c_len_means'] - net_b_results['pop_c_len_stds'],
             net_b_results['pop_c_len_means'] + net_b_results['pop_c_len_stds'],
             alpha=0.2, color=net_b_color)
+
+    if plot_network_c_results:
+        if net_c_results['pop_c_len_n'] > 0:
+            ax2.plot(
+                c_len_arr, net_c_results['pop_c_len_means'],
+                # label='Model (N={})'.format(model_pop_c_len_n),
+                color=net_c_color, marker=net_c_marker
+            )
+            ax2.fill_between(
+                c_len_arr,
+                net_c_results['pop_c_len_means'] - net_c_results['pop_c_len_stds'],
+                net_c_results['pop_c_len_means'] + net_c_results['pop_c_len_stds'],
+                alpha=0.2, color=net_c_color)
 
     if plot_neuro_results:
         ax2.plot(
@@ -4418,7 +4472,7 @@ if __name__ == "__main__":
     ax2.set_xticks(c_len_arr)
     ax2.set_xlabel("Length (fragments)")
     ax2.set_ylabel("Gain")
-    ax2.set_ylim(bottom=-0.2)
+    ax2.set_ylim(bottom=-0.2, top=10)
     ax2.legend()
 
     # [C] Gain Vs Fragment Spacing
@@ -4429,7 +4483,7 @@ if __name__ == "__main__":
         ax3.plot(
             spacing_arr, net_a_results['pop_space_means'],
             label='{} (N={})'.format(net_a_name, net_a_results['pop_space_n']),
-            color=net_a_color, marker='x'
+            color=net_a_color, marker=net_a_marker
         )
         ax3.fill_between(
             spacing_arr,
@@ -4441,13 +4495,26 @@ if __name__ == "__main__":
         ax3.plot(
             spacing_arr, net_b_results['pop_space_means'],
             label='{} (N={})'.format(net_b_name, net_b_results['pop_space_n']),
-            color=net_b_color, marker='o'
+            color=net_b_color, marker=net_b_marker
         )
         ax3.fill_between(
             spacing_arr,
             net_b_results['pop_space_means'] - net_b_results['pop_space_stds'],
             net_b_results['pop_space_means'] + net_b_results['pop_space_stds'],
             alpha=0.2, color=net_b_color)
+
+    if plot_network_c_results:
+        if net_c_results['pop_space_n'] > 0:
+            ax3.plot(
+                spacing_arr, net_c_results['pop_space_means'],
+                label='{} (N={})'.format(net_c_name, net_c_results['pop_space_n']),
+                color=net_c_color, marker=net_c_marker
+            )
+            ax3.fill_between(
+                spacing_arr,
+                net_c_results['pop_space_means'] - net_c_results['pop_space_stds'],
+                net_c_results['pop_space_means'] + net_c_results['pop_space_stds'],
+                alpha=0.2, color=net_c_color)
 
     if plot_neuro_results:
         ax3.plot(monkey_ma['rcd'], neuro_space_results, color='black', marker='s',
