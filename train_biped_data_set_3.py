@@ -178,7 +178,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # Pre-processing
     transforms_list = [
         transforms.Normalize(mean=ch_mean, std=ch_std),
-        utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
     ]
     pre_process_transforms = transforms.Compose(transforms_list)
 
@@ -237,8 +237,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
     # detect_thres = 0.5
     detect_thres = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
-
-    criterion = nn.BCEWithLogitsLoss().to(device)
 
     # -----------------------------------------------------------------------------------
     # Loss Functions
@@ -562,7 +560,7 @@ if __name__ == '__main__':
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/biped')
+         base_results_store_dir='./results/biped_new')
 
     # -----------------------------------------------------------------------------------
     # End
