@@ -538,7 +538,7 @@ if __name__ == '__main__':
     train_parameters = {
         'random_seed': 1,
         'train_batch_size': 32,
-        'test_batch_size': 1,
+        'test_batch_size': 32,
         'learning_rate': 1e-3,
         'num_epochs': 100,
          'lateral_w_reg_weight': 0.0001,
