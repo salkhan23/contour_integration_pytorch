@@ -188,12 +188,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         transform=pre_process_transforms,
         subset_size=train_subset_size,
         resize_size=resize_size,
+        calculate_stats=False
     )
     train_batch_size = min(train_batch_size, len(train_set))
 
     train_data_loader = DataLoader(
         dataset=train_set,
-        num_workers=4,
+        num_workers=30,
         batch_size=train_batch_size,
         shuffle=True,
         pin_memory=True
@@ -205,12 +206,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         transform=pre_process_transforms,
         subset_size=test_subset_size,
         resize_size=resize_size,
+        calculate_stats=False
     )
     test_batch_size = min(test_batch_size, len(val_set))
 
     val_data_loader = DataLoader(
         dataset=val_set,
-        num_workers=4,
+        num_workers=30,
         batch_size=test_batch_size,
         shuffle=False,
         pin_memory=True
