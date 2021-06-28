@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import os
 
 import torch
-import torch.nn as nn
 from torchvision import transforms
 from torch.utils.data import DataLoader
 
@@ -26,142 +25,48 @@ cont_int_in_act = []
 cont_int_out_act = []
 
 
-def edge_extract_cb(self, layer_in, layer_out):
-    """ Attach at Edge Extract layer
-        Callback to retrieve the activations output of Edge Extract layer
+def get_predictions(model, data_loader, store_dir, detect_thres=0.3):
     """
-    global edge_extract_act
-    edge_extract_act = layer_out.cpu().detach().numpy()
+    :param model:
+    :param data_loader: 
+    :param store_dir:
+    :param detect_thres:
 
-
-def contour_integration_cb(self, layer_in, layer_out):
-    """ Attach at Contour Integration layer
-        Callback to retrieve the input & output activations of the contour Integration layer
+    :return: None
     """
-    global cont_int_in_act
-    global cont_int_out_act
+    results_dir = os.path.join(store_dir, 'predictions')
+    if not os.path.exists(results_dir):
+        os.makedirs(results_dir)
 
-    cont_int_in_act = layer_in[0].cpu().detach().numpy()
-    cont_int_out_act = layer_out.cpu().detach().numpy()
+    list_of_files = data_loader.dataset.labels
+    print("".format("Storing {} predictions".format(len(list_of_files))))
 
-
-if __name__ == "__main__":
-    # -----------------------------------------------------------------------------------
-    # Initialization
-    # -----------------------------------------------------------------------------------
-    random_seed = 5
-    data_set_dir = './data/BIPED/edges'
-
-    save_predictions = True
-
-    # # Control Model
-    # ----------------
-    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    cont_int_layer = new_control_models.ControlMatchParametersLayer(
-        lateral_e_size=15, lateral_i_size=15)
-    saved_model = \
-        'results/biped' \
-        '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
-        '/last_epoch.pth'
-
-    # # Model
-    # # -----
-    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # saved_model = \
-    #     'results/biped' \
-    #     '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base' \
-    #     '/last_epoch.pth'
-
-    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
-
-    # Immutable
-    # ---------------------------------------------------
-    plt.ion()
-    np.random.seed(random_seed)
-    torch.manual_seed(random_seed)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    net = net.to(device)
-    net.load_state_dict(torch.load(saved_model, map_location=device))
-
-    net.edge_extract.register_forward_hook(edge_extract_cb)
-    net.contour_integration_layer.register_forward_hook(contour_integration_cb)
-
-    # -----------------------------------------------------------------------------------
-    # Data Loader
-    # -----------------------------------------------------------------------------------
-    # Imagenet Mean and STD
-    ch_mean = [0.485, 0.456, 0.406]
-    ch_std = [0.229, 0.224, 0.225]
-
-    # Pre-processing
-    pre_process_transforms = transforms.Compose([
-        transforms.Normalize(mean=ch_mean, std=ch_std),
-        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
-    ])
-
-    val_set = dataset_biped.BipedDataSet(
-        data_dir=data_set_dir,
-        dataset_type='test',
-        transform=pre_process_transforms,
-        resize_size=(256, 256)
-    )
-
-    val_data_loader = DataLoader(
-        dataset=val_set,
-        num_workers=4,
-        batch_size=1,
-        shuffle=False,  # Do not change needed to save predictions with correct file names
-        pin_memory=True
-    )
-
-    # -----------------------------------------------------------------------------------
-    # Loss Function
-    # -----------------------------------------------------------------------------------
-    criterion = nn.BCEWithLogitsLoss().to(device)
-    detect_thres = 0.3
-
-    # -----------------------------------------------------------------------------------
-    # Main Loop
-    # -----------------------------------------------------------------------------------
-    net.eval()
-    e_loss = 0
-    e_iou = 0
-
-    # Where to save predictions
-    if save_predictions:
-        list_of_files = val_data_loader.dataset.labels
-
-        model_results_dir = os.path.dirname(saved_model)
-        preds_dir = os.path.join(model_results_dir, 'predictions')
-        if not os.path.exists(preds_dir):
-            os.makedirs(preds_dir)
+    model.eval()
+    total_iou = 0
 
     with torch.no_grad():
-        for iteration, (img, label) in enumerate(val_data_loader, 0):
+        for iteration, (img, label) in enumerate(data_loader, 0):
+
             img = img.to(device)
             label = label.to(device)
 
-            label_out = net(img)
-            batch_loss = criterion(label_out, label.float())
+            label_out = model(img)
 
             preds = (torch.sigmoid(label_out) > detect_thres)
             iou = utils.intersection_over_union(
                 preds.float(), label.float()).cpu().detach().numpy()
-            e_iou += iou
+            total_iou += iou
 
             # Before visualizing Sigmoid the output. This is already done in the loss function
             label_out = torch.sigmoid(label_out)
 
-            if save_predictions:
-                plt.imsave(
-                    fname=os.path.join(preds_dir, list_of_files[iteration].split('/')[-1]),
-                    arr=np.squeeze(label_out),
-                    cmap=plt.cm.gray,
-                )
+            plt.imsave(
+                fname=os.path.join(results_dir, list_of_files[iteration].split('/')[-1]),
+                arr=np.squeeze(label_out),
+                cmap=plt.cm.gray,
+            )
 
+            # # -----------------------------------------------------------------------------
             # #  Plot input image, label and prediction
             # # ---------------------------------------------------------------------------
             # display_img = img.detach().cpu().numpy()
@@ -232,9 +137,82 @@ if __name__ == "__main__":
             # pdb.set_trace()
             # plt.close('all')
 
-        e_loss = e_loss / len(val_data_loader)
-        e_iou = e_iou / len(val_data_loader)
-        print("Val Loss = {:0.4f}, IoU={:0.4f}".format(e_loss, e_iou))
+    total_iou = total_iou / len(data_loader)
+    print("Mean IoU={:0.4f}".format(total_iou))
+
+
+if __name__ == "__main__":
+    # -----------------------------------------------------------------------------------
+    # Initialization
+    # -----------------------------------------------------------------------------------
+    random_seed = 5
+    data_set_dir = './data/BIPED/edges'
+
+    save_predictions = True
+
+    # Build Model
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+         lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
+    
+    saved_model = \
+        'results/biped' \
+        '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
+        '/last_epoch.pth'
+
+    # Immutable
+    # ---------------------------------------------------
+    plt.ion()
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net = net.to(device)
+    net.load_state_dict(torch.load(saved_model, map_location=device))
+
+    # -----------------------------------------------------------------------------------
+    # Data Loader
+    # -----------------------------------------------------------------------------------
+    # Imagenet Mean and STD
+    ch_mean = [0.485, 0.456, 0.406]
+    ch_std = [0.229, 0.224, 0.225]
+
+    # Pre-processing
+    pre_process_transforms = transforms.Compose([
+        transforms.Normalize(mean=ch_mean, std=ch_std),
+        # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
+    ])
+
+    val_set = dataset_biped.BipedDataSet(
+        data_dir=data_set_dir,
+        dataset_type='test',
+        transform=pre_process_transforms,
+        resize_size=(256, 256)
+    )
+
+    val_data_loader = DataLoader(
+        dataset=val_set,
+        num_workers=4,
+        batch_size=1,
+        shuffle=False,  # Do not change needed to save predictions with correct file names
+        pin_memory=True
+    )
+
+    # -----------------------------------------------------------------------------------
+    # Main
+    # -----------------------------------------------------------------------------------
+    get_predictions(
+        net,
+        val_data_loader,
+        store_dir=os.path.dirname(saved_model))
 
     # -----------------------------------------------------------------------------------
     # End

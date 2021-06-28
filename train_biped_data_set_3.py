@@ -24,6 +24,7 @@ import models.new_control_models as new_control_models
 
 import experiment_gain_vs_len
 import experiment_gain_vs_spacing
+import validate_biped_dataset
 
 
 def get_lr(opt):
@@ -493,16 +494,17 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         f1.savefig(os.path.join(results_store_dir, 'iou_train.jpg'), format='jpg')
         f2.savefig(os.path.join(results_store_dir, 'iou_val.jpg'), format='jpg')
 
-    # -----------------------------------------------------------------------------------
-    # Run Li 2006 experiments
-    # -----------------------------------------------------------------------------------
-    print("====> Running Experiments")
-    optim_stim_dict = experiment_gain_vs_len.main(
-        model, base_results_dir=results_store_dir, iou_results=False, n_images=100)
+    # # -----------------------------------------------------------------------------------
+    # # Run Li 2006 experiments
+    # # -----------------------------------------------------------------------------------
+    # print("====> Running Experiments")
+    # optim_stim_dict = experiment_gain_vs_len.main(
+    #     model, base_results_dir=results_store_dir, iou_results=False, n_images=100)
+    #
+    # experiment_gain_vs_spacing.main(
+    #     model, base_results_dir=results_store_dir, optimal_stim_dict=optim_stim_dict, n_images=100)
 
-    experiment_gain_vs_spacing.main(
-        model, base_results_dir=results_store_dir, optimal_stim_dict=optim_stim_dict, n_images=100)
-
+    # ------------------------------------------------------------------------------------
     # View trained kernels
     # ------------------------------------------------------------------------------------
     trained_kernels_store_dir = os.path.join(results_store_dir, 'trained_kernels')
@@ -520,6 +522,18 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         results_store_dir=trained_kernels_store_dir,
         spatial_func=np.mean
     )
+
+    # ------------------------------------------------------------------------------------
+    # Store Predictions over the validation dataset
+    # ------------------------------------------------------------------------------------
+    val_data_loader_no_shuffle = DataLoader(
+        dataset=val_set,
+        num_workers=30,
+        batch_size=1,
+        shuffle=False,  # Do not change needed to save predictions with correct file names
+        pin_memory=True
+    )
+    validate_biped_dataset.get_predictions(model, val_data_loader_no_shuffle, results_store_dir)
 
 
 if __name__ == '__main__':
