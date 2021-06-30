@@ -1,6 +1,16 @@
 # ---------------------------------------------------------------------------------------
-# Get performance of a Trained Edge Extraction Model over the Single Natural Image Contour
-# Dataset
+#  Generate predictions of a trained model on the single contours dataset.
+#  Dataset has be be previously created, see  generate_data/generate_single_contour_dataset
+#  Data set structure:
+#        main
+#           contour_len_bin_25-49
+#           contour_len_bin_50-99
+#           ---
+#
+#       Each sub directory should have 2 folders,
+#            images  (full images)
+#            label (highlighted single contour)
+#
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -60,59 +70,27 @@ class SingleContourDataSet(Dataset):
         return img1, target
 
 
-if __name__ == "__main__":
-    # -----------------------------------------------------------------------------------
-    # Initialization
-    # -----------------------------------------------------------------------------------
-    data_set_dir = './data/single_contour_natural_images_4'
-    random_seed = 5
+def get_predictions(model, data_dir, results_dir):
+    """
 
-    save_predictions = True
+    :param model:
+    :param data_dir:
+    :param results_dir:
+    :return:
+    """
 
-    # # # Control Model
-    # # ----------------
-    # # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
-    # #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
-    #     lateral_e_size=15, lateral_i_size=15)
-    # saved_model = \
-    #     './results/biped' \
-    #     '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
-    #     '/last_epoch.pth'
-
-    # Model
-    # -----
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
-    saved_model = \
-        './results/biped' \
-        '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base' \
-        '/last_epoch.pth'
-
-    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
-
-    # immutable
-    # ------------------------------------------------
-    plt.ion()
-    np.random.seed(random_seed)
-    torch.manual_seed(random_seed)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    model = net.to(device)
-    model.load_state_dict(torch.load(saved_model, map_location=device))
-
-    list_of_sub_dirs = os.listdir(os.path.join(data_set_dir, 'labels'))
+    list_of_sub_dirs = os.listdir(os.path.join(data_dir, 'labels'))  # sub dirs of contour lengths
     list_of_sub_dirs.sort(key=lambda x1: float(x1.split('_')[1]))
+
+    predicts_base_dir = os.path.join(results_dir, 'predictions_' + data_dir.split('/')[-1] + '_test')
+
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     for sb_dir_idx, sub_dir in enumerate(list_of_sub_dirs):
 
         print("Processing contours of length {} ...".format(sub_dir))
 
-        # Create the predictions store directory
-        base_store_dir = os.path.dirname(saved_model)
-        preds_dir = os.path.join(
-            base_store_dir, 'predictions_{}'.format(data_set_dir.split('/')[-1]), sub_dir)
+        preds_dir = os.path.join(predicts_base_dir, sub_dir)
         if not os.path.exists(preds_dir):
             os.makedirs(preds_dir)
         # print('storing results @ {}'.format(preds_store_dir))
@@ -131,7 +109,7 @@ if __name__ == "__main__":
             # utils.PunctureImage(n_bubbles=100, fwhm=20, peak_bubble_transparency=0)
         ])
 
-        dataset = SingleContourDataSet(data_set_dir, sub_dir, pre_process_transforms)
+        dataset = SingleContourDataSet(data_dir, sub_dir, pre_process_transforms)
         data_loader = DataLoader(
             dataset=dataset,
             num_workers=4,
@@ -143,38 +121,37 @@ if __name__ == "__main__":
         # -------------------------------------------------------------------------------
         # Main Loop
         # -------------------------------------------------------------------------------
-        net.eval()
+        model.eval()
 
         list_of_labels = data_loader.dataset.labels
 
         with torch.no_grad():
             for iteration, (img, label) in enumerate(data_loader, 0):
-                img = img.to(device)
-                label = label.to(device)
+                img = img.to(dev)
+                label = label.to(dev)
 
-                label_out = net(img)
+                label_out = model(img)
 
                 # Before visualizing Sigmoid the output.
                 # This is already done in the loss function
                 label_out = torch.sigmoid(label_out)
-                label_out = label * label_out
+                label_out = label * label_out  # To get only pixels of interest (single contour)
                 label_out = label_out.cpu().detach().numpy()
                 label_out = np.squeeze(label_out)
 
-                if save_predictions:
-                    plt.imsave(
-                        fname=os.path.join(preds_dir, list_of_labels[iteration].split('/')[-1]),
-                        arr=np.squeeze(label_out),
-                        cmap=plt.cm.gray,
-                    )
+                plt.imsave(
+                    fname=os.path.join(preds_dir, list_of_labels[iteration].split('/')[-1]),
+                    arr=np.squeeze(label_out),
+                    cmap=plt.cm.gray,
+                )
 
-                # Plot Input image, label and prediction
-                img = img.detach().cpu().numpy()
-                img = np.squeeze(img)
-
-                label = label.detach().cpu().numpy()
-                label = np.squeeze(label)
-
+                # # Plot Input image, label and prediction
+                # img = img.detach().cpu().numpy()
+                # img = np.squeeze(img)
+                #
+                # label = label.detach().cpu().numpy()
+                # label = np.squeeze(label)
+                #
                 # # Debug Plot
                 # f, ax_arr = plt.subplots(1, 3)
                 #
@@ -192,6 +169,58 @@ if __name__ == "__main__":
                 #
                 # import pdb
                 # pdb.set_trace()
+
+
+if __name__ == "__main__":
+    # -----------------------------------------------------------------------------------
+    # Initialization
+    # -----------------------------------------------------------------------------------
+    data_set_dir = './data/single_contour_natural_images_4'
+    random_seed = 5
+
+    # Build Model
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+        lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
+
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
+
+    # saved_model = \
+    #     './results/biped' \
+    #     '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base' \
+    #     '/last_epoch.pth'
+
+    saved_model = \
+        'results/biped' \
+        '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
+        '/last_epoch.pth'
+
+    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
+
+    # Immutable
+    # ------------------------------------------------
+    plt.ion()
+    np.random.seed(random_seed)
+    torch.manual_seed(random_seed)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    net = net.to(device)
+    net.load_state_dict(torch.load(saved_model, map_location=device))
+
+    # -----------------------------------------------------------------------------------
+    # Initialization
+    # -----------------------------------------------------------------------------------
+    get_predictions(
+        net,
+        data_set_dir,
+        os.path.dirname(saved_model))
 
     # -----------------------------------------------------------------------------------
     # End

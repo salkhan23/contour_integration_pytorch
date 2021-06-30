@@ -25,6 +25,7 @@ import models.new_control_models as new_control_models
 import experiment_gain_vs_len
 import experiment_gain_vs_spacing
 import validate_biped_dataset
+import validate_single_contour_dataset
 
 
 def get_lr(opt):
@@ -524,7 +525,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     )
 
     # ------------------------------------------------------------------------------------
-    # Store Predictions over the validation dataset
+    # Store Predictions over the validation dataset - Weak Edge Enhancement Experiment
     # ------------------------------------------------------------------------------------
     val_data_loader_no_shuffle = DataLoader(
         dataset=val_set,
@@ -534,6 +535,12 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         pin_memory=True
     )
     validate_biped_dataset.get_predictions(model, val_data_loader_no_shuffle, results_store_dir)
+
+    # ------------------------------------------------------------------------------------
+    # Store Predictions over the single contour dataset - Contour length Experiment
+    # ------------------------------------------------------------------------------------
+    data_set_dir = './data/single_contour_natural_images_4'
+    validate_single_contour_dataset.get_predictions(model, data_set_dir, results_store_dir)
 
 
 if __name__ == '__main__':

@@ -148,8 +148,6 @@ if __name__ == "__main__":
     random_seed = 5
     data_set_dir = './data/BIPED/edges'
 
-    save_predictions = True
-
     # Build Model
     # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
