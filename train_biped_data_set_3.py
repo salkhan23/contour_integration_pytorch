@@ -520,13 +520,13 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
         os.makedirs(trained_kernels_store_dir)
 
     utils.view_ff_kernels(
-        model.edge_extract.weight.data.numpy(),
+        model.edge_extract.weight.data.cpu().detach().numpy(),
         results_store_dir=trained_kernels_store_dir
     )
 
     utils.view_spatial_lateral_kernels(
-        model.contour_integration_layer.lateral_e.weight.data.numpy(),
-        model.contour_integration_layer.lateral_i.weight.data.numpy(),
+        model.contour_integration_layer.lateral_e.weight.data.cpu().detach().numpy(),
+        model.contour_integration_layer.lateral_i.weight.data.cpu().detach().numpy(),
         results_store_dir=trained_kernels_store_dir,
         spatial_func=np.mean
     )
