@@ -61,6 +61,7 @@ def get_predictions(model, data_loader, store_dir, detect_thres=0.3):
 
             # Before visualizing Sigmoid the output. This is already done in the loss function
             label_out = torch.sigmoid(label_out)
+            label_out = label_out.detach().cpu().numpy()
 
             plt.imsave(
                 fname=os.path.join(results_dir, list_of_files[iteration].split('/')[-1]),
