@@ -44,11 +44,13 @@ def get_predictions(model, data_loader, store_dir, detect_thres=0.3):
     model.eval()
     total_iou = 0
 
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     with torch.no_grad():
         for iteration, (img, label) in enumerate(data_loader, 0):
 
-            img = img.to(device)
-            label = label.to(device)
+            img = img.to(dev)
+            label = label.to(dev)
 
             label_out = model(img)
 
