@@ -448,8 +448,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     train_utils.store_tracked_variables(
         track_var_dict, results_store_dir, n_ch=model.contour_integration_layer.edge_out_ch)
 
-    train_history = np.array(train_history)
-    val_history = np.array(val_history)
+    train_history = np.array(train_history, dtype=object)
+    val_history = np.array(val_history, dtype=object)
 
     # -----------------------------------------------------------------------------------
     #  Post training load model with best accuracy
