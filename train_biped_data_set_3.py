@@ -11,7 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import torch
-import torch.nn as nn
 from torchvision import transforms
 from torch.utils.data import DataLoader
 import torch.optim as optim
@@ -22,8 +21,8 @@ import train_utils
 import models.new_piech_models as new_piech_models
 import models.new_control_models as new_control_models
 
-import experiment_gain_vs_len
-import experiment_gain_vs_spacing
+# import experiment_gain_vs_len
+# import experiment_gain_vs_spacing
 import validate_biped_dataset
 import validate_single_contour_dataset
 
@@ -453,8 +452,15 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     val_history = np.array(val_history)
 
     # -----------------------------------------------------------------------------------
+    #  Post training load model with best accuracy
+    # -----------------------------------------------------------------------------------
+    best_val_acc_model = os.path.join(results_store_dir, 'best_accuracy.pth')
+    net.load_state_dict(torch.load(best_val_acc_model, map_location=device))
+
+    # -----------------------------------------------------------------------------------
     # Plots
     # -----------------------------------------------------------------------------------
+    print("Plotting training figures.")
     train_iou_mat = np.zeros((num_epochs, len(detect_thres)))
     val_iou_mat = np.zeros_like(train_iou_mat)
     for e_idx in range(num_epochs):
@@ -508,6 +514,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # ------------------------------------------------------------------------------------
     # View trained kernels
     # ------------------------------------------------------------------------------------
+    print("Plotting lateral kernels")
     trained_kernels_store_dir = os.path.join(results_store_dir, 'trained_kernels')
     if not os.path.exists(trained_kernels_store_dir):
         os.makedirs(trained_kernels_store_dir)
@@ -527,6 +534,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # ------------------------------------------------------------------------------------
     # Store Predictions over the validation dataset - Weak Edge Enhancement Experiment
     # ------------------------------------------------------------------------------------
+    print("Get Predictions over validation dataset ... ")
     val_data_loader_no_shuffle = DataLoader(
         dataset=val_set,
         num_workers=30,
@@ -539,6 +547,7 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # ------------------------------------------------------------------------------------
     # Store Predictions over the single contour dataset - Contour length Experiment
     # ------------------------------------------------------------------------------------
+    print("Get Predictions over single contour dataset ....")
     data_set_dir = './data/single_contour_natural_images_4'
     validate_single_contour_dataset.get_predictions(model, data_set_dir, results_store_dir)
 
