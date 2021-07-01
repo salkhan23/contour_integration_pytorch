@@ -553,9 +553,6 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
 
 
 if __name__ == '__main__':
-    random_seed = 10
-    torch.manual_seed(random_seed)
-    np.random.seed(random_seed)
     plt.ion()
 
     data_set_parameters = {
@@ -566,7 +563,7 @@ if __name__ == '__main__':
     }
 
     train_parameters = {
-        'random_seed': 1,
+        'random_seed': 96,
         'train_batch_size': 32,
         'test_batch_size': 32,
         'learning_rate': 1e-3,
