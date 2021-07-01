@@ -7705,7 +7705,7 @@ def plot_avg_training(a_results, a_name, a_color, b_results, b_name, b_color, c_
 
 if __name__ == '__main__':
     plt.ion()
-    np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
+    np.set_printoptions(precision=4, linewidth=120, suppress=True, threshold=np.inf)
 
     frag_tile_size = np.array([7, 7])
     bubble_tile_sizes = np.array([[7, 7], [9, 9], [11, 11], [13, 13], [15, 15], [17, 17]])
