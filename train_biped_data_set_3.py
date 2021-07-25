@@ -244,8 +244,8 @@ def main(model, train_params, data_set_params, base_results_store_dir='./results
     # -----------------------------------------------------------------------------------
     # Loss Functions
     # -----------------------------------------------------------------------------------
-    criterion = torch.nn.BCEWithLogitsLoss()
-    # criterion = train_utils.ClassBalancedCrossEntropy()
+    # criterion = torch.nn.BCEWithLogitsLoss()
+    criterion = train_utils.ClassBalancedCrossEntropy()
     # criterion = train_utils.ClassBalancedCrossEntropyAttentionLoss()
     criterion_loss_sigmoid_outputs = False
 
