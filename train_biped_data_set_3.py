@@ -567,7 +567,7 @@ if __name__ == '__main__':
         'train_batch_size': 32,
         'test_batch_size': 32,
         'learning_rate': 1e-3,
-        'num_epochs': 100,
+        'num_epochs': 50,
          'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
         'clip_negative_lateral_weights': True,
