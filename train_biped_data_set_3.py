@@ -571,7 +571,7 @@ if __name__ == '__main__':
          'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
         'clip_negative_lateral_weights': True,
-        'lr_sched_step_size': 80,
+        'lr_sched_step_size': 40,
         'lr_sched_gamma': 0.5
     }
 
