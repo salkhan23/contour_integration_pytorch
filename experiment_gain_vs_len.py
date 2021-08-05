@@ -1084,12 +1084,12 @@ if __name__ == "__main__":
     # Model
     # -------
     cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5)
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
     saved_model = \
-        './results/new_model_resnet_based/Old/' \
-        '/ContourIntegrationResnet50_CurrentSubtractInhibitLayer_20200816_222302_baseline' \
-        '/best_accuracy.pth'
+        './results/contour_dataset_multiple_runs/' \
+        'positive_lateral_weights_with_independent_BN_best_gain_curves/' \
+        'run_1/best_accuracy.pth'
 
     plt.ion()
     torch.manual_seed(random_seed)
