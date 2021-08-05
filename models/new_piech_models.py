@@ -396,9 +396,8 @@ class CurrentSubtractInhibitLayer(nn.Module):
 
         # Only for Debugging
         self.store_recurrent_acts = store_recurrent_acts
-        if self.store_recurrent_acts:
-            self.x_per_iteration = []
-            self.y_per_iteration = []
+        self.x_per_iteration = []
+        self.y_per_iteration = []
 
         # Parameters
         if a is not None:
@@ -489,6 +488,9 @@ class CurrentSubtractInhibitLayer(nn.Module):
         y = torch.zeros_like(ff)  # state of inhibitory neurons
         f_y = torch.zeros_like(ff)  # Fire Rate (after nonlinear activation) of excitatory neurons
 
+        self.x_per_iteration = []
+        self.y_per_iteration = []
+
         # # Debug
         # idx = ff.argmax()  # This is the index in the flattened array
 
@@ -526,6 +528,10 @@ class CurrentSubtractInhibitLayer(nn.Module):
                 )
 
             if self.use_recurrent_batch_norm:
+
+                if i >= len(self.recurrent_e_BN):
+                    i = len(self.recurrent_e_BN) - 1
+
                 f_x = nn.functional.relu(self.recurrent_e_BN[i](x))
                 f_y = nn.functional.relu(self.recurrent_i_BN[i](y))
                 # f_x = nn.functional.relu(self.recurrent_e_BN(x, i))
