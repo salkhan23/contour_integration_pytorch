@@ -506,7 +506,7 @@ def main(model, optimal_stim_dict=None, r_dir="."):
 
     # # Increase the number of time steps to see what happens beyond trained iterations
     train_n_iter = model.contour_integration_layer.n_iters - 1
-    model.contour_integration_layer.n_iters = 7
+    # model.contour_integration_layer.n_iters = 7
 
     overall_results = {}
     # results is dictionary of dictionaries (referenced by channel index), one for each channel
