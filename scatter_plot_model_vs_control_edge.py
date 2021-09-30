@@ -1,4 +1,6 @@
 # ---------------------------------------------------------------------------------------
+# Outdated (old method), see V2 version.
+# ---------------------------------------------------------------------------------------
 # Scatter plot predictions of model (y-axis) vs control (x_axis)
 # (After sigmoid but before thresholding)
 #
