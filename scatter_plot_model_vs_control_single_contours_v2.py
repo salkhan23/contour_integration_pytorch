@@ -53,12 +53,12 @@ def main(m_pred_dir, c_pred_dir, gt_dir, win_len=0.2, bin_size=0.1):
     list_of_sub_dirs = os.listdir(gt_dir)
     list_of_sub_dirs.sort(key=lambda x1: float(x1.split('_')[1]))
 
-    # For each subdirectory for each threshold counts of edges above, below & on diagonal
-    list_of_edge_counts = []
+    # for each sub dir [c_len start, c_len stop, mean_diff, std_diff, n_points]
+    results_list = []
 
-    # For plotting
-    color = iter(cm.rainbow(np.linspace(0, 1, len(list_of_sub_dirs))))
-    fig, ax = plt.subplots(figsize=(7, 7))
+    # # For plotting
+    # color = iter(cm.rainbow(np.linspace(0, 1, len(list_of_sub_dirs))))
+    # fig, ax = plt.subplots(figsize=(7, 7))
 
     for sb_dir_idx, sb_dir in enumerate(list_of_sub_dirs):
         print("[{}] Processing contours of length {}. ".format(sb_dir_idx, sb_dir))
@@ -78,10 +78,40 @@ def main(m_pred_dir, c_pred_dir, gt_dir, win_len=0.2, bin_size=0.1):
                 verbose=False
             )
 
-        c = next(color)
+        # c = next(color)
+        # scatter_plot_model_vs_control_edge.plot_prediction_differences(
+        #         sb_dir_idx, m_e_diff_mean, m_e_diff_std, axis=ax, color=c, label='c_len_{}'.format(sb_dir))
 
-        scatter_plot_model_vs_control_edge.plot_prediction_differences(
-                sb_dir_idx, m_e_diff_mean, m_e_diff_std, axis=ax, color=c, label='c_len_{}'.format(sb_dir))
+        results_list.append([
+            np.int(sb_dir.split('_')[1]),  # C_len start
+            np.int(sb_dir.split('_')[2]),
+            np.float(m_e_diff_mean),
+            np.float(m_e_diff_std),
+            np.float(m_e_counts)
+        ])
+
+    results_list = np.array(results_list)
+
+    return results_list
+
+
+def plot_prediction_differences_vs_lens(lens, diff_m, diff_std, label=None, axis=None, color='black', marker='x'):
+    if axis is None:
+        f, axis = plt.subplots(figsize=(9, 9))
+
+    axis.plot(lens, diff_m, marker=marker, color=color, label=label)
+    axis.fill_between(
+        lens,
+        diff_m - diff_std,
+        diff_m + diff_std,
+        alpha=0.2, color=color)
+
+    axis.set_xlabel("Contour Length(pixels)")
+    axis.set_ylabel("Prediction Difference")
+
+    axis.axhline(y=0, color='k')
+    axis.legend()
+    axis.grid()
 
 
 if __name__ == "__main__":
@@ -90,7 +120,7 @@ if __name__ == "__main__":
     edge_strength_bin_size = 1
 
     # Note: Predictions over the validation set have to be calculated beforehand.
-    # Please see validate_biped_dataset.get_predictions()
+    # Please see validate_single_contour_dataset.get_predictions()
     # This is also called in the training script
     control_predictions_dir = './results/biped_new/control/random_seed_1/predictions_single_contour_natural_images_4'
     ground_truth_dir = './data/single_contour_natural_images_4/labels'
@@ -111,13 +141,42 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # edge_str_arr, model_edges_diff_mean, model_edges_diff_std, _, \
     #     model_non_edges_diff_mean, model_non_edges_diff_std, _ = \
-    main(
+    results_model = main(
         m_pred_dir=model_predictions_dir,
         c_pred_dir=control_predictions_dir,
         gt_dir=ground_truth_dir,
         win_len=window_len, bin_size=edge_strength_bin_size)
 
+    results_rpcm = main(
+        m_pred_dir=rpcm_predictions_dir,
+        c_pred_dir=control_predictions_dir,
+        gt_dir=ground_truth_dir,
+        win_len=window_len, bin_size=edge_strength_bin_size)
 
+    # Plot the figure
+    # ------------------------------------------------------------------------------------------
+
+    fig, ax = plt.subplots(figsize=(9, 9))
+
+    plot_prediction_differences_vs_lens(
+        lens=results_model[:, 0],  # use min lengths,
+        diff_m=results_model[:, 2],
+        diff_std=results_model[:, 3],
+        axis=ax,
+        color=model_color,
+        marker=model_marker,
+        label='model'
+    )
+
+    plot_prediction_differences_vs_lens(
+        lens=results_rpcm[:, 0],  # use min lengths,
+        diff_m=results_rpcm[:, 2],
+        diff_std=results_rpcm[:, 3],
+        axis=ax,
+        color=rpcm_color,
+        marker=rpcm_marker,
+        label='rpcm'
+    )
 
     # -----------------------------------------------------------------------------------
     # End
