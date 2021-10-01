@@ -1,3 +1,5 @@
+# Needs further tweaking in inkscape. Too much spacing
+
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -782,8 +784,8 @@ if __name__ == '__main__':
     model_3x3_final = model_3x3_random_seed_96
     rpcm_final = rpcm_random_seed_96
 
-    f = plt.figure(figsize=(9, 9))
-    gs = f.add_gridspec(2, 2)
+    f = plt.figure(figsize=(10, 5))
+    gs = f.add_gridspec(1, 3)
 
     # ------------------------------------------------------------------------------------
     # Plot IoU scores over time
@@ -793,7 +795,7 @@ if __name__ == '__main__':
     # val_loss, val_iou_0.1, val_iou_0.2, val_iou_0.3, val_iou_0.4, val_iou_0.5, val_iou_0.6, val_iou_0.7, val_iou_0.8
     # ------------------------------------------------------------------------------------
     # fig, ax1 = plt.subplots(figsize=(9, 9))
-    ax1 = f.add_subplot(gs[0, 0])
+    ax1 = f.add_subplot(gs[0])
 
     plot_iou_over_time(model_final, 'val', iou_th_idx=2, axis=ax1, label='model')
     plot_iou_over_time(control_final, 'val', iou_th_idx=2, axis=ax1, label='control')
@@ -803,9 +805,11 @@ if __name__ == '__main__':
     ax1.set_xlabel("Epoch")
     ax1.set_ylabel("IoU")
     ax1.set_xlim([-1, 50])
+    ax1.set_xticks(np.arange(0, 51, 25))
     ax1.set_ylim([0.2, 0.5])
+
     # ax1.set_title("Validation IoU vs. Time")
-    ax1.legend(loc='lower right')
+    ax1.legend(loc='lower right', fontsize=16)
 
     # ------------------------------------------------------------------------------------
     # Edges Model vs. Control difference vs Prediction Strength - Get Results
@@ -819,14 +823,14 @@ if __name__ == '__main__':
             m_pred_dir=model_final['val_predictions_dir'],
             c_preds_dir=control_final['val_predictions_dir'],
             gt_dir=gt_dir,
-            win_len=avg_wind_len, bin_size=e_bin_size)
+            win_len=avg_wind_len, bin_size=e_bin_size, verbose=False)
 
     _, rpcm_e_diff_mean, rpcm_e_diff_std, _, rpcm_ne_diff_mean, rpcm_ne_diff_std, _ = \
         scatter_plot_model_vs_control_edge.main(
             m_pred_dir=rpcm_final['val_predictions_dir'],
             c_preds_dir=control_final['val_predictions_dir'],
             gt_dir=gt_dir,
-            win_len=avg_wind_len, bin_size=e_bin_size)
+            win_len=avg_wind_len, bin_size=e_bin_size, verbose=False)
 
     # ------------------------------------------------------------------------------------
     # Plot Edges Prediction Differences
@@ -836,7 +840,7 @@ if __name__ == '__main__':
     rpcm_color = 'g'
     rpcm_marker = 'x'
 
-    ax2 = f.add_subplot(gs[1, 0])
+    ax2 = f.add_subplot(gs[1])
 
     scatter_plot_model_vs_control_edge.plot_prediction_differences(
         e_str_arr, m_e_diff_mean, m_e_diff_std, axis=ax2, color=m_color, marker=m_marker, label='model')
@@ -845,11 +849,12 @@ if __name__ == '__main__':
         e_str_arr, rpcm_e_diff_mean, rpcm_e_diff_std, axis=ax2, color=rpcm_color, marker=rpcm_marker, label='rpcm')
 
     ax2.set_title("Edges")
+    ax2.set_xticks(np.arange(0, 1, 0.3))
 
     # ------------------------------------------------------------------------------------
     # Plot Non-Edges Prediction Differences
     # ------------------------------------------------------------------------------------
-    ax3 = f.add_subplot(gs[1, 1])
+    ax3 = f.add_subplot(gs[2], sharey=ax2)
 
     scatter_plot_model_vs_control_edge.plot_prediction_differences(
         e_str_arr, m_ne_diff_mean, m_ne_diff_std, axis=ax3, color=m_color, marker=m_marker, label='model')
@@ -858,8 +863,12 @@ if __name__ == '__main__':
         e_str_arr, rpcm_ne_diff_mean, rpcm_ne_diff_std, axis=ax3, color=rpcm_color, marker=rpcm_marker, label='rpcm')
 
     ax3.set_title("Non-Edges")
+    ax3.set_xticks(np.arange(0, 1, 0.3))
     plt.gca().get_legend().remove()
+    ax3.set_ylabel(None)
 
+
+    plt.tight_layout()
 
     # # -------------------------------------------------------------------------------------
     # # PLots IoUs over Time
