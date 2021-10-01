@@ -22,7 +22,7 @@
 #     2. Model predictions
 #     3. Control predictions
 #
-# See script validate_biped_dataset to get them
+# See script validate_single_contour_dataset to get them
 # ---------------------------------------------------------------------------------------
 import numpy as np
 import matplotlib.pyplot as plt
@@ -91,7 +91,7 @@ def get_prediction_differences(x_predicts, y_predicts, w_len, e_str_arr):
     return mu_arr, sigma_arr, count_arr
 
 
-def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
+def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1, process_non_edges=True, verbose=True):
     """
 
     :param m_pred_dir:
@@ -99,6 +99,7 @@ def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
     :param gt_dir:
     :param win_len:
     :param bin_size:
+    :param process_non_edges: [Default=True]
     :return:
     """
 
@@ -127,13 +128,14 @@ def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
     # -----------------------------------------------------------------------------------
     #  Load All Model, Control, GT Predictions
     # -----------------------------------------------------------------------------------
-    print(">>>> Loading Predictions ...")
+    print(">>>> Loading Predictions (Number of images {}) ...".format(len(gt_list_of_files)))
     gt_full = []
     m_out_full = []
     c_out_full = []
 
     for i_idx, img in enumerate(sorted(gt_list_of_files)):
-        print("[{}] processing image: {}".format(i_idx, img))
+        if verbose:
+            print("[{}] processing image: {}".format(i_idx, img))
 
         gt = Image.open(os.path.join(gt_dir, img)).convert("L")
         gt = np.asarray(gt.resize((256, 256), Image.LANCZOS)) / 255.0
@@ -147,15 +149,13 @@ def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
             Image.open(os.path.join(c_preds_dir, img)).convert("L")) / 255.
 
         # # Debug - PLots
-        # f, ax_arr = plt.subplots(1, 4, figsize=(15, 5))
+        # f, ax_arr = plt.subplots(1, 3, figsize=(15, 5))
         # ax_arr[0].imshow(gt)
         # ax_arr[0].set_title("GT")
         # ax_arr[1].imshow(m_out * gt)
         # ax_arr[1].set_title("Model")
         # ax_arr[2].imshow(c_out * gt)
         # ax_arr[2].set_title("Control")
-        # ax_arr[3].imshow(rpcm_out * gt)
-        # ax_arr[3].set_title("RPCM")
         # plt.tight_layout()
         #
         # import pdb
@@ -186,23 +186,29 @@ def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
     # ---------------------------------------------------------------------------
     # Process Non - Edges
     # ---------------------------------------------------------------------------
-    non_edges_mask = np.abs(gt_full - 1)
-    non_edges_model = (m_out_full * non_edges_mask).flatten()
-    non_edges_control = (c_out_full * non_edges_mask).flatten()
+    if process_non_edges:
+        non_edges_mask = np.abs(gt_full - 1)
+        non_edges_model = (m_out_full * non_edges_mask).flatten()
+        non_edges_control = (c_out_full * non_edges_mask).flatten()
 
-    print("Calculating Non-Edge prediction differences Model vs Control...")
-    m_non_edge_diff_means, m_non_edge_diff_stds, m_non_edge_diff_counts = get_prediction_differences(
-        x_predicts=non_edges_control,
-        y_predicts=non_edges_model,
-        w_len=win_len,
-        e_str_arr=edge_strength_arr)
+        print("Calculating Non-Edge prediction differences Model vs Control...")
+        m_non_edge_diff_means, m_non_edge_diff_stds, m_non_edge_diff_counts = get_prediction_differences(
+            x_predicts=non_edges_control,
+            y_predicts=non_edges_model,
+            w_len=win_len,
+            e_str_arr=edge_strength_arr)
+    else:
+        m_non_edge_diff_means = 0
+        m_non_edge_diff_stds = 0
+        m_non_edge_diff_counts = 0
 
     return edge_strength_arr, \
         m_edge_diff_means, m_edge_diff_stds, m_edge_diff_counts, \
         m_non_edge_diff_means, m_non_edge_diff_stds, m_non_edge_diff_counts
 
 
-def plot_prediction_differences(str_bins, diff_m, diff_std, label=None, axis=None, color='black', marker='x'):
+def plot_prediction_differences(
+        str_bins, diff_m, diff_std, label=None, axis=None, color='black', marker='x'):
     """
 
     :param str_bins:
