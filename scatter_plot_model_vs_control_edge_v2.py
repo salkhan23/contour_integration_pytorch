@@ -58,6 +58,9 @@ def get_prediction_differences(x_predicts, y_predicts, w_len, e_str_arr):
 
     for idx, min_w_e_str in enumerate(e_str_arr):
 
+        if min_w_e_str == 0:
+            min_w_e_str = 0.00001  # items not in mask.
+
         max_w_e_str = np.min((min_w_e_str + w_len, max_e_str))
 
         above_min_mask = x_predicts >= min_w_e_str
@@ -275,14 +278,14 @@ if __name__ == "__main__":
             m_pred_dir=model_predictions_dir,
             c_preds_dir=control_predictions_dir,
             gt_dir=ground_truth_dir,
-            win_len=window_len, bin_size=edge_strength_bin_size)
+            win_len=window_len, bin_size=edge_strength_bin_size, verbose=False)
 
     _, rpcm_edges_diff_mean, rpcm_edges_diff_std, _, \
         rpcm_non_edges_diff_mean, rpcm_non_edges_diff_std, _ = main(
             m_pred_dir=rpcm_predictions_dir,
             c_preds_dir=control_predictions_dir,
             gt_dir=ground_truth_dir,
-            win_len=window_len, bin_size=edge_strength_bin_size)
+            win_len=window_len, bin_size=edge_strength_bin_size, verbose=False)
 
     # Plot Edge Differences ----------------------------------------------------------------------
     _, ax = plt.subplots(figsize=(9, 9))
