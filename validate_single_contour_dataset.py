@@ -22,6 +22,8 @@ import torch
 from torchvision import transforms
 import torchvision.transforms.functional as transform_functional
 from torch.utils.data import DataLoader, Dataset
+from datetime import datetime
+
 
 from models import new_piech_models
 from models import new_control_models
@@ -176,38 +178,34 @@ if __name__ == "__main__":
     # Initialization
     # -----------------------------------------------------------------------------------
     data_set_dir = './data/single_contour_natural_images_4'
-    random_seed = 5
+    # data_set_dir = './data/single_contour_natural_images_new_3'
 
     # Build Model
-    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
     # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
 
-    cont_int_layer = new_control_models.ControlMatchParametersLayer(
-        lateral_e_size=15, lateral_i_size=15)
+    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
+    #     lateral_e_size=15, lateral_i_size=15)
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
 
-    net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
+    saved_model = \
+        './results/biped_new' \
+        '/model/random_seed_96' \
+        '/last_epoch.pth'
 
     # saved_model = \
-    #     './results/biped' \
-    #     '/EdgeDetectionResnet50_CurrentSubtractInhibitLayer_20200430_131825_base' \
+    #     'results/biped' \
+    #     '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
     #     '/last_epoch.pth'
-
-    saved_model = \
-        'results/biped' \
-        '/EdgeDetectionResnet50_ControlMatchParametersLayer_20200508_001539_base' \
-        '/last_epoch.pth'
 
     net = new_piech_models.EdgeDetectionResnet50(cont_int_layer)
 
     # Immutable
     # ------------------------------------------------
     plt.ion()
-    np.random.seed(random_seed)
-    torch.manual_seed(random_seed)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -217,6 +215,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # Initialization
     # -----------------------------------------------------------------------------------
+    start_time = datetime.now()
     get_predictions(
         net,
         data_set_dir,
@@ -225,5 +224,7 @@ if __name__ == "__main__":
     # -----------------------------------------------------------------------------------
     # End
     # -----------------------------------------------------------------------------------
+    run_time = datetime.now() - start_time
+    print('Finished Getting predictions. Training took {}'.format(run_time))
     input("Press any Key to continue")
     pdb.set_trace()
