@@ -133,6 +133,12 @@ if __name__ == "__main__":
     rpcm_color = 'g'
     rpcm_marker = 'x'
 
+    # # -------------------------------------------------------------------
+    # control_predictions_dir = './results/biped_new/control/random_seed_96/predictions_single_contour_natural_images_new_3'
+    # model_predictions_dir = './results/biped_new/model/random_seed_3/predictions_single_contour_natural_images_new_3'
+    # rpcm_predictions_dir = './results/biped_new/rpcm_variant/random_seed_96/predictions_single_contour_natural_images_new_3'
+    # ground_truth_dir = './data/single_contour_natural_images_new_3/labels'
+
     # Immutable ------------------------
     plt.ion()
 
