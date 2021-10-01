@@ -202,7 +202,7 @@ def main(m_pred_dir, c_preds_dir, gt_dir, win_len=0.2, bin_size=0.1):
         m_non_edge_diff_means, m_non_edge_diff_stds, m_non_edge_diff_counts
 
 
-def plot_prediction_differences(str_bins, diff_m, diff_std, label=None, axis=None, color='block', marker='x'):
+def plot_prediction_differences(str_bins, diff_m, diff_std, label=None, axis=None, color='black', marker='x'):
     """
 
     :param str_bins:
@@ -219,15 +219,15 @@ def plot_prediction_differences(str_bins, diff_m, diff_std, label=None, axis=Non
         f, axis = plt.subplots()
 
     axis.plot(str_bins, diff_m, marker=marker, color=color, label=label)
-    plt.fill_between(
+    axis.fill_between(
         str_bins,
         diff_m - diff_std, diff_m + diff_std,
         alpha=0.2, color=color)
 
-    plt.axhline(y=0, color='k')
-    plt.xlabel("Edge Strength")
-    plt.ylabel("Prediction Difference")
-    plt.grid()
+    axis.axhline(y=0, color='k')
+    axis.set_xlabel("Edge Strength")
+    axis.set_ylabel("Prediction Difference")
+    # plt.grid('ON')
     plt.legend()
     plt.tight_layout()
 
