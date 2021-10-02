@@ -234,7 +234,7 @@ def plot_prediction_differences(
         alpha=0.2, color=color)
 
     axis.axhline(y=0, color='k')
-    axis.set_xlabel("Edge Strength")
+    axis.set_xlabel("Prediction Strength")
     axis.set_ylabel("Prediction Difference")
     # plt.grid('ON')
     plt.legend()
