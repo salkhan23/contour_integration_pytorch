@@ -655,7 +655,7 @@ def write_population_avg_results(iou_arr, mean_gain_arr, std_gain_arr, f_handle)
 def plot_individual_neurons_separately(
         mu_mat, spacing_arr, no_optim_stim_n, below_th_n, store_dir, f_name, f_title):
 
-    tile_single_dim = np.int(np.ceil(np.sqrt(len(mu_mat))))
+    tile_single_dim = int(np.ceil(np.sqrt(len(mu_mat))))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
     for ch_idx in range(len(mu_mat)):

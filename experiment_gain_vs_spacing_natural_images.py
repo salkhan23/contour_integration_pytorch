@@ -362,7 +362,7 @@ def find_best_stimuli_for_each_channel(
                         d_ep2 = data_loader.dataset.get_distance_between_two_points(
                             curr_max_act_idx * cont_int_scale, end_point)
 
-                        if min_d_to_contour < np.float(max_sep_dist) and \
+                        if min_d_to_contour < float(max_sep_dist) and \
                                 d_ep1.item() >= float(data_loader.dataset.end_stop_radius) and \
                                 d_ep2.item() >= float(data_loader.dataset.end_stop_radius):
 
@@ -570,7 +570,7 @@ def plot_tiled_activations(x, mean_in_acts, mean_out_acts):
     mean_in_acts = [n_channels x n_RCD]
     """
     n_channels = len(mean_in_acts)
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
@@ -601,7 +601,7 @@ def plot_tiled_oo_gains(x, mean_out_acts, epsilon):
     NOTE: mean_out_acts = [n_channels x n_RCD]
     """
     n_channels = len(mean_out_acts)
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
@@ -629,7 +629,7 @@ def plot_tiled_out_vs_in_gains(x, mean_in_acts, mean_out_acts, epsilon):
     Plot gain individually for each channel in a tiled image.
     """
     n_channels = len(mean_in_acts)
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
@@ -658,7 +658,7 @@ def plot_tiled_predictions(x, mean_preds, std_preds):
 
     """
     n_channels = len(mean_preds)
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_channels)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_channels)))
 
     f, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(11, 11))
 
@@ -856,7 +856,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
     np.set_printoptions(precision=3, linewidth=120, suppress=True, threshold=np.inf)
 
     # Relative co-linear distance =  spacing / fragment length
-    rcd = bubble_tile_sizes[:, 0] / np.float(frag_tile_size[0])
+    rcd = bubble_tile_sizes[:, 0] / float(frag_tile_size[0])
     total_n_imgs = data_set_params['n_biped_imgs'] * data_set_params['n_epochs']
 
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -875,7 +875,7 @@ def main(model, base_results_dir, data_set_params, cont_int_scale, top_n=50, n_c
 
     results_dir = os.path.join(
         base_results_dir,
-        'experiment_gain_vs_frag_size_natural_images_max_sep_dist_{}_test'.format(np.int(max_sep_dist)))
+        'experiment_gain_vs_frag_size_natural_images_max_sep_dist_{}_test'.format(int(max_sep_dist)))
     if not os.path.exists(results_dir):
         os.makedirs(results_dir)
 

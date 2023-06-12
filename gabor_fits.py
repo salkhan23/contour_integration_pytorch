@@ -43,7 +43,7 @@ def gabor_2d(inputs, x0, y0, theta_deg, amp, sigma, lambda1, psi, gamma):
     x = inputs[0]
     y = inputs[1]
 
-    sigma = np.float(sigma)
+    sigma = float(sigma)
 
     theta = theta_deg * np.pi / 180.0
 

@@ -54,7 +54,7 @@ def view_ff_kernels(ff_kernels, results_store_dir=None):
     """
     n_ff_kernels = ff_kernels.shape[0]
 
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_ff_kernels)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_ff_kernels)))
     fig, ax_arr = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
     fig.suptitle("Feed Forward Kernels")
 
@@ -96,7 +96,7 @@ def view_spatial_lateral_kernels(e_kernels, i_kernels, spatial_func=np.mean, res
     # -----------------------------------------------------------------------------------
     # View the lateral kernels
     # -----------------------------------------------------------------------------------
-    tile_single_dim = np.int(np.ceil(np.sqrt(n_out_ch)))
+    tile_single_dim = int(np.ceil(np.sqrt(n_out_ch)))
 
     f_e, ax_arr_e = plt.subplots(tile_single_dim, tile_single_dim, figsize=(9, 9))
     f_e.suptitle("Excitatory Lateral Kernels - {} across input channels".format(spatial_func.__name__))
@@ -187,9 +187,9 @@ class PunctureImage(object):
         else:
             if isinstance(fwhm, np.ndarray):
                 max_fwhm = max(fwhm)
-                self.tile_size = np.array([np.int(2 * max_fwhm), np.int(2 * max_fwhm)])
+                self.tile_size = np.array([int(2 * max_fwhm), int(2 * max_fwhm)])
             else:
-                self.tile_size = np.array([np.int(2 * self.fwhm), np.int(2 * self.fwhm)])
+                self.tile_size = np.array([int(2 * self.fwhm), int(2 * self.fwhm)])
 
     def __call__(self, img, start_loc_arr=None):
         """

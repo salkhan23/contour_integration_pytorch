@@ -90,7 +90,7 @@ def randomly_rotate_tile(tile, delta_rotation=45.0):
     :return: rotated tile. Note this is an RGB format and values range b/w [0, 255]
     """
     num_possible_rotations = 360 // delta_rotation
-    return rotate(tile, angle=(np.random.randint(0, np.int(num_possible_rotations)) * delta_rotation))
+    return rotate(tile, angle=(np.random.randint(0, int(num_possible_rotations)) * delta_rotation))
 
 
 def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, gaussian_smoothing=True,
@@ -127,11 +127,11 @@ def tile_image(img, frag, insert_loc_arr, rotate_frags=True, delta_rotation=45, 
 
         if (-tile_len < x_arr[idx] < img.shape[0]) and (-tile_len < y_arr[idx] < img.shape[1]):
 
-            start_x_loc = np.int(max(x_arr[idx], 0))
-            stop_x_loc = np.int(min(x_arr[idx] + tile_len, img.shape[0]))
+            start_x_loc = int(max(x_arr[idx], 0))
+            stop_x_loc = int(min(x_arr[idx] + tile_len, img.shape[0]))
 
-            start_y_loc = np.int(max(y_arr[idx], 0))
-            stop_y_loc = np.int(min(y_arr[idx] + tile_len, img.shape[1]))
+            start_y_loc = int(max(y_arr[idx], 0))
+            stop_y_loc = int(min(y_arr[idx] + tile_len, img.shape[1]))
 
             # print("Placing Fragment at location  l1=(%d, %d), y = (%d, %d),"
             #       % (start_x_loc, stop_x_loc, start_y_loc, stop_y_loc))
@@ -205,7 +205,7 @@ def _add_single_side_of_contour_constant_separation(
     if type(frag_params) is not list:
         frag_params = [frag_params]
 
-    tile_offset = np.zeros((2,), dtype=np.int)
+    tile_offset = np.zeros((2,), dtype=int)
     prev_tile_start = center_frag_start
 
     tile_starts = []
@@ -469,8 +469,8 @@ def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles
 
     :return: start_x, start_y
     """
-    frag_spacing = np.int(frag_len + space_bw_tiles)
-    n_tiles = np.int(img_len // frag_spacing)
+    frag_spacing = int(frag_len + space_bw_tiles)
+    n_tiles = int(img_len // frag_spacing)
 
     # To handle non-zero row shift, we have to add additional tiles, so that the whole image is populated
     add_tiles = 0
@@ -499,7 +499,7 @@ def get_background_tiles_locations(frag_len, img_len, row_offset, space_bw_tiles
 
     # # If there is nonzero spacing between tiles, the offset needs to be updated
     if space_bw_tiles:
-        row_offset = np.int(frag_spacing / np.float(frag_len) * row_offset)
+        row_offset = int(frag_spacing / float(frag_len) * row_offset)
 
     start_y = []
     for row_idx in np.arange(-n_tiles / 2, (n_tiles / 2) + 1):
@@ -530,7 +530,7 @@ def find_containing_tile_idx(p, tile_start_arr, tile_size):
 
     tmp = x_greater_start * x_less_stop * y_greater_start * y_less_stop
 
-    return np.int(np.nonzero(tmp)[0])
+    return int(np.nonzero(tmp)[0])
 
 
 def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotation, frag_params,
@@ -656,7 +656,7 @@ def add_background_fragments(img, frag, c_frag_starts, f_tile_size, delta_rotati
 
     for start in bg_frag_starts:
 
-        random_rotation = np.random.randint(0, np.int(num_possible_rotations)) * delta_rotation
+        random_rotation = np.random.randint(0, int(num_possible_rotations)) * delta_rotation
         for c_params in rotated_frag_params_list:
             c_params['theta_deg'] = c_params['theta_deg'] + random_rotation
 
@@ -861,7 +861,7 @@ def generate_contour_image(
     )
     f_tile_centers = f_tile_starts + (f_tile_size // 2)
     num_f_tiles = len(f_tile_starts)
-    f_tiles_single_dim = np.int(np.sqrt(num_f_tiles))
+    f_tiles_single_dim = int(np.sqrt(num_f_tiles))
 
     img = np.ones(img_size, dtype=np.uint8) * bg
 

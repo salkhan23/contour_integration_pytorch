@@ -487,19 +487,19 @@ if __name__ == '__main__':
         'num_epochs': 100,
         'lateral_w_reg_weight': 0.0001,
         'lateral_w_reg_gaussian_sigma': 10,
-        'clip_negative_lateral_weights': True,
+        'clip_negative_lateral_weights': False,
         'lr_sched_step_size': 80,
         'lr_sched_gamma': 0.5
     }
 
     # Build Model
-    cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
-        lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
+    # cont_int_layer = new_piech_models.CurrentSubtractInhibitLayer(
+    #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
     # cont_int_layer = new_piech_models.CurrentDivisiveInhibitLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5, use_recurrent_batch_norm=True)
 
-    # cont_int_layer = new_control_models.ControlMatchParametersLayer(
-    #      lateral_e_size=15, lateral_i_size=15)
+    cont_int_layer = new_control_models.ControlMatchParametersLayer(
+         lateral_e_size=15, lateral_i_size=15)
     # cont_int_layer = new_control_models.ControlMatchIterationsLayer(
     #     lateral_e_size=15, lateral_i_size=15, n_iters=5)
     # cont_int_layer = new_control_models.ControlRecurrentCnnLayer(
@@ -508,7 +508,7 @@ if __name__ == '__main__':
     net = new_piech_models.ContourIntegrationResnet50(cont_int_layer)
 
     main(net, train_params=train_parameters, data_set_params=data_set_parameters,
-         base_results_store_dir='./results/positive_weights')
+         base_results_store_dir='./results/new_2023')
 
     # -----------------------------------------------------------------------------------
     # End

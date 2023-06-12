@@ -79,7 +79,7 @@ def store_tracked_variables(var_dict, store_dir, n_ch=64):
     f_handle.close()
 
     # Plot tracked variables
-    single_dim = np.int(np.ceil(np.sqrt(n_ch)))
+    single_dim = int(np.ceil(np.sqrt(n_ch)))
 
     for key, value in var_dict.items():
         if not value:
